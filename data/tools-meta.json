@@ -1,0 +1,2163 @@
+{
+  "retrieved": "2026-10-14",
+  "conventions": "null = not verified in this pass. price_tier is a judgement of product class, not a quoted price. Ansys product URLs now redirect to ansys.synopsys.com or synopsys.com.",
+  "tools": [
+    {
+      "name": "HFSS",
+      "owner": "Ansys, part of Synopsys (Synopsys closed the Ansys acquisition 17 Jul 2025)",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-hfss",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "rfic",
+        "pcb_si",
+        "antenna",
+        "bioem",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": "student",
+      "api": [
+        "Python (PyAEDT)",
+        "IronPython/VBScript (AEDT scripting)"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "ODB++",
+        "IPC-2581",
+        "STEP",
+        "DXF"
+      ],
+      "eda_link": [
+        "AEDT Circuit",
+        "Virtuoso",
+        "Custom Compiler",
+        "Allegro"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "FEM reference solver. SAR setting includes an 'IEC/IEEE 62704-4 Draft' option. Free Electronics Desktop Student is capped at 64k volume elements and 4 cores.",
+      "sources": [
+        "https://www.sec.gov/Archives/edgar/data/883241/000088324125000024/snps-20250731.htm",
+        "https://ansyshelp.ansys.com/public/Views/Secured/Electronics/v252/en/Subsystems/HFSS/Content/HFSS/CalculatingtheSAR.htm",
+        "https://ansys.synopsys.com/academic/students/ansys-electronics-desktop-student"
+      ]
+    },
+    {
+      "name": "HFSS-IE and HFSS SBR+",
+      "owner": "Ansys, part of Synopsys (2025)",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-hfss",
+      "methods": [
+        "mom3d",
+        "asym"
+      ],
+      "domains": [
+        "antenna",
+        "rf",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "Python (PyAEDT)"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "DXF"
+      ],
+      "eda_link": [
+        "AEDT Circuit"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Solver options inside HFSS: IE is MoM for open radiation, SBR+ is ray-based for installed antennas. Per Ansys, SBR+ is not in the student build.",
+      "sources": [
+        "https://ansys.synopsys.com/products/electronics/ansys-hfss"
+      ]
+    },
+    {
+      "name": "HFSS 3D Layout",
+      "owner": "Ansys, part of Synopsys (2025)",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-hfss",
+      "methods": [
+        "fem",
+        "mom25"
+      ],
+      "domains": [
+        "pcb_si",
+        "rfic",
+        "rf"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": null,
+      "api": [
+        "Python (PyAEDT, PyEDB)"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "ODB++",
+        "IPC-2581",
+        "DXF",
+        "Gerber"
+      ],
+      "eda_link": [
+        "AEDT Circuit",
+        "Allegro",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Layout-driven front end to the HFSS solvers for PCB, package and IC. Its old dedicated product URL now returns 404.",
+      "sources": [
+        "https://ansys.synopsys.com/products/electronics/ansys-hfss"
+      ]
+    },
+    {
+      "name": "SIwave",
+      "owner": "Ansys, part of Synopsys (2025)",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-siwave",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "pcb_si",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "Python (PyAEDT, PyEDB)"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "ODB++",
+        "IPC-2581",
+        "GDSII"
+      ],
+      "eda_link": [
+        "AEDT Circuit",
+        "Allegro"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "2.5D hybrid solver for PCB and package SI, PI and DC IR. Not included in Electronics Desktop Student.",
+      "sources": [
+        "https://ansys.synopsys.com/products/electronics/ansys-siwave"
+      ]
+    },
+    {
+      "name": "RaptorX / Exalto",
+      "owner": "Ansys, part of Synopsys (2025). Exalto is now sold as Synopsys Exalto. RaptorX ships inside HFSS-IC and RaptorH.",
+      "url": "https://www.synopsys.com/implementation-and-signoff/signoff/exalto.html",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "rfic"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": "none",
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Linux"
+      ],
+      "import": [
+        "GDSII"
+      ],
+      "eda_link": [
+        "Custom Compiler",
+        "IC Validator",
+        "StarRC",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "RaptorX is a PEEC/random-walk on-chip solver, now part of HFSS-IC. Exalto does post-LVS EM-aware extraction. The old RaptorX URL redirects to an overview page.",
+      "sources": [
+        "https://www.synopsys.com/implementation-and-signoff/signoff/exalto.html",
+        "https://ansys.synopsys.com/products/electronics/ansys-hfss-ic",
+        "https://ansys.com/resource-center/webinar/the-foundations-of-the-ansys-raptor-x-silicon-optimized-electromagnetic-solver"
+      ]
+    },
+    {
+      "name": "VeloceRF",
+      "owner": "Synopsys (Helic was bought by Ansys in 2019; Synopsys acquired Ansys in 2025). Now branded Synopsys VeloceRF.",
+      "url": "https://www.synopsys.com/implementation-and-signoff/ams-simulation/velocerf.html",
+      "methods": null,
+      "domains": [
+        "rfic"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "none",
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Linux"
+      ],
+      "import": [
+        "GDSII"
+      ],
+      "eda_link": [
+        "Custom Compiler",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Synthesises inductors, T-coils, transformers and lines, with models. Accuracy is certified against HFSS-IC. Current page names Custom Compiler but not Virtuoso.",
+      "sources": [
+        "https://www.synopsys.com/implementation-and-signoff/ams-simulation/velocerf.html",
+        "https://ansys.com/resource-center/brochure/velocerf-datasheet"
+      ]
+    },
+    {
+      "name": "COMSOL RF Module",
+      "owner": "COMSOL AB",
+      "url": "https://www.comsol.com/rf-module",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "bioem",
+        "photonics"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Java API",
+        "MATLAB (LiveLink)",
+        "Python (MPh, third-party)"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "STEP",
+        "DXF",
+        "GDSII"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Multiphysics FEM. Version 6.4 adds the NVIDIA cuDSS GPU direct solver, but RF-specific GPU support is not documented. Trial by request (reseller states 14 days).",
+      "sources": [
+        "https://comsol.com/release/6.4",
+        "https://www.humusoft.cz/en/comsol/trial/"
+      ]
+    },
+    {
+      "name": "CST Studio Suite",
+      "owner": "Dassault Systemes (SIMULIA)",
+      "url": "https://www.3ds.com/products/simulia/cst-studio-suite",
+      "methods": [
+        "fdtd",
+        "fem",
+        "mom3d",
+        "asym"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "pcb_si",
+        "emc",
+        "bioem",
+        "photonics"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": "student",
+      "api": [
+        "VBA",
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "DXF",
+        "GDSII",
+        "ODB++",
+        "Gerber"
+      ],
+      "eda_link": [
+        "Allegro",
+        "ADS",
+        "Microwave Office"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Free version is now called the Learning Edition (Windows only, non-commercial, size-limited). No public 62704-1 SAR conformance statement found.",
+      "sources": [
+        "https://www.3ds.com/products-services/simulia/products/cst-studio-suite/learning-edition",
+        "https://www.3ds.com/products/simulia/cst-studio-suite"
+      ]
+    },
+    {
+      "name": "AWR Analyst",
+      "owner": "Cadence (bought AWR from NI in 2020)",
+      "url": "https://www.cadence.com/en_US/home/tools/system-analysis/rf-microwave-design/awr-analyst-software.html",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "VBA/SAX scripting (AWR API)",
+        "Python (pyawr, third-party)"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows"
+      ],
+      "import": [
+        "STEP",
+        "DXF",
+        "GDSII",
+        "ODB++"
+      ],
+      "eda_link": [
+        "Microwave Office"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Tetrahedral FEM integrated into Microwave Office. The AWR free trial lasts 8 hours or 30 days and needs a payment method.",
+      "sources": [
+        "https://www.cadence.com/en_US/home/resources/datasheets/awr-analyst-ds.html",
+        "https://newstaging.cadence.com/en_US/home/tools/system-analysis/rf-microwave-design/awr-design-environment-platform.html"
+      ]
+    },
+    {
+      "name": "AXIEM",
+      "owner": "Cadence (AWR acquired 2020)",
+      "url": "https://www.cadence.com/en_US/home/tools/system-analysis/rf-microwave-design/awr-axiem.html",
+      "methods": [
+        "mom25"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "rfic",
+        "pcb_si"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "VBA/SAX scripting (AWR API)"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows"
+      ],
+      "import": [
+        "GDSII",
+        "DXF",
+        "ODB++",
+        "Gerber"
+      ],
+      "eda_link": [
+        "Microwave Office"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Planar MoM for PCB, LTCC, MMIC and RFIC passives. It is unclear whether the AWR trial includes AXIEM.",
+      "sources": [
+        "https://www5.cadence.com/AWR_Free_Trial.html"
+      ]
+    },
+    {
+      "name": "Clarity 3D Solver",
+      "owner": "Cadence",
+      "url": "https://www.cadence.com/en_US/home/tools/system-analysis/em-solver/clarity.html",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "pcb_si",
+        "rf",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": null,
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "ODB++",
+        "IPC-2581",
+        "GDSII"
+      ],
+      "eda_link": [
+        "Allegro",
+        "Sigrity",
+        "Virtuoso",
+        "Microwave Office"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Massively distributed FEM, also offered on AWS cloud. GPU support is documented for the separate Clarity 3D Transient Solver.",
+      "sources": [
+        "https://www.signalintegrityjournal.com/articles/1199-cadence-unveils-clarity-3d-solver-delivering-unprecedented-performance-and-capacity-for-system-analysis-and-design",
+        "https://newstaging.cadence.com/ja_JP/home/tools/system-analysis/em-solver/clarity-3d-transient-solver.html"
+      ]
+    },
+    {
+      "name": "EMX Planar 3D Solver",
+      "owner": "Cadence (acquired Integrand Software in 2020)",
+      "url": "https://www.cadence.com/en_US/home/tools/system-analysis/em-solver/emx-planar-3d-simulator.html",
+      "methods": [
+        "mom25"
+      ],
+      "domains": [
+        "rfic"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "none",
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "OASIS"
+      ],
+      "eda_link": [
+        "Virtuoso",
+        "Quantus"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Foundry-certified on-chip EM solver (Samsung 8LPP among others). Runs from Virtuoso, with Quantus Smart View for EM-aware extraction.",
+      "sources": [
+        "https://www.cadence.com/en_US/home/resources/datasheets/emx-planar-3d-solver-ds.html",
+        "https://us.design-reuse.com/news/55199/cadence-emx-3d-planar-solver-samsung-foundry-8nm-lpp.html"
+      ]
+    },
+    {
+      "name": "Sigrity (Sigrity X)",
+      "owner": "Cadence (acquired Sigrity in 2012)",
+      "url": "https://www.cadence.com/en_US/home/tools/system-analysis/signal-and-power-integrity.html",
+      "methods": [
+        "fem",
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": null,
+      "api": [
+        "Tcl"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "ODB++",
+        "IPC-2581",
+        "GDSII"
+      ],
+      "eda_link": [
+        "Allegro",
+        "Allegro Package Designer",
+        "Clarity"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Sold as Sigrity X since 2021. Covers PowerSI, PowerDC, SystemSI and similar tools, and uses Clarity's distributed engine.",
+      "sources": [
+        "https://newelectronics.co.uk/content/news/cadence-unveils-next-generation-sigrity-x"
+      ]
+    },
+    {
+      "name": "EMPro (PathWave EM Design)",
+      "owner": "Keysight",
+      "url": "https://www.keysight.com/us/en/products/software/pathwave-design-software/pathwave-em-design-software.html",
+      "methods": [
+        "fem",
+        "fdtd"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "bioem",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "DXF",
+        "GDSII",
+        "ODB++"
+      ],
+      "eda_link": [
+        "ADS",
+        "RFPro"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "2026 release dated Sep 2025. FDTD runs on CUDA GPUs. Built-in LSF/PBS cluster submission was removed in EMPro 2026.",
+      "sources": [
+        "https://www.keysight.com/th/en/lib/resources/software-releases/em-design-empro-2026-product-release.html"
+      ]
+    },
+    {
+      "name": "Momentum",
+      "owner": "Keysight",
+      "url": "https://www.keysight.com/us/en/products/software/pathwave-design-software/pathwave-advanced-design-system.html",
+      "methods": [
+        "mom25"
+      ],
+      "domains": [
+        "rf",
+        "rfic",
+        "antenna",
+        "pcb_si"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Python (ADS)",
+        "AEL"
+      ],
+      "gpu": false,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "ODB++",
+        "IPC-2581",
+        "DXF",
+        "Gerber"
+      ],
+      "eda_link": [
+        "ADS",
+        "RFPro",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Planar MoM in ADS, now run mainly through RFPro. The ADS 2026 speed-ups are CPU-side; no GPU path documented. ADS evaluation licence by request.",
+      "sources": [
+        "https://www.keysight.com/au/en/lib/resources/software-releases/ads-2026-product-release.html",
+        "https://keysight.com/my/en/lib/resources/miscellaneous/apply-for-a-free-trial-1834446.html"
+      ]
+    },
+    {
+      "name": "RFPro",
+      "owner": "Keysight",
+      "url": "https://www.keysight.com/us/en/products/software/pathwave-design-software/pathwave-rfpro.html",
+      "methods": [
+        "mom25",
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "rfic",
+        "pcb_si",
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Python (ADS)"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "ODB++",
+        "IPC-2581",
+        "STEP"
+      ],
+      "eda_link": [
+        "ADS",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Circuit-EM co-simulation front end for Momentum and FEM. FEM direct solver can use NVIDIA cuDSS GPUs (ADS 2027 notes); first release unconfirmed.",
+      "sources": [
+        "https://www.keysight.com/at/de/lib/resources/software-releases/ads-2027-product-release.html",
+        "https://www.keysight.com/blogs/en/tech/sim-des/removing-the-accuracy-and-time-tradeoff-in-em-simulation"
+      ]
+    },
+    {
+      "name": "JCMsuite",
+      "owner": "JCMwave GmbH",
+      "url": "https://jcmwave.com",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "photonics"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Python",
+        "MATLAB/Octave"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "STEP"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "High-order adaptive FEM for nano-optics: scattering, waveguide modes and resonances. Free 14-day trial.",
+      "sources": [
+        "https://jcmwave.com/74-documentation-start",
+        "https://jcmwave.com/jcmsuite/technology/"
+      ]
+    },
+    {
+      "name": "Palace",
+      "owner": "AWS Labs (Amazon)",
+      "url": "https://github.com/awslabs/palace",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "rfic"
+      ],
+      "licence": "open",
+      "open_licence": "Apache-2.0",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "JSON config"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Gmsh .msh",
+        "Exodus",
+        "Nastran"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Parallel FEM using MPI, with NVIDIA/AMD multi-GPU support. Common in superconducting-qubit work. No GUI; needs an external mesher such as Gmsh.",
+      "sources": [
+        "https://github.com/awslabs/palace"
+      ]
+    },
+    {
+      "name": "Elmer FEM",
+      "owner": "CSC - IT Center for Science (Finland)",
+      "url": "https://github.com/ElmerCSC/elmerfem",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-2.0 (solver library LGPL-2.1)",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "SIF text input",
+        "MATC"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Gmsh .msh",
+        "UNV",
+        "STEP (via ElmerGUI/Netgen)"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "General multiphysics FEM with vector-element EM wave solvers. gds2palace can also write Elmer models.",
+      "sources": [
+        "https://github.com/ElmerCSC/elmerfem",
+        "https://github.com/VolkerMuehlhaus/gds2palace_ihp_sg13g2"
+      ]
+    },
+    {
+      "name": "NGSolve",
+      "owner": "TU Wien / NGSolve community (Schoeberl group)",
+      "url": "https://ngsolve.org",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "photonics"
+      ],
+      "licence": "open",
+      "open_licence": "LGPL-2.1",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "STEP (via Netgen/OCC)",
+        "Gmsh .msh"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "High-order FEM library scripted in Python. You write the Maxwell formulation yourself; no RF-specific GUI.",
+      "sources": [
+        "https://github.com/NGSolve/ngsolve"
+      ]
+    },
+    {
+      "name": "GetDP + Gmsh",
+      "owner": "ONELAB, Univ. of Liege (Geuzaine, Dular)",
+      "url": "https://getdp.info",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "photonics"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-2.0-or-later",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "GetDP .pro problem files",
+        "Gmsh Python/C++ API"
+      ],
+      "gpu": false,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "BREP (Gmsh/OpenCASCADE)"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Last stable GetDP release is 3.5.0 (May 2022). Binaries use PETSc/MUMPS; MPI builds must be compiled from source.",
+      "sources": [
+        "https://getdp.info"
+      ]
+    },
+    {
+      "name": "XFdtd",
+      "owner": "Remcom Inc.",
+      "url": "https://www.remcom.com/xfdtd-3d-em-simulation-software",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "antenna",
+        "bioem",
+        "rf",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "JavaScript (XF scripting)"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "DXF",
+        "ODB++"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Remcom says each release passes all IEC/IEEE 62704-1 SAR verification tests. Trials are subject to export control.",
+      "sources": [
+        "https://support.remcom.com/xfdtd/standards/iec-ieee-62704-1.php",
+        "https://www.remcom.com/free-trial-request"
+      ]
+    },
+    {
+      "name": "QuickWave",
+      "owner": "QWED Sp. z o.o. (Poland)",
+      "url": "https://qwed.eu",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "bioem"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": null,
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows"
+      ],
+      "import": [
+        "STEP",
+        "DXF"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Conformal FDTD, including 2D axisymmetric (V2D). QW-GPUSim runs on OpenCL GPUs. Scripting and current OS support not verified.",
+      "sources": [
+        "https://welcome.etesters.com/product/9D1E9053-1935-4B67-82B2-E156059563B4/gpu-computing"
+      ]
+    },
+    {
+      "name": "Sim4Life",
+      "owner": "ZMT Zurich MedTech AG",
+      "url": "https://sim4life.swiss",
+      "methods": [
+        "fdtd",
+        "q2d"
+      ],
+      "domains": [
+        "bioem",
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "student",
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "STL"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "psSAR evaluator follows IEEE/IEC 62704-1 averaging. Includes anatomical body models. Free Lite edition is limited; a Web edition is pay-per-use.",
+      "sources": [
+        "https://sim4life.swiss/specifications",
+        "https://sim4life.swiss/safety-tools",
+        "https://zmt.swiss/news-and-events/news/sim4life/sim4life-v3-4-release/"
+      ]
+    },
+    {
+      "name": "EMPIRE XPU",
+      "owner": "IMST GmbH",
+      "url": "https://empire.de",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "antenna",
+        "rf",
+        "bioem"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": null,
+      "gpu": false,
+      "hpc": true,
+      "os": null,
+      "import": [
+        "STEP",
+        "DXF",
+        "GDSII",
+        "Gerber"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "CPU-cache 'XPU' acceleration in place of GPUs. Supports clusters and AWS/Azure. OS and scripting support not verified.",
+      "sources": [
+        "https://empire.de/xpu-technology/",
+        "https://empire.de/features/solver.html"
+      ]
+    },
+    {
+      "name": "Lumerical FDTD",
+      "owner": "Ansys, part of Synopsys (2025). Lumerical was not sold to Keysight with RSoft.",
+      "url": "https://ansys.synopsys.com/products/optics/fdtd",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "photonics"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "Lumerical script (lsf)",
+        "Python (lumapi)"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "GDSII",
+        "STEP",
+        "STL"
+      ],
+      "eda_link": [
+        "Virtuoso (via Lumerical photonic flow)"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "GPU solver since 2024. 2025 R2 adds multi-node multi-GPU runs, and Cloud Burst is available as an option.",
+      "sources": [
+        "https://optics.ansys.com/hc/en-us/articles/42500782973715-2025-R2-Release-Notes",
+        "https://optics.ansys.com/hc/en-us/articles/41006181327763-2025-R1-3-Release-Notes"
+      ]
+    },
+    {
+      "name": "RSoft FullWAVE",
+      "owner": "Keysight (bought Synopsys Optical Solutions Group, closed 17 Oct 2025)",
+      "url": "https://www.keysight.com/us/en/cmp/2026/photonic-ic-solutions.html",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "photonics"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "RSoft CAD scripting",
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "DXF"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Multi-GPU FDTD since release 2024.09 (CUDA 12.3+, Turing or newer). MOST Cluster spreads parameter scans across machines.",
+      "sources": [
+        "https://www.businesswire.com/news/home/20251017434407/en/Keysight-Completes-Acquisition-of-Synopsys-Optical-Solutions-Group-and-Ansys-PowerArtist",
+        "https://www.keysight.com/blogs/en/tech/sim-des/adding-gpu-acceleration-to-electromagnetic-simulations-in-fullwave-fdtd",
+        "https://www.keysight.com/mx/en/lib/resources/software-releases/rsoft-photonic-device-tools-hardware-and-system-requirements.html"
+      ]
+    },
+    {
+      "name": "Tidy3D",
+      "owner": "Flexcompute Inc.",
+      "url": "https://www.flexcompute.com/tidy3d/",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "photonics",
+        "rf",
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": "LGPL-2.1 (Python client only)",
+      "price_tier": "$",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "GDSII",
+        "STL"
+      ],
+      "eda_link": [],
+      "cloud_only": true,
+      "maturity": "production",
+      "note": "The open Python client sends jobs to Flexcompute's GPU cloud, billed per solver run time. No public on-premises solver found.",
+      "sources": [
+        "https://pypi.org/project/tidy3d",
+        "https://docs.flexcompute.com/projects/tidy3d/en/latest/_sources/index.rst"
+      ]
+    },
+    {
+      "name": "Simcenter Feko",
+      "owner": "Siemens (bought Altair, closed 26 Mar 2025). Formerly Altair Feko; Altair had bought EMSS in 2014.",
+      "url": "https://www.siemens.com/en-us/products/simcenter/electromagnetics-simulation/feko/",
+      "methods": [
+        "mom3d",
+        "fem",
+        "fdtd",
+        "asym"
+      ],
+      "domains": [
+        "antenna",
+        "emc",
+        "rf",
+        "propagation",
+        "bioem"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$$",
+      "trial": "student",
+      "api": [
+        "Lua",
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "Parasolid",
+        "DXF",
+        "NASTRAN"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Hybrid MoM/MLFMM, FEM, FDTD, PO and ray methods. The 'no-limits' student edition dates from Altair (2023.1); its status under Siemens is unconfirmed.",
+      "sources": [
+        "https://blogs.sw.siemens.com/simcenter/simcenter-feko-history-part-1/",
+        "https://www.digitalengineering247.com/article/siemens-completes-acquisition-of-altair/news",
+        "https://community.altair.com/discussion/33364/introducing-the-no-limits-feko-student-edition"
+      ]
+    },
+    {
+      "name": "openEMS",
+      "owner": "Thorsten Liebig and community",
+      "url": "https://openems.de",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "rf",
+        "antenna",
+        "rfic",
+        "bioem"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-3.0 (CSXCAD LGPL-3.0)",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "MATLAB/Octave",
+        "Python"
+      ],
+      "gpu": false,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "STL",
+        "GDSII (via gds2openEMS)"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "EC-FDTD solver. Its CalcSAR docs warn that the SAR averaging is not yet validated against IEC/IEEE 62704-1.",
+      "sources": [
+        "https://github.com/thliebig/openEMS",
+        "https://openems.readthedocs.io/en/latest/octave/autogenerated/openEMS/CalcSAR.html"
+      ]
+    },
+    {
+      "name": "MEEP",
+      "owner": "MIT / NanoComp (open community)",
+      "url": "https://github.com/NanoComp/meep",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "photonics"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-2.0-or-later",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python",
+        "Scheme"
+      ],
+      "gpu": false,
+      "hpc": true,
+      "os": [
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "GDSII"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Widely cited photonics FDTD with MPI parallelism and adjoint optimisation. CPU only.",
+      "sources": [
+        "https://github.com/NanoComp/meep"
+      ]
+    },
+    {
+      "name": "gprMax",
+      "owner": "University of Edinburgh (gprMax team)",
+      "url": "https://www.gprmax.com",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "propagation"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-3.0",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python",
+        "text input file"
+      ],
+      "gpu": true,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "FDTD built for ground-penetrating radar, with CUDA GPU support. A niche tool, not a general RF solver.",
+      "sources": [
+        "https://github.com/gprMax/gprMax"
+      ]
+    },
+    {
+      "name": "WIPL-D Pro",
+      "owner": "WIPL-D d.o.o. (Serbia)",
+      "url": "https://wipl-d.com/products/wipl-d-pro/",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna",
+        "rf",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": null,
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows"
+      ],
+      "import": [
+        "STEP",
+        "IGES",
+        "DXF"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Higher-order MoM. The add-on GPU solver speeds matrix inversion. 30-day demo and a low-cost 1,000-unknown Starter version.",
+      "sources": [
+        "https://wipl-d.com/support/faq/",
+        "https://wipl-d.com/products/wipl-d-pro/"
+      ]
+    },
+    {
+      "name": "ESTEAM",
+      "owner": "TICRA (Denmark)",
+      "url": "https://www.ticra.com/software/esteam/",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": null,
+      "import": [
+        "STEP"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Higher-order MoM with MLFMM for electrically large antennas and platforms. Not part of the TICRA Tools Student Edition.",
+      "sources": [
+        "https://www.ticra.com/software/esteam/"
+      ]
+    },
+    {
+      "name": "NEC-2",
+      "owner": "Lawrence Livermore National Laboratory (original). Public domain.",
+      "url": "https://www.nec2.org",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "free",
+      "open_licence": "Public domain",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "NEC card deck"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "Thin-wire MoM from the 1980s that many front ends still use. Wires only: no dielectrics or general surfaces.",
+      "sources": [
+        "https://www.nec2.org"
+      ]
+    },
+    {
+      "name": "4nec2",
+      "owner": "Arie Voors (freeware)",
+      "url": "https://www.qsl.net/4nec2/",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "free",
+      "open_licence": null,
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "NEC card deck"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "NEC-2/4 GUI and optimiser popular with radio amateurs. Author, OS and version not confirmed on the fetched page.",
+      "sources": [
+        "https://www.qsl.net/4nec2/"
+      ]
+    },
+    {
+      "name": "Bempp-cl",
+      "owner": "Bempp project (Betcke, Scroggs; UCL/Cambridge)",
+      "url": "https://github.com/bempp/bempp-cl",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "rf",
+        "antenna"
+      ],
+      "licence": "open",
+      "open_licence": "MIT",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Gmsh .msh"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Python boundary-element library with Maxwell operators. Uses OpenCL/Numba kernels and can run on GPUs. Research code.",
+      "sources": [
+        "https://github.com/bempp/bempp-cl"
+      ]
+    },
+    {
+      "name": "Sonnet Suites and Sonnet Lite",
+      "owner": "Sonnet Software Inc.",
+      "url": "https://www.sonnetsoftware.com",
+      "methods": [
+        "mom25"
+      ],
+      "domains": [
+        "rf",
+        "rfic",
+        "pcb_si"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "MATLAB (SonnetLab)"
+      ],
+      "gpu": false,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "GDSII",
+        "DXF",
+        "Gerber",
+        "ODB++"
+      ],
+      "eda_link": [
+        "ADS",
+        "Microwave Office",
+        "Virtuoso"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Shielded-box planar MoM. Suites are at 19.54 (Jun 2026). Free Sonnet Lite 18.53 (2021): 6 ports, 64 MB, 2 metal levels.",
+      "sources": [
+        "https://sonnetsoftware.com/support/sonnet-suites/versions.html",
+        "https://www.sonnetsoftware.com/products/sonnet-suites/suite-prices.html"
+      ]
+    },
+    {
+      "name": "GRASP",
+      "owner": "TICRA (Denmark)",
+      "url": "https://www.ticra.com/software/grasp/",
+      "methods": [
+        "asym",
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "both",
+      "api": [
+        "TICRA command language",
+        "Python"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "IGES"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Reflector-antenna standard for PO, GTD/UTD and BoR-MoM. Free, reduced TICRA Tools Student Edition, plus a free trial.",
+      "sources": [
+        "https://www.ticra.com/software/grasp/",
+        "https://www.ticra.com/software/ticra-tools-student-edition/"
+      ]
+    },
+    {
+      "name": "XGtd",
+      "owner": "Remcom Inc.",
+      "url": "https://www.remcom.com/xgtd",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "antenna",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": null,
+      "import": [
+        "STEP",
+        "IGES",
+        "STL"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Ray-based solver for antenna placement, coupling and RCS on large platforms. GPU and OS support not stated on the product page.",
+      "sources": [
+        "https://www.remcom.com/xgtd",
+        "https://www.remcom.com/free-trial-request"
+      ]
+    },
+    {
+      "name": "Wireless InSite",
+      "owner": "Remcom Inc.",
+      "url": "https://www.remcom.com/wireless-insite-propagation-software",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "propagation"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "C++ API",
+        "Real Time engine API"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "DXF",
+        "STL",
+        "OpenStreetMap",
+        "Shapefile"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "X3D ray tracing on CUDA/OptiX GPUs. Accepts Huygens-surface antenna data from XFdtd. Free 30-day trial.",
+      "sources": [
+        "https://www.remcom.com/wireless-insite-propagation-software"
+      ]
+    },
+    {
+      "name": "Sionna RT",
+      "owner": "NVIDIA (NVlabs)",
+      "url": "https://github.com/NVlabs/sionna-rt",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "propagation"
+      ],
+      "licence": "open",
+      "open_licence": "Apache-2.0",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Mitsuba 3 XML",
+        "PLY"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Differentiable ray tracer built on Mitsuba 3 and Dr.Jit. Version 1.0 (Apr 2025) was a full rewrite; later releases added diffraction.",
+      "sources": [
+        "https://github.com/NVlabs/sionna-rt",
+        "https://research.nvidia.com/publication/2025-04_sionna-rt-technical-report"
+      ]
+    },
+    {
+      "name": "POFacets",
+      "owner": "David Jenn, Naval Postgraduate School",
+      "url": "https://www.mathworks.com/matlabcentral/fileexchange/50602-pofacets4-5",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "free",
+      "open_licence": null,
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "MATLAB/Octave"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "STL"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "Physical-optics RCS of faceted targets. No multiple reflections, shadowing or diffraction. Needs MATLAB.",
+      "sources": [
+        "https://www.mathworks.com/matlabcentral/fileexchange/50602-pofacets4-5"
+      ]
+    },
+    {
+      "name": "Q3D Extractor and 2D Extractor",
+      "owner": "Ansys, part of Synopsys (2025)",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-q3d-extractor",
+      "methods": [
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si",
+        "emc",
+        "rfic"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "student",
+      "api": [
+        "Python (PyAEDT)"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "STEP",
+        "DXF",
+        "ODB++",
+        "GDSII"
+      ],
+      "eda_link": [
+        "AEDT Circuit",
+        "SIwave"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Quasi-static RLGC extraction: Q3D for 3D, 2D Extractor for cross-sections. Q3D is in Electronics Desktop Student; 2D Extractor inclusion is not confirmed.",
+      "sources": [
+        "https://ansys.synopsys.com/products/electronics/ansys-q3d-extractor",
+        "https://ansys.synopsys.com/academic/students/ansys-student"
+      ]
+    },
+    {
+      "name": "Si9000e",
+      "owner": "Polar Instruments",
+      "url": "https://www.polarinstruments.com/products/si/Si9000.html",
+      "methods": [
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$",
+      "trial": null,
+      "api": null,
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "2D BEM for PCB line impedance, loss and roughness, valid in the TEM range (about 100 GHz). Common between PCB fabs and designers.",
+      "sources": [
+        "https://www.polarinstruments.com/products/si/Si9000.html",
+        "https://www.polarinstruments.com/pdf/brochures/Si9000_brochure.pdf"
+      ]
+    },
+    {
+      "name": "FastHenry and FastCap",
+      "owner": "MIT (original). FastHenry2/FastCap2 maintained by FastFieldSolvers (E. Di Lorenzo).",
+      "url": "https://www.fastfieldsolvers.com/",
+      "methods": [
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si",
+        "rfic"
+      ],
+      "licence": "open",
+      "open_licence": "MIT or LGPL (per FastFieldSolvers; per-tool licence not stated)",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "text input decks",
+        "COM automation (Windows)"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Quasi-static solvers: FastHenry for inductance and resistance, FastCap for multipole-accelerated capacitance. GitHub repos show no licence file.",
+      "sources": [
+        "https://www.fastfieldsolvers.com/",
+        "https://github.com/ediloren/FastHenry2"
+      ]
+    },
+    {
+      "name": "ASITIC",
+      "owner": "Ali Niknejad, UC Berkeley",
+      "url": "https://rfic.eecs.berkeley.edu/software.html",
+      "methods": [
+        "mom25",
+        "q2d"
+      ],
+      "domains": [
+        "rfic"
+      ],
+      "licence": "free",
+      "open_licence": null,
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "command line / technology file"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Linux"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "No longer developed. Quasi-static Green's function limits it to below about 6 GHz; Berkeley points users to EMX or ADS.",
+      "sources": [
+        "https://rfic.eecs.berkeley.edu/software.html"
+      ]
+    },
+    {
+      "name": "MMTL (TNT-MMTL)",
+      "owner": "Mayo Clinic SPPDG (released as free software 2004)",
+      "url": "https://mmtl.sourceforge.net/",
+      "methods": [
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si"
+      ],
+      "licence": "open",
+      "open_licence": "GPL (version not stated)",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Tcl/Tk GUI",
+        "text input"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "Lossless quasi-TEM BEM for multilayer lines, accurate to about 5 GHz for PCBs. Needs a bottom ground plane. Effectively unmaintained.",
+      "sources": [
+        "https://mmtl.sourceforge.net/",
+        "https://pkgsrc.se/cad/tnt-mmtl"
+      ]
+    },
+    {
+      "name": "HyperLynx Full-Wave / HyperLynx Advanced Solvers",
+      "owner": "Siemens Digital Industries Software (EDA; formerly Mentor Graphics, acquired 2017)",
+      "url": "https://www.siemens.com/en-us/products/pcb/hyperlynx/advanced-solvers/full-wave-solver/",
+      "methods": [
+        "mom3d",
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si",
+        "emc"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "ODB++",
+        "IPC-2581"
+      ],
+      "eda_link": [
+        "Xpedition",
+        "PADS",
+        "Allegro"
+      ],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Full-Wave Solver is accelerated 3D BEM with no volume mesh. The family also has hybrid and PI solvers. Supports distributed LAN runs and Python automation.",
+      "sources": [
+        "https://www.siemens.com/en-us/products/pcb/hyperlynx/advanced-solvers/full-wave-solver/",
+        "https://blogs.sw.siemens.com/electronic-systems-design/?p=12056"
+      ]
+    },
+    {
+      "name": "Simbeor",
+      "owner": "Simberian Inc.",
+      "url": "https://www.simberian.com/",
+      "methods": [
+        "q2d"
+      ],
+      "domains": [
+        "pcb_si"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": null,
+      "gpu": null,
+      "hpc": true,
+      "os": [
+        "Windows"
+      ],
+      "import": [
+        "ODB++",
+        "IPC-2581"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Hybrid 2D/3D interconnect solver with causal dielectric and roughness models. Current release 2026.01. Free evaluation licence. 3D method not stated on site.",
+      "sources": [
+        "https://www.simberian.com/"
+      ]
+    },
+    {
+      "name": "µWave Wizard",
+      "owner": "Mician GmbH (Bremen). Also listed in the Altair Partner Alliance.",
+      "url": "https://www.mician.com/",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rf",
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "trial",
+      "api": [
+        "Programmable Interface (add-on)"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": null,
+      "import": null,
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Mode-matching hybrid with 2D/3D FEM for waveguide filters, OMTs and horns. Very fast for these structures. Latest release is 2025 (12.0).",
+      "sources": [
+        "https://www.mician.com/",
+        "https://altair.com/uwave-wizard/modules"
+      ]
+    },
+    {
+      "name": "gds2palace",
+      "owner": "Volker Muehlhaus (personal GitHub; documented by IHP Open PDK)",
+      "url": "https://github.com/VolkerMuehlhaus/gds2palace_ihp_sg13g2",
+      "methods": [
+        "fem"
+      ],
+      "domains": [
+        "rfic"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-3.0-or-later",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Linux"
+      ],
+      "import": [
+        "GDSII"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Turns IHP SG13G2 GDSII plus an XML stackup into Palace (or Elmer) models. pip install gds2palace. Not a solver itself.",
+      "sources": [
+        "https://github.com/VolkerMuehlhaus/gds2palace_ihp_sg13g2",
+        "https://ihp-open-pdk-docs.readthedocs.io/en/latest/em_simulation/em_simulation_overview.html"
+      ]
+    },
+    {
+      "name": "gds2openEMS",
+      "owner": "Volker Muehlhaus (personal GitHub; documented by IHP Open PDK)",
+      "url": "https://github.com/VolkerMuehlhaus/gds2openEMS",
+      "methods": [
+        "fdtd"
+      ],
+      "domains": [
+        "rfic"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-3.0",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": false,
+      "hpc": null,
+      "os": [
+        "Linux",
+        "Windows"
+      ],
+      "import": [
+        "GDSII"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "openEMS model builder for IHP SG13G2: GDSII ports on special layers, XML stackup, Touchstone output. Repo was renamed from openems_ihp_sg13g2. pip install gds2openEMS.",
+      "sources": [
+        "https://github.com/VolkerMuehlhaus/gds2openEMS",
+        "https://ihp-open-pdk-docs.readthedocs.io/en/latest/em_simulation/em_simulation_overview.html"
+      ]
+    },
+    {
+      "name": "OpenParEM",
+      "owner": "Brian Young (independent developer)",
+      "url": "https://openparem.org",
+      "methods": [
+        "fem",
+        "q2d"
+      ],
+      "domains": [
+        "rf",
+        "pcb_si",
+        "antenna"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-3.0-or-later",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "text setup files"
+      ],
+      "gpu": false,
+      "hpc": true,
+      "os": [
+        "Linux"
+      ],
+      "import": [
+        "Gmsh .msh",
+        "STEP (via FreeCAD/Gmsh)"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "MFEM-based FEM with a 2D port and line solver plus 3D S-parameters and antenna metrics. Version 2.1 released May 2025. MPI-parallel.",
+      "sources": [
+        "https://openparem.org",
+        "https://github.com/OpenParEM/OpenParEM"
+      ]
+    },
+    {
+      "name": "scuff-em",
+      "owner": "Homer Reid (MIT, original author)",
+      "url": "https://github.com/homerreid/scuff-em",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "photonics",
+        "rf"
+      ],
+      "licence": "open",
+      "open_licence": "GPL-2.0",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python",
+        "C++",
+        "command line"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Gmsh .msh"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "research",
+      "note": "Surface-integral BEM for scattering and Casimir/heat-transfer research. No commits since June 2020, so effectively unmaintained.",
+      "sources": [
+        "https://github.com/homerreid/scuff-em"
+      ]
+    },
+    {
+      "name": "scikit-rf",
+      "owner": "scikit-rf community",
+      "url": "https://scikit-rf.org",
+      "methods": [],
+      "domains": [
+        "rf",
+        "pcb_si"
+      ],
+      "licence": "open",
+      "open_licence": "BSD-3-Clause",
+      "price_tier": "free",
+      "trial": null,
+      "api": [
+        "Python"
+      ],
+      "gpu": false,
+      "hpc": false,
+      "os": [
+        "Windows",
+        "Linux",
+        "macOS"
+      ],
+      "import": [
+        "Touchstone"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Not a solver. Python library for Touchstone handling, calibration, de-embedding and network maths on any solver's output.",
+      "sources": [
+        "https://github.com/scikit-rf/scikit-rf"
+      ]
+    }
+  ],
+  "answers": {
+    "rsoft_owner": "Keysight Technologies. Keysight closed its purchase of the Synopsys Optical Solutions Group (RSoft, CODE V, LightTools, LucidShape, ImSym) and of Ansys PowerArtist on 17 Oct 2025. Synopsys divested these as part of the Ansys deal. Lumerical stayed with Ansys/Synopsys. Source: https://www.businesswire.com/news/home/20251017434407/en/Keysight-Completes-Acquisition-of-Synopsys-Optical-Solutions-Group-and-Ansys-PowerArtist",
+    "sar_tools": [
+      "XFdtd (Remcom): states it complies with and passes all IEC/IEEE 62704-1 tests, verified on each release; documents are behind a login. https://support.remcom.com/xfdtd/standards/iec-ieee-62704-1.php",
+      "Sim4Life (ZMT): psSAR evaluator uses moving constant-mass cubes 'as specified in IEEE/IEC 62704-1'; V3.4 reimplemented it 'preserving full compliance'. https://sim4life.swiss/safety-tools ; https://zmt.swiss/news-and-events/news/sim4life/sim4life-v3-4-release/",
+      "HFSS (Ansys): SAR settings offer an 'IEC/IEEE 62704-4 Draft' method (voxel mesh plus the 62704-1 two-pass averaging) and a 'Gridless' method. https://ansyshelp.ansys.com/public/Views/Secured/Electronics/v252/en/Subsystems/HFSS/Content/HFSS/CalculatingtheSAR.htm",
+      "Not on the list but relevant: SEMCAD X (SPEAG) has a psSAR evaluator for regulatory use, plus a preview algorithm that follows the 62704-1 draft revision (V20.2). https://speag.swiss/news-events/news/simulation/semcad-x-matterhorn-release-v20-2/",
+      "No public 62704-1/-4 conformance statement found for CST Studio Suite, COMSOL, Simcenter Feko, EMPIRE XPU, QuickWave or EMPro. openEMS says its SAR averaging is NOT yet validated to 62704-1.",
+      "Both standards are being revised: IEEE PARs approved 2025-06-19 extend the range to 100 kHz-10 GHz. https://standards.ieee.org/ieee/62704-1/12090"
+    ],
+    "sonnet_lite": "Sonnet Lite is free. The current Lite release is 18.53 (Oct 2021), while the paid Suites are at 19.54 (Jun 2026). Lite Plus no longer exists; its features were folded into Lite. Published limits: up to 6 ports, 64 MB analysis memory, 2 signal conductor levels plus ground, 3 ideal internal components, sweep/optimise 1 parameter. An older Sonnet tutorial, now a 404, said Lite allows 3 dielectric layers; unconfirmed on current pages. Sources: https://sonnetsoftware.com/support/sonnet-suites/versions.html ; https://www.sonnetsoftware.com/products/sonnet-suites/suite-prices.html ; https://sonnetsoftware.com/support/help-18/Home/SonnetLiteInfo.html",
+    "student_editions": "HFSS: yes. Ansys Electronics Desktop Student (2025 R2) includes HFSS, Maxwell, Q3D and Icepak. Limits: 64,000 3D volume elements, 8,000 surface elements, 2,000 2D triangles; 4 cores; DXF/STEP import only; no geometry export; Windows 10 64-bit; renewable 12-month licence (built-in licence valid to 31 Jul 2027). The page now lives at ansys.synopsys.com. Search snippets also say SBR+, hybrid and mesh-assembly solves are excluded; not seen on the fetched page. https://ansys.synopsys.com/academic/students/ansys-electronics-desktop-student . CST: yes, but now named 'CST Studio Suite Learning Edition'. Free via SIMULIA Community, Windows only, non-commercial; cannot open commercial models or share a PC with a commercial licence. Dassault's licensing table appears to state 80k tetrahedra and 1 core, but the table was hard to parse; forum users report a <100k mesh-cell cap. Treat the limits as approximate. https://www.3ds.com/products-services/simulia/products/cst-studio-suite/learning-edition"
+  }
+}

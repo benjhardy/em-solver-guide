@@ -1,0 +1,683 @@
+{
+ "retrieved": "2026-10-14",
+ "source": "OpenAlex API",
+ "method": "For each tool, one OpenAlex works search (the search= parameter, which covers title, abstract and full text where OpenAlex has it, using OpenAlex boolean syntax) grouped by publication_year: mentions_all is meta.count and mentions_since_2020 is the sum of the 2020-2026 year groups. Ambiguous names are paired with required context words. precision_estimate is set only for the six largest counts, from a random sample of 10 records each (sample=10, seed=7) judged by title and abstract; other tools' informal checks are in their notes. canonical_paper.cited_by is OpenAlex cited_by_count looked up by DOI, a different measure from mention counts.",
+ "tools": [
+  {
+   "name": "Ansys HFSS",
+   "owner": "Ansys",
+   "license": "commercial",
+   "methods": [
+    "fem"
+   ],
+   "query": "(HFSS AND (antenna OR microwave OR electromagnetic OR Ansys OR Ansoft OR waveguide)) OR \"High Frequency Structure Simulator\"",
+   "mentions_all": 33329,
+   "mentions_since_2020": 15338,
+   "precision_estimate": 0.75,
+   "canonical_paper": null,
+   "note": "Bare 'HFSS' also matches 'HFSs' (hesitant fuzzy sets), so the query requires an RF/EM context word. Sample still had 2.5/10 off-target (fuzzy-set paper, magazine issue). Includes HFSS-IE/SBR+ mentions."
+  },
+  {
+   "name": "Ansys HFSS-IE / HFSS SBR+",
+   "owner": "Ansys",
+   "license": "commercial",
+   "methods": [
+    "mom3d",
+    "asym"
+   ],
+   "query": "\"HFSS-IE\" OR \"HFSS SBR\" OR \"SBR+ solver\"",
+   "mentions_all": 88,
+   "mentions_since_2020": 63,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Subset of HFSS mentions; papers often write just 'HFSS', so this undercounts."
+  },
+  {
+   "name": "COMSOL Multiphysics RF Module",
+   "owner": "COMSOL",
+   "license": "commercial",
+   "methods": [
+    "fem"
+   ],
+   "query": "COMSOL AND (\"RF Module\" OR \"electromagnetic waves\")",
+   "mentions_all": 8862,
+   "mentions_since_2020": 5473,
+   "precision_estimate": 0.8,
+   "canonical_paper": null,
+   "note": "'electromagnetic waves' also matches the Wave Optics module interface and incidental wording; some thermal-only COMSOL papers leak in."
+  },
+  {
+   "name": "CST Studio Suite (CST Microwave Studio)",
+   "owner": "Dassault Systemes",
+   "license": "commercial",
+   "methods": [
+    "fdtd",
+    "fem",
+    "mom3d"
+   ],
+   "query": "\"CST Microwave Studio\" OR \"CST Studio Suite\" OR \"CST MWS\"",
+   "mentions_all": 24077,
+   "mentions_since_2020": 13349,
+   "precision_estimate": 1.0,
+   "canonical_paper": null,
+   "note": "Phrase query; misses papers that write only 'CST' or 'CST Studio', so it likely undercounts."
+  },
+  {
+   "name": "Cadence AWR AXIEM / AWR Analyst",
+   "owner": "Cadence (formerly NI AWR)",
+   "license": "commercial",
+   "methods": [
+    "mom25",
+    "fem"
+   ],
+   "query": "AXIEM OR \"AWR Analyst\"",
+   "mentions_all": 298,
+   "mentions_since_2020": 152,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Many papers name only 'Microwave Office' even when AXIEM was the EM engine, so this undercounts."
+  },
+  {
+   "name": "Cadence AWR Microwave Office",
+   "owner": "Cadence (formerly NI AWR)",
+   "license": "commercial",
+   "methods": [
+    "mom25",
+    "fem"
+   ],
+   "query": "\"Microwave Office\" AND AWR",
+   "mentions_all": 703,
+   "mentions_since_2020": 276,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Mostly a circuit simulator; this count is not an EM-solver measure. Do not rank against EM solvers."
+  },
+  {
+   "name": "Cadence Clarity 3D Solver",
+   "owner": "Cadence",
+   "license": "commercial",
+   "methods": [
+    "fem"
+   ],
+   "query": "\"Clarity 3D Solver\" OR \"Cadence Clarity\" OR \"Clarity 3D\"",
+   "mentions_all": 187,
+   "mentions_since_2020": 97,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Released 2019; the 'Clarity 3D' phrase may catch unrelated uses."
+  },
+  {
+   "name": "Cadence EMX",
+   "owner": "Cadence (formerly Integrand)",
+   "license": "commercial",
+   "methods": [
+    "mom25"
+   ],
+   "query": "EMX AND (Cadence OR Integrand) AND (inductor OR electromagnetic OR transformer)",
+   "mentions_all": 106,
+   "mentions_since_2020": 57,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'EMX' collides with Emx genes and other acronyms; query requires Cadence/Integrand plus an EM word, so it undercounts."
+  },
+  {
+   "name": "Keysight EMPro",
+   "owner": "Keysight",
+   "license": "commercial",
+   "methods": [
+    "fdtd",
+    "fem"
+   ],
+   "query": "EMPro AND (Keysight OR Agilent OR FDTD OR electromagnetic)",
+   "mentions_all": 325,
+   "mentions_since_2020": 148,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Keysight ADS Momentum",
+   "owner": "Keysight",
+   "license": "commercial",
+   "methods": [
+    "mom25"
+   ],
+   "query": "\"ADS Momentum\" OR \"Keysight Momentum\" OR \"Agilent Momentum\" OR \"Momentum simulator\"",
+   "mentions_all": 1151,
+   "mentions_since_2020": 327,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'Momentum' is a common word, so only product phrases are counted; papers writing 'Momentum in ADS' are missed. Informal sample 8.5/10 on target (one physics false positive)."
+  },
+  {
+   "name": "Keysight RFPro",
+   "owner": "Keysight",
+   "license": "commercial",
+   "methods": [
+    "mom25",
+    "fem"
+   ],
+   "query": "RFPro OR (\"RF Pro\" AND Keysight)",
+   "mentions_all": 72,
+   "mentions_since_2020": 56,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Released 2018; front end to Momentum and FEM engines."
+  },
+  {
+   "name": "JCMsuite",
+   "owner": "JCMwave",
+   "license": "commercial",
+   "methods": [
+    "fem"
+   ],
+   "query": "JCMsuite OR JCMwave",
+   "mentions_all": 307,
+   "mentions_since_2020": 154,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Palace",
+   "owner": "AWS (open source)",
+   "license": "open",
+   "methods": [
+    "fem"
+   ],
+   "query": "Palace AND \"finite element\" AND electromagnetic AND (AWS OR Amazon OR awslabs)",
+   "mentions_all": 15,
+   "mentions_since_2020": 14,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Common word; strict query (Palace + finite element + electromagnetic + AWS/Amazon) undercounts. No canonical paper found in OpenAlex."
+  },
+  {
+   "name": "Elmer FEM",
+   "owner": "CSC - IT Center for Science (open source)",
+   "license": "open",
+   "methods": [
+    "fem"
+   ],
+   "query": "(\"Elmer FEM\" OR ElmerFEM OR \"Elmer multiphysics\" OR \"Elmer finite element\") AND (electromagnetic OR Maxwell)",
+   "mentions_all": 128,
+   "mentions_since_2020": 84,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'Elmer' is a common name (and Elmer/Ice is glaciology); strict EM query undercounts. No journal canonical paper."
+  },
+  {
+   "name": "NGSolve",
+   "owner": "TU Wien (open source)",
+   "license": "open",
+   "methods": [
+    "fem"
+   ],
+   "query": "NGSolve AND (Maxwell OR electromagnetic)",
+   "mentions_all": 272,
+   "mentions_since_2020": 212,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Restricted to EM context. No NGSolve software paper indexed; users often cite the Netgen mesher paper (doi:10.1007/s007910050004, 1209 cites), not counted here."
+  },
+  {
+   "name": "GetDP",
+   "owner": "Univ. of Liege (open source)",
+   "license": "open",
+   "methods": [
+    "fem"
+   ],
+   "query": "GetDP",
+   "mentions_all": 953,
+   "mentions_since_2020": 481,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1109/20.717799",
+    "title": "A general environment for the treatment of discrete problems and its application to the finite element method",
+    "year": 1998,
+    "cited_by": 351
+   },
+   "note": "Mostly low-frequency/magnetics EM. Informal sample 6.5/10 on target (off-topic economics and astrophysics hits, likely text-extraction noise). The Gmsh paper (7816 cites) is the mesher and is not counted."
+  },
+  {
+   "name": "MFEM",
+   "owner": "LLNL (open source)",
+   "license": "open",
+   "methods": [
+    "fem"
+   ],
+   "query": "MFEM AND (LLNL OR \"Lawrence Livermore\" OR \"mfem.org\") AND (Maxwell OR electromagnetic)",
+   "mentions_all": 122,
+   "mentions_since_2020": 85,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1016/j.camwa.2020.06.009",
+    "title": "MFEM: A modular finite element methods library",
+    "year": 2020,
+    "cited_by": 453
+   },
+   "note": "'MFEM' also means 'mixed finite element method'; query requires LLNL plus Maxwell/EM, so it undercounts. Paper citations cover all MFEM uses, not only EM."
+  },
+  {
+   "name": "Remcom XFdtd",
+   "owner": "Remcom",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "XFdtd OR (Remcom AND FDTD)",
+   "mentions_all": 797,
+   "mentions_since_2020": 237,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "ZMT Sim4Life / SEMCAD X",
+   "owner": "ZMT Zurich MedTech",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "Sim4Life OR SEMCAD",
+   "mentions_all": 1646,
+   "mentions_since_2020": 846,
+   "precision_estimate": 0.8,
+   "canonical_paper": null,
+   "note": "Sample included focused-ultrasound (acoustic) uses, which are not EM. Also has quasi-static EM solvers."
+  },
+  {
+   "name": "IMST EMPIRE XPU",
+   "owner": "IMST",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "\"EMPIRE XPU\" OR \"EMPIRE XCcel\" OR (EMPIRE AND IMST)",
+   "mentions_all": 221,
+   "mentions_since_2020": 47,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Ansys Lumerical FDTD",
+   "owner": "Ansys (formerly Lumerical)",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "Lumerical AND FDTD",
+   "mentions_all": 7196,
+   "mentions_since_2020": 4650,
+   "precision_estimate": 1.0,
+   "canonical_paper": null,
+   "note": "Query is Lumerical AND FDTD, so it may include Lumerical MODE/varFDTD users who also mention FDTD."
+  },
+  {
+   "name": "Synopsys RSoft FullWAVE",
+   "owner": "Synopsys",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "FullWAVE AND (RSoft OR Synopsys)",
+   "mentions_all": 428,
+   "mentions_since_2020": 149,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Flexcompute Tidy3D",
+   "owner": "Flexcompute",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "Tidy3D OR Flexcompute",
+   "mentions_all": 161,
+   "mentions_since_2020": 157,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Launched about 2020; query also matches the company name."
+  },
+  {
+   "name": "QWED QuickWave",
+   "owner": "QWED",
+   "license": "commercial",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "QuickWave OR QWED",
+   "mentions_all": 365,
+   "mentions_since_2020": 162,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Altair Feko",
+   "owner": "Siemens (formerly Altair)",
+   "license": "commercial",
+   "methods": [
+    "mom3d",
+    "asym",
+    "fem",
+    "fdtd"
+   ],
+   "query": "FEKO AND (antenna OR electromagnetic OR \"method of moments\")",
+   "mentions_all": 3929,
+   "mentions_since_2020": 1881,
+   "precision_estimate": 0.9,
+   "canonical_paper": null,
+   "note": "Query requires an antenna/EM context word. Sample had one proceedings table-of-contents record."
+  },
+  {
+   "name": "openEMS",
+   "owner": "T. Liebig et al. (open source)",
+   "license": "open",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "openEMS AND (FDTD OR electromagnetic OR antenna)",
+   "mentions_all": 100,
+   "mentions_since_2020": 65,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1002/jnm.1875",
+    "title": "openEMS - a free and open source equivalent-circuit (EC) FDTD simulation platform supporting cylindrical coordinates suitable for the analysis of traveling wave MRI applications",
+    "year": 2012,
+    "cited_by": 53
+   },
+   "note": "'OpenEMS' is also an energy-management name (378 bare hits); query requires FDTD/EM/antenna. Most users cite the website, so the paper citation count is low."
+  },
+  {
+   "name": "MEEP",
+   "owner": "MIT (open source)",
+   "license": "open",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "Meep AND (FDTD OR \"finite-difference time-domain\")",
+   "mentions_all": 1338,
+   "mentions_since_2020": 648,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1016/j.cpc.2009.11.008",
+    "title": "Meep: A flexible free-software package for electromagnetic simulations by the FDTD method",
+    "year": 2009,
+    "cited_by": 2744
+   },
+   "note": "Query requires FDTD wording, so it undercounts. Informal sample 10/10 in EM context."
+  },
+  {
+   "name": "gprMax",
+   "owner": "Univ. of Edinburgh (open source)",
+   "license": "open",
+   "methods": [
+    "fdtd"
+   ],
+   "query": "gprMax",
+   "mentions_all": 1094,
+   "mentions_since_2020": 769,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1016/j.cpc.2016.08.020",
+    "title": "gprMax: Open source software to simulate electromagnetic wave propagation for Ground Penetrating Radar",
+    "year": 2016,
+    "cited_by": 988
+   },
+   "note": "Unique name. Informal sample 10/10 GPR context."
+  },
+  {
+   "name": "WIPL-D",
+   "owner": "WIPL-D d.o.o.",
+   "license": "commercial",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "\"WIPL-D\" OR WIPLD",
+   "mentions_all": 579,
+   "mentions_since_2020": 213,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "TICRA ESTEAM",
+   "owner": "TICRA",
+   "license": "commercial",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "ESTEAM AND TICRA",
+   "mentions_all": 1,
+   "mentions_since_2020": 1,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Only 1 hit; papers rarely name ESTEAM. Count is not meaningful."
+  },
+  {
+   "name": "TICRA GRASP",
+   "owner": "TICRA",
+   "license": "commercial",
+   "methods": [
+    "asym"
+   ],
+   "query": "GRASP AND TICRA",
+   "mentions_all": 259,
+   "mentions_since_2020": 114,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'GRASP' is a common acronym; query requires TICRA, so it undercounts."
+  },
+  {
+   "name": "NEC-2 / NEC (and 4nec2)",
+   "owner": "LLNL (public domain); 4nec2 freeware",
+   "license": "open",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "\"Numerical Electromagnetics Code\" OR 4nec2 OR ((\"NEC-2\" OR NEC2) AND antenna)",
+   "mentions_all": 1454,
+   "mentions_since_2020": 280,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Includes NEC-4 and generic 'Numerical Electromagnetics Code' mentions. The Burke & Poggio 1981 report has no DOI. Informal sample 10/10 antenna context."
+  },
+  {
+   "name": "Bempp-cl",
+   "owner": "Betcke & Scroggs (open source)",
+   "license": "open",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "Bempp OR \"bempp-cl\"",
+   "mentions_all": 114,
+   "mentions_since_2020": 94,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.21105/joss.02879",
+    "title": "Bempp-cl: A fast Python based just-in-time compiling boundary element library.",
+    "year": 2021,
+    "cited_by": 62
+   },
+   "note": "Includes older Bempp versions and non-EM (acoustic, Laplace) BEM uses."
+  },
+  {
+   "name": "Sonnet (incl. Sonnet Lite)",
+   "owner": "Sonnet Software",
+   "license": "commercial",
+   "methods": [
+    "mom25"
+   ],
+   "query": "Sonnet AND (microstrip OR \"planar electromagnetic\" OR \"EM simulator\" OR \"electromagnetic simulator\")",
+   "mentions_all": 1002,
+   "mentions_since_2020": 272,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'Sonnet' is a poetry word; query requires microstrip/planar-EM wording, so it undercounts. Informal sample 10/10 RF context."
+  },
+  {
+   "name": "Remcom Wireless InSite",
+   "owner": "Remcom",
+   "license": "commercial",
+   "methods": [
+    "asym"
+   ],
+   "query": "\"Wireless InSite\"",
+   "mentions_all": 1068,
+   "mentions_since_2020": 802,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Many hits use the DeepMIMO dataset (generated with Wireless InSite) rather than run the tool. Informal sample 9/10 in context."
+  },
+  {
+   "name": "Remcom XGtd",
+   "owner": "Remcom",
+   "license": "commercial",
+   "methods": [
+    "asym"
+   ],
+   "query": "XGtd",
+   "mentions_all": 45,
+   "mentions_since_2020": 12,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Sionna RT",
+   "owner": "NVIDIA (open source)",
+   "license": "open",
+   "methods": [
+    "asym"
+   ],
+   "query": "Sionna AND (\"ray tracing\" OR \"Sionna RT\")",
+   "mentions_all": 578,
+   "mentions_since_2020": 577,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1109/gcwkshps58843.2023.10465179",
+    "title": "Sionna RT: Differentiable Ray Tracing for Radio Propagation Modeling",
+    "year": 2023,
+    "cited_by": 246
+   },
+   "note": "Released 2023. Some hits only mention or cite Sionna; includes software-release records. Informal sample 9/10 in context."
+  },
+  {
+   "name": "POFacets",
+   "owner": "D. Jenn, NPS (free MATLAB code)",
+   "license": "free",
+   "methods": [
+    "asym"
+   ],
+   "query": "POFacets",
+   "mentions_all": 69,
+   "mentions_since_2020": 28,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": ""
+  },
+  {
+   "name": "Ansys Q3D Extractor / 2D Extractor",
+   "owner": "Ansys",
+   "license": "commercial",
+   "methods": [
+    "q2d"
+   ],
+   "query": "\"Q3D Extractor\" OR (Q3D AND (Ansys OR Ansoft)) OR \"2D Extractor\"",
+   "mentions_all": 1265,
+   "mentions_since_2020": 758,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'Q3D' also appears in non-EM contexts (3D imaging, structural ANSYS papers). Informal sample 6.5/10 on target."
+  },
+  {
+   "name": "Polar Instruments Si9000",
+   "owner": "Polar Instruments",
+   "license": "commercial",
+   "methods": [
+    "q2d"
+   ],
+   "query": "Si9000 OR (\"Polar Instruments\" AND impedance)",
+   "mentions_all": 39,
+   "mentions_since_2020": 15,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Mostly an industry tool; few publications name it."
+  },
+  {
+   "name": "FastHenry",
+   "owner": "MIT (open source)",
+   "license": "open",
+   "methods": [
+    "q2d"
+   ],
+   "query": "FastHenry",
+   "mentions_all": 366,
+   "mentions_since_2020": 55,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1109/22.310584",
+    "title": "FASTHENRY: a multipole-accelerated 3-D inductance extraction program",
+    "year": 1994,
+    "cited_by": 1028
+   },
+   "note": "3D magneto-quasi-static solver (q2d key used for quasi-static)."
+  },
+  {
+   "name": "FastCap",
+   "owner": "MIT (open source)",
+   "license": "open",
+   "methods": [
+    "q2d"
+   ],
+   "query": "FastCap",
+   "mentions_all": 360,
+   "mentions_since_2020": 75,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1109/43.97624",
+    "title": "FastCap: a multipole accelerated 3-D capacitance extraction program",
+    "year": 1991,
+    "cited_by": 902
+   },
+   "note": "3D electrostatic solver (q2d key used for quasi-static)."
+  },
+  {
+   "name": "ASITIC",
+   "owner": "A. Niknejad, UC Berkeley (freeware)",
+   "license": "free",
+   "methods": [
+    "q2d"
+   ],
+   "query": "ASITIC AND Niknejad AND inductor",
+   "mentions_all": 89,
+   "mentions_since_2020": 7,
+   "precision_estimate": null,
+   "canonical_paper": {
+    "doi": "10.1109/4.720393",
+    "title": "Analysis, design, and optimization of spiral inductors and transformers for Si RF ICs",
+    "year": 1998,
+    "cited_by": 723
+   },
+   "note": "Bare 'ASITIC' (2659 hits) is inflated by line-break hyphenation of 'par-asitic' (sample: 0/10 relevant); 'ASITIC AND inductor' still only 2.5/10. Count uses ASITIC AND Niknejad AND inductor: precise (informal sample about 9.5/10) but an undercount."
+  },
+  {
+   "name": "MMTL",
+   "owner": "Mayo Clinic SPPDG (free)",
+   "license": "free",
+   "methods": [
+    "q2d"
+   ],
+   "query": "MMTL AND \"transmission line\"",
+   "mentions_all": 11,
+   "mentions_since_2020": 5,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "'MMTL' is ambiguous; query requires 'transmission line'. Small count."
+  }
+ ]
+}
