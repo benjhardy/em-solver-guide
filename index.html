@@ -860,15 +860,21 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     if (f >= 1e6) return +(f / 1e6).toPrecision(3) + " MHz";
     return +(f / 1e3).toPrecision(3) + " kHz";
   }
+  const SUP = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+  const pow10 = (p) => "10" + (p < 0 ? "⁻" : "") + String(Math.abs(p)).split("").map((c) => SUP[c]).join("");
+  const sci = (n) => { const p = Math.floor(Math.log10(n)); return `${(n / 10 ** p).toFixed(1)} × ${pow10(p)}`; };
   function fmtE(e) {
+    if (e >= 1e6) return fmtCount(e) + " λ";
     if (e >= 100) return Math.round(e).toLocaleString("en-US") + " λ";
     if (e >= 10) return e.toFixed(0) + " λ";
     if (e >= 1) return e.toFixed(1) + " λ";
     if (e >= 0.01) return e.toFixed(2) + " λ";
-    return e.toFixed(4) + " λ";
+    if (e >= 1e-4) return +e.toPrecision(2) + " λ";
+    return sci(e) + " λ";
   }
   function fmtBytes(b) {
-    const u = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]; let i = 0;
+    if (b >= 1e21) return sci(b) + " B";
+    const u = ["B", "kB", "MB", "GB", "TB", "PB", "EB"]; let i = 0;
     while (b >= 1000 && i < u.length - 1) { b /= 1000; i++; }
     return (b >= 100 ? b.toFixed(0) : b >= 10 ? b.toFixed(1) : b.toFixed(2)) + " " + u[i];
   }
@@ -1009,6 +1015,9 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   const MESH_TYPES = { fem: "FEM", fdtd: "FDTD", mom: "MoM", rays: "Rays", q2d: "2D" };
   const MESH_METHOD = { fem: "fem", fdtd: "fdtd", mom: "mom3d", rays: "asym", q2d: "q2d" };
   const meshFor = (k) => (k === "mom3d" || k === "mom25" ? "mom" : k === "asym" ? "rays" : k);
+  // guess mode: the answer stays hidden until the user selects a solver for this device
+  const answerHidden = () => V.guess && V.dev && !(V.dev.id in V.guesses);
+  const momKey = (d) => (d.m === "mom25" ? "mom25" : "mom3d");
   const MAT = {
     gold: { color: 0xC9A227, metal: true }, copper: { color: 0xC4773B, metal: true }, steel: { color: 0x9AA3AE, metal: true }, alu: { color: 0xB8C0C8, metal: true }, solder: { color: 0xA9ADB3, metal: true },
     sub: { color: 0x2F7A69, opacity: 0.4 }, gaas: { color: 0x3E4A57, opacity: 0.5 }, si: { color: 0x7C8FA6, opacity: 0.6 }, oxide: { color: 0x9CC7E8, opacity: 0.32 },
@@ -1038,7 +1047,11 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   }
   async function loadDevice(d) {
     const token = ++V.token;
-    const data = await getMesh(d.id);
+    let data;
+    try { data = await getMesh(d.id); } catch (e) {
+      if (token === V.token) $("caption").textContent = "The 3D mesh did not load. Use the size map.";
+      return false;
+    }
     if (token !== V.token) return false; // a newer selection won
     const root = R3.root; clearGroup(root); root.scale.setScalar(1); root.position.set(0, 0, 0);
     const model = new THREE.Group(), solids = [];
@@ -1057,7 +1070,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     const size = box.getSize(new THREE.Vector3()), center = box.getCenter(new THREE.Vector3());
     const k = 3.2 / Math.max(size.x, size.y, size.z);
     root.scale.setScalar(k); root.position.copy(center).multiplyScalar(-k); root.updateMatrixWorld(true);
-    Object.assign(R3, { box, data, solids, model, dataId: d.id });
+    Object.assign(R3, { box, data, solids, model, dataId: d.id, loadToken: token });
     const meshG = new THREE.Group(); root.add(meshG); R3.layers = { mesh: meshG };
     R3.frameObj = model; R3.fit = 1.0; R3.az = V.meshType === "fem" && V.showMesh ? 12 : 35; R3.frame();
     return true;
@@ -1085,7 +1098,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   }
   function buildMesh(type) {
     const g = R3.layers.mesh; clearGroup(g);
-    const col = new THREE.Color(css("--c-" + (type === "mom" ? (V.dev.m === "mom25" ? "mom25" : "mom3d") : MESH_METHOD[type])));
+    const col = new THREE.Color(css("--c-" + (type === "mom" ? (answerHidden() ? "mom3d" : momKey(V.dev)) : MESH_METHOD[type])));
     const D = R3.data;
     setModelLook(type);
     if (type === "fem") {
@@ -1152,14 +1165,15 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       // keep each axis to about 60 lines: merge snap lines that are close, with a larger merge distance if needed
       const lines = (a) => { let hm = Math.max(hmin, L / 150), out; do { out = gridLines(snaps[a], lo[a], hi[a], hmax, hm); hm *= 1.4; } while (out.length > 60); return out; };
       const ax = { x: lines("x"), y: lines("y"), z: lines("z") };
-      const ray = new THREE.Raycaster(), dir = new THREE.Vector3(1, 0.0013, 0.0007).normalize(), o = new THREE.Vector3(), cells = [];
+      // the cell centre o is in model coordinates; the raycaster uses world coordinates (root is scaled and moved)
+      const ray = new THREE.Raycaster(), dir = new THREE.Vector3(1, 0.0013, 0.0007).normalize(), o = new THREE.Vector3(), ow = new THREE.Vector3(), toW = R3.root.matrixWorld, cells = [];
       R3.solids.forEach((s) => (s.material.side = THREE.DoubleSide));
       for (let i = 0; i < ax.x.length - 1; i++) for (let j = 0; j < ax.y.length - 1; j++) for (let k = 0; k < ax.z.length - 1; k++) {
         o.set((ax.x[i] + ax.x[i + 1]) / 2, (ax.y[j] + ax.y[j + 1]) / 2, (ax.z[k] + ax.z[k + 1]) / 2);
         let hit = null;
         for (let n = 0; n < R3.solids.length; n++) {
           if (!bbs[n].containsPoint(o)) continue;
-          ray.set(o, dir); ray.far = 1e9;
+          ray.set(ow.copy(o).applyMatrix4(toW), dir); ray.far = 1e9;
           const hits = ray.intersectObject(R3.solids[n], false);
           if (hits.length % 2 === 1) { hit = R3.solids[n].userData.mat; if (isMetal(hit)) break; }
         }
@@ -1229,7 +1243,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       (V.dev.id === "cav" ? " In the real filter, only the inside of the waveguide is the solution space." : " The air box stops at a radiation boundary or a PML.");
     if (type === "mom") return D.mom.kind === "dielectric"
       ? `MoM: this device has no metal. Surface-equivalence MoM meshes the dielectric surfaces: ${fmtInt(D.mom.tris)} triangles, ${fmtInt(D.mom.rwg)} RWG unknowns for each current. There is no volume mesh.`
-      : `MoM: ${fmtInt(D.mom.tris)} triangles on the metal${V.dev.m === "mom25" ? " sheets (the ground plane and the substrate are in the Green's function)" : ""}, ${fmtInt(D.mom.rwg)} RWG unknowns (inner edges). There is no air mesh.`;
+      : `MoM: ${fmtInt(D.mom.tris)} triangles on the metal${V.dev.m === "mom25" && !answerHidden() ? " sheets (the ground plane and the substrate are in the Green's function)" : ""}, ${fmtInt(D.mom.rwg)} RWG unknowns (inner edges). There is no air mesh.`;
     if (type === "fdtd") { const y = R3.yee; return y ? `FDTD: a graded Yee grid of ${y.nx} × ${y.ny} × ${y.nz} = ${fmtInt(y.nx * y.ny * y.nz)} cells. Grid lines snap to the faces of each part. ${fmtInt(y.filled)} cells are inside a part; curved surfaces become steps. A PML absorbs the outgoing waves.` : ""; }
     if (type === "rays") return "Rays: the solver traces rays and their reflections on the metal facets. It does not mesh the volume.";
     if (type === "q2d") return D.q2d ? `2D: ${fmtInt(D.q2d.tris)} triangles on the cross-section, finer near the strip edges. The solver assumes that the line is the same along its full length.` : "";
@@ -1239,7 +1253,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     const d = V.dev, parts = [`<b>${d.name}.</b>`];
     parts.push(V.showMesh ? meshText(V.meshType) : "Metal is solid. Dielectrics are transparent.");
     $("caption").innerHTML = parts.join(" "); glossify($("caption"));
-    const mlabel = V.meshType === "mom" ? METHODS[d.m === "mom25" ? "mom25" : "mom3d"].short : MESH_TYPES[V.meshType];
+    const mlabel = V.meshType === "mom" ? (answerHidden() ? "MoM" : METHODS[momKey(d)].short) : MESH_TYPES[V.meshType];
     $("stagetag").textContent = (V.showMesh ? mlabel + " mesh" : "Model") + " · " + d.lab;
     if (R3) R3.renderer.domElement.setAttribute("aria-label", `3D view of the ${d.name}. ${$("caption").textContent} Use the arrow keys to turn the view.`);
   }
@@ -1253,11 +1267,12 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   function buildMeshSel(d, r) {
     const avail = d.id === "xsec" ? ["q2d", "fem", "fdtd", "mom"] : ["fem", "fdtd", "mom", "rays"];
     const rankOf = (t) => { const k = t === "mom" ? (r.s.mom25 > r.s.mom3d ? "mom25" : "mom3d") : MESH_METHOD[t]; return r.ranked.indexOf(k); };
+    const hide = answerHidden();
     $("meshsel").innerHTML = avail.map((t) => {
       const ok = t !== "rays" || d.geo === "metal3d";
-      const mk = t === "mom" ? (d.m === "mom25" ? "mom25" : "mom3d") : MESH_METHOD[t];
-      const label = t === "mom" ? METHODS[mk].short : MESH_TYPES[t];
-      return `<button type="button" role="radio" data-m="${t}" aria-checked="false" ${ok ? "" : "disabled title=\"Rays apply only to large metal objects\""}>${icon(mk)}${label} <span class="rk">${ok && !V.guess ? ordinal(rankOf(t)) : ""}</span></button>`;
+      const mk = t === "mom" ? momKey(d) : MESH_METHOD[t];
+      const label = t === "mom" ? (hide ? "MoM" : METHODS[mk].short) : MESH_TYPES[t];
+      return `<button type="button" role="radio" data-m="${t}" aria-checked="false" ${ok ? "" : "disabled title=\"Rays apply only to large metal objects\""}>${hide && t === "mom" ? neutralIcon() : icon(mk)}${label} <span class="rk">${ok && !hide ? ordinal(rankOf(t)) : ""}</span></button>`;
     }).join("");
     const btns = [...$("meshsel").querySelectorAll("button")];
     btns.forEach((b) => {
@@ -1344,25 +1359,32 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       return `<${tag} ${tag === "button" ? `type="button" data-k="${k}" title="Show the ${METHODS[k].short} view"` : ""} class="bar m-${k}${i === 0 ? " win" : ""}${tag === "div" ? " static" : ""}"><span class="lb">${icon(k)}${METHODS[k].short}</span><span class="track"><span class="fill" style="width:${Math.max(0, r.s[k]) / max * 100}%"></span></span><span class="sc">${lbl}</span></${tag}>`;
     }).join("") + `</div>`;
   }
+  // full point: the method to use first (or the equal first). Half point: the "then" method, or a method within 1 point of the first
+  function grade(d, r, g) {
+    const ok = g === d.m || (r.tie && g === r.ranked[1]);
+    const near = !ok && r.ranked.indexOf(g) > 0 && r.s[r.ranked[0]] - r.s[g] <= 1;
+    return { ok, close: !ok && (g === d.alt || near), near };
+  }
   function renderGuess(d, r) {
     $("devcard").innerHTML = `<p class="eyebrow">Guess mode · score ${V.score[0]} of ${V.score[1]}</p><h3>${d.name}</h3>` +
       `<div class="facts"><div><span>Size D</span><b>${fmtSize(d.size)}</b></div><div><span>Frequency</span><b>${fmtFreq(d.freq)}</b></div><div><span>D / λ</span><b>${fmtE(r.e0)}</b>${d.er > 1 ? `<small class="note" style="display:block">${fmtE(r.e)} in ε<sub>r</sub> ${d.er}</small>` : ""}</div></div>` +
       `<div class="guessbox"><p><b>Which solver would you use first?</b> Look at the model, the size and the materials. Then select.</p>` +
       `<div class="opts">${ORDER.map((k) => `<button type="button" data-k="${k}">${icon(k)}${METHODS[k].short}</button>`).join("")}</div></div>`;
     $("devcard").querySelectorAll(".guessbox button").forEach((b) => b.addEventListener("click", () => {
-      const k = b.dataset.k, ok = k === d.m || (r.tie && k === r.ranked[1]), close = !ok && r.ranked.indexOf(k) > 0 && r.s[r.ranked[0]] - r.s[k] <= 1;
+      const k = b.dataset.k, { ok, close } = grade(d, r, k);
       V.guesses[d.id] = k; V.score[1]++; if (ok) V.score[0]++; else if (close) V.score[0] += 0.5;
+      V.meshType = meshFor(d.m); V.showMesh = true; $("t-mesh").setAttribute("aria-pressed", "true");
       buildDevGroups();
       selectDevice(d.id);
-      if (!V.showMesh) $("t-mesh").click();
+      const v = $("devcard").querySelector(".verdict"); if (v) v.focus();
     }));
     $("dev-n").textContent = `${DEVICES.indexOf(d) + 1} / ${DEVICES.length}`;
     document.querySelectorAll("#devgroups button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === d.id)));
+    // hide the mesh and the mesh selection: together they show the answer
+    V.meshType = "fem"; V.showMesh = false; $("t-mesh").setAttribute("aria-pressed", "false");
     buildMeshSel(d, r);
-    if (V.ok) loadDevice(d).then(() => updateCaption());
-    V.meshType = "fem";
-    if (V.showMesh) $("t-mesh").click(); // hide the mesh: it shows the answer
-    $("meshsel").querySelectorAll("button").forEach((b) => b.setAttribute("aria-checked", "false"));
+    if (R3 && R3.layers && R3.dataId === d.id) { clearGroup(R3.layers.mesh); setModelLook("model"); R3.request(); }
+    if (V.ok) loadDevice(d).then((ok) => { if (ok && V.dev === d) { if (V.showMesh) setMeshType(V.meshType); else updateCaption(); } });
     updateCaption();
     drawMap();
   }
@@ -1381,8 +1403,11 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       `<div class="tools"><div><b>Commercial</b>${toolNames(d.m, "c", d.fld) || toolNames(d.m, "c") || "No tool in this list"}</div><div><b>Open / free</b>${toolNames(d.m, "o", d.fld) || toolNames(d.m, "o") || "No tool in this list"}</div></div>` +
       `<button class="btn" type="button" id="toPicker">Change the inputs in the picker &darr;</button>`;
     if (V.guess && id in V.guesses) {
-      const g = V.guesses[id], ok = g === d.m || (r.tie && g === r.ranked[1]), close = !ok && r.ranked.indexOf(g) > 0 && r.s[r.ranked[0]] - r.s[g] <= 1;
-      $("devcard").insertAdjacentHTML("afterbegin", `<p class="verdict ${ok ? "right" : close ? "close" : "wrong"}">${ok ? "Correct." : close ? `Close. ${METHODS[g].short} is ${ordinal(r.ranked.indexOf(g))} and about equal (half a point).` : `Not correct. You selected ${METHODS[g].short}.`} Score: ${V.score[0]} of ${V.score[1]}.</p>`);
+      const g = V.guesses[id], { ok, close, near } = grade(d, r, g);
+      const msg = ok ? "Correct." : !close ? `Not correct. You selected ${METHODS[g].short}.`
+        : near ? `Close. ${METHODS[g].short} is ${ordinal(r.ranked.indexOf(g))} and about equal (half a point).`
+        : `Close. ${METHODS[g].short} is the second choice for this device (half a point).`;
+      $("devcard").insertAdjacentHTML("afterbegin", `<p class="verdict ${ok ? "right" : close ? "close" : "wrong"}" tabindex="-1">${msg} Score: ${V.score[0]} of ${V.score[1]}.</p>`);
     }
     glossify($("devcard"));
     $("devcard").querySelectorAll("button.bar").forEach((b) => b.addEventListener("click", () => {
@@ -1394,7 +1419,8 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     $("dev-n").textContent = `${DEVICES.indexOf(d) + 1} / ${DEVICES.length}`;
     buildMeshSel(d, r);
     setMeshType(meshFor(d.m));
-    if (V.ok) loadDevice(d).then((ok) => { if (ok && V.dev === d) setMeshType(V.meshType); });
+    // the model of this device is already in the view (for example after a guess): keep it and the camera
+    if (V.ok && !(R3.dataId === d.id && V.token === R3.loadToken)) loadDevice(d).then((ok) => { if (ok && V.dev === d) setMeshType(V.meshType); });
     drawMap();
   }
 
@@ -2020,6 +2046,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   }
   function loadPreset(d) {
     $("pk-fld").value = d.fld || "any"; $("pk-lic").value = d.lic || "all"; $("pk-geo").value = d.geo; $("pk-need").value = d.need; $("pk-bb").checked = d.bb; $("pk-q").checked = d.q; $("pk-er").value = d.er || 1;
+    $("pk-flow").value = d.flow || ""; $("pk-cloud").checked = !!d.cloud;
     const su = bestUnit(d.size, [1e-6, 1e-3, 1e-2, 1]);
     $("pk-sizeu").value = su === 1e-6 ? "1e-6" : su === 1e-3 ? "1e-3" : su === 1e-2 ? "1e-2" : "1";
     $("pk-size").value = +(d.size / su).toPrecision(4);
@@ -2031,7 +2058,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   }
   function runPicker() {
     const size = parseFloat($("pk-size").value) * parseFloat($("pk-sizeu").value), freq = parseFloat($("pk-freq").value) * parseFloat($("pk-frequ").value);
-    if (!(size > 0) || !(freq > 0)) { $("pk-elec").textContent = "Type a size and a frequency that are more than zero."; $("pk-out").innerHTML = ""; return; }
+    if (!(size > 0) || !(freq > 0)) { $("pk-elec").textContent = "Type a size and a frequency that are more than zero."; $("pk-out").innerHTML = ""; $("pk-hint").hidden = true; SHORT = null; return; }
     const er = Math.max(1, parseFloat($("pk-er").value) || 1);
     const r = score({ geo: $("pk-geo").value, need: $("pk-need").value, size, freq, er, broadband: $("pk-bb").checked, highQ: $("pk-q").checked });
     const top = r.ranked[0], second = r.ranked[1];
@@ -2040,7 +2067,6 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     hint.hidden = !($("pk-geo").value === "planar" && r.e0 > 0.25);
     hint.textContent = "Is the board, mold or package finite? Then select \"3D, many materials\". A 2.5D solver assumes that the layers are infinite.";
     const reasons = r.why[top].length ? r.why[top] : ["This method has the highest score after the size and geometry penalties"];
-    setTimeout(() => { const c = $("pk-copy"); if (c) c.addEventListener("click", copyResult); const b = $("pk-all"); if (b) b.addEventListener("click", () => { setDir({ m: top, lic: $("pk-lic").value, fld: $("pk-fld").value }); $("tools").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth" }); }); }, 0);
     $("pk-out").innerHTML =
       `<div class="pick m-${top}"><p class="eyebrow">${r.tie ? "Equal score: use first" : "Use first"}</p><div class="big">${METHODS[top].short}${r.tie ? ` <span class="m-${second}" style="font-size:0.6em">or ${METHODS[second].short}</span>` : ""}</div><p class="sub">${METHODS[top].name}</p>` +
       `<ul>${reasons.map((x) => `<li>${x}.</li>`).join("")}</ul>` +
@@ -2048,6 +2074,9 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       (r.s[second] > 0 && !r.tie ? `<p class="note">Second: <b class="m-${second}">${METHODS[second].short}</b>${r.why[second][0] ? ". " + r.why[second][0] : ""}.</p>` : "") +
       `<p class="note"><b>Check your result.</b> Solve again with a second method or tool, or compare with a measurement or a known case.</p>` +
       `</div><div class="panel"><p class="eyebrow">Relative fit</p>` + rankBars(r, false) + `</div>` + costPanel(r, top, $("pk-geo").value);
+    // bind the buttons now: a timer can bind them two times when "input" and "change" both run the picker
+    $("pk-copy").addEventListener("click", copyResult);
+    $("pk-all").addEventListener("click", () => { setDir({ m: top, lic: $("pk-lic").value, fld: $("pk-fld").value }); $("tools").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth" }); });
   }
   // order-of-magnitude problem size for each method. e0: D in free-space wavelengths; e: D in the densest material
   function costPanel(r, top, geo) {
@@ -2068,6 +2097,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       ["mom3d", `${fmtCount(mom3)} unknowns, dense matrix`, fmtBytes(16 * mom3 * mom3) + (16 * mom3 * mom3 > 64e9 ? " (use MLFMM)" : "")],
     ];
     if (geo === "planar") rows.push(["mom25", `${fmtCount(mom25)} unknowns, dense matrix`, fmtBytes(16 * mom25 * mom25)]);
+    if (geo === "crosssec") rows.unshift(["q2d", "1,000 to 100,000 triangles on the cross-section. The length of the line has no effect", "less than 1 GB"]);
     return `<div class="panel"><p class="eyebrow">Estimated problem size (order of magnitude)</p>` +
       `<div class="cost">${rows.map(([k, a, b]) => `<div class="m-${k}${k === top ? " win" : ""}"><span>${icon(k)}${METHODS[k].short}</span><span>${a}</span><b>${b}</b></div>`).join("")}</div>` +
       (top === "asym" ? `<p class="note"><b>These numbers show why a full-wave solve is not practical here.</b> A ray solver needs only the surface facets and a set of rays.</p>` : "") +
@@ -2096,7 +2126,10 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     }).filter(Boolean).sort((a, b) => b.sc - a.sc);
     let list = rank(true, true);
     if (list.length < 3) { const more = rank(true, false).filter((x) => !list.some((y) => y.t === x.t)); more.forEach((x) => x.why.push("Field not listed by the vendor")); list = list.concat(more); }
+    // the list must have one tool with the method to use first, also when other tools are common in the field
+    const firstM = list.find((x) => x.t.m.includes(m1));
     list = list.slice(0, 3);
+    if (firstM && !list.includes(firstM)) list[list.length - 1] = firstM;
     const noFlow = flow ? rank(false, true)[0] : null;
     SHORT = { r, list, fld, lic, flow };
     const link = `<div class="row"><button class="btn" type="button" id="pk-all">See all matching tools &darr;</button><button class="btn" type="button" id="pk-copy">Copy this result</button><span class="note" id="pk-copied" role="status"></span></div>`;
@@ -2110,7 +2143,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     if (!SHORT) return;
     const { r, list } = SHORT;
     const lines = [
-      `Problem: ${$("pk-geo").selectedOptions[0].text}; D = ${$("pk-size").value} ${$("pk-sizeu").selectedOptions[0].text}; f = ${$("pk-freq").value} ${$("pk-frequ").selectedOptions[0].text}; εr = ${$("pk-er").value}; result: ${$("pk-need").selectedOptions[0].text}.`,
+      `Problem: ${$("pk-geo").selectedOptions[0].text}; D = ${$("pk-size").value} ${$("pk-sizeu").selectedOptions[0].text}; f = ${$("pk-freq").value} ${$("pk-frequ").selectedOptions[0].text}; εr = ${Math.max(1, parseFloat($("pk-er").value) || 1)}; result: ${$("pk-need").selectedOptions[0].text}.`,
       `Electrical size: ${fmtE(r.e0)} in air (${fmtE(r.e)} in the material).`,
       `Method to use first: ${METHODS[r.ranked[0]].name}. Second: ${METHODS[r.ranked[1]].name}.`,
       `Tools to look at first: ${list.map((x) => `${x.t.n} (${x.t.owner})`).join("; ")}.`,
@@ -2119,7 +2152,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     const txt = lines.join("\n"), done = (m) => { $("pk-copied").textContent = m; };
     try { navigator.clipboard.writeText(txt).then(() => done("Copied."), () => done("Select and copy the text: " + txt)); } catch (e) { done("Select and copy the text: " + txt); }
   }
-  function fmtCount(n) { if (n >= 1e12) return (n / 1e12).toPrecision(2) + " trillion"; if (n >= 1e9) return (n / 1e9).toPrecision(2) + " billion"; if (n >= 1e6) return (n / 1e6).toPrecision(2) + " million"; if (n >= 1e4) return Math.round(n / 1e3) + " thousand"; return fmtInt(n); }
+  function fmtCount(n) { if (n >= 1e15) return sci(n); if (n >= 1e12) return +(n / 1e12).toPrecision(2) + " trillion"; if (n >= 1e9) return +(n / 1e9).toPrecision(2) + " billion"; if (n >= 1e6) return +(n / 1e6).toPrecision(2) + " million"; if (n >= 1e4) return Math.round(n / 1e3) + " thousand"; return fmtInt(n); }
   function buildPicker() {
     $("pk-presets").innerHTML = `<span class="note" style="width:100%">Tasks</span>` + TASKS.map((t) => `<button type="button" data-id="${t.id}" class="task" aria-pressed="false">${t.lab}</button>`).join("") +
       `<span class="note" style="width:100%">Devices from the 3D lab</span>` + PRESETS.map((id) => `<button type="button" data-id="${id}" aria-pressed="false">${DEVICES.find((d) => d.id === id).lab}</button>`).join("");
@@ -2229,9 +2262,11 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     $("v-reset").addEventListener("click", () => R3 && R3.frame());
     $("t-guess").addEventListener("click", (e) => {
       V.guess = !V.guess; e.currentTarget.setAttribute("aria-pressed", String(V.guess));
-      if (V.guess) { V.guesses = {}; V.score = [0, 0]; } else if (!V.showMesh) $("t-mesh").click();
+      if (V.guess) { V.guesses = {}; V.score = [0, 0]; } else if (!V.showMesh) { V.showMesh = true; $("t-mesh").setAttribute("aria-pressed", "true"); }
       buildDevGroups();
       selectDevice(V.dev.id);
+      // on a phone the card is below the viewer: show the question
+      if (V.guess && narrowMQ.matches) $("devcard").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth", block: "nearest" });
     });
     const step = (d) => { const i = DEVICES.indexOf(V.dev); selectDevice(DEVICES[(i + d + DEVICES.length) % DEVICES.length].id); };
     $("dev-prev").addEventListener("click", () => step(-1)); $("dev-next").addEventListener("click", () => step(1));
