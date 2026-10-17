@@ -1,0 +1,1792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Learn the physics of high-frequency EM methods and propagation tools: geometrical optics, ray tracing, UTD diffraction, physical optics, SBR and empirical planning models, with live demos checked against exact solutions.">
+<meta property="og:title" content="Rays, PO or Hata?">
+<meta property="og:description" content="An interactive guide to asymptotic EM methods and RF planning models: learn the physics, then select a method for your problem.">
+<title>Rays, PO or Hata?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Companion to the FDTD/FEM/MoM guide (index.html): same tokens, cards, chips and controls. */
+:root {
+  --bg: #F1F4F7; --surface: #FFFFFF; --ink: #142230; --muted: #586678; --line: #D5DCE5; --grid: #E4E9EF;
+  --field: #D9472B; --hfield: #2B6CB0; --ok: #2A7F50; --bad: #C0392B;
+  --c-fem: #2160A8; --c-fdtd: #B85A0B; --c-mom3d: #7E3B9C; --c-mom25: #B8336F; --c-asym: #2A7F50; --c-q2d: #66727F;
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D131A; --surface: #141C26; --ink: #E3E9EF; --muted: #98A4B2; --line: #2A3644; --grid: #223040;
+    --field: #FF8A5C; --hfield: #6FB0F0; --ok: #6BCB93; --bad: #FF8A80;
+    --c-fem: #6FA8EA; --c-fdtd: #F0A050; --c-mom3d: #C690DE; --c-mom25: #EE7FB0; --c-asym: #6BCB93; --c-q2d: #9AA7B5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D131A; --surface: #141C26; --ink: #E3E9EF; --muted: #98A4B2; --line: #2A3644; --grid: #223040;
+  --field: #FF8A5C; --hfield: #6FB0F0; --ok: #6BCB93; --bad: #FF8A80;
+  --c-fem: #6FA8EA; --c-fdtd: #F0A050; --c-mom3d: #C690DE; --c-mom25: #EE7FB0; --c-asym: #6BCB93; --c-q2d: #9AA7B5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 64px); }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 72px; display: grid; gap: 72px; }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; gap: 56px; } }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.08; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.4rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); font-weight: 800; letter-spacing: -0.01em; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font: 600 0.74rem/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; max-width: 70ch; color: var(--muted); }
+.read { max-width: 72ch; display: grid; gap: 8px; }
+.note { font-size: 0.88rem; color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+a { color: var(--c-fem); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+button { font-family: var(--body); }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.topnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.topnav ul { list-style: none; margin: 0 auto; padding: 8px 20px; max-width: 1180px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.topnav a { display: block; padding: 8px 12px; border-radius: 8px; font: 600 0.86rem/1 var(--body); color: var(--muted); text-decoration: none; white-space: nowrap; }
+.topnav a[aria-current="true"] { background: var(--ink); color: var(--bg); }
+.topnav a:hover { color: var(--ink); }
+.topnav a[aria-current="true"]:hover { color: var(--bg); }
+.topnav li.grp { font: 600 0.66rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); align-self: center; padding: 0 4px 0 10px; border-left: 1px solid var(--line); white-space: nowrap; }
+.topnav li.grp:first-child { border-left: 0; padding-left: 0; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 600 0.78rem/1 var(--mono); padding: 6px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.chip.star::before { width: 10px; height: 10px; border-radius: 0; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.m-fem { color: var(--c-fem); } .m-fdtd { color: var(--c-fdtd); } .m-mom3d { color: var(--c-mom3d); }
+.m-asym { color: var(--c-asym); } .m-q2d { color: var(--c-q2d); } .m-neutral { color: var(--muted); }
+
+.hero-head { display: grid; gap: 12px; }
+.path { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 6px; padding: 0; list-style: none; counter-reset: st; }
+.path li { counter-increment: st; display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; font-size: 0.92rem; }
+.path li::before { content: counter(st); width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font: 700 0.8rem/1 var(--mono); }
+.path a { color: var(--ink); }
+@media (max-width: 760px) { .path { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 420px) { .path { grid-template-columns: 1fr; } }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+@media (max-width: 520px) { .card, .panel { padding: 14px; } }
+.card h3 { font-size: 1.3rem; font-weight: 800; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; max-width: 100%; }
+.seg button { font: 600 0.82rem/1 var(--body); padding: 9px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.ibtn { font: 600 0.8rem/1 var(--body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-width: 36px; }
+.ibtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn { font: 600 0.88rem/1 var(--body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; justify-self: start; text-decoration: none; display: inline-block; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.lbl { font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+select { font: 400 0.92rem/1.2 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; max-width: 100%; }
+
+/* demo layout: the demo first, a narrow card beside it */
+.demo { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.demo.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .demo, .demo.even { grid-template-columns: 1fr; } }
+.viewer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: grid; min-width: 0; overflow: hidden; align-content: start; }
+.vbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.vctl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+.vctl .grp { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.stage { position: relative; width: 100%; background: var(--surface); }
+.stage canvas { display: block; width: 100%; touch-action: none; cursor: crosshair; }
+.stage canvas:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.stage .tag { position: absolute; left: 12px; top: 10px; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); pointer-events: none; max-width: 70%; }
+.caption { padding: 10px 12px 12px; font-size: 0.92rem; border-top: 1px solid var(--line); }
+.plotbox { position: relative; width: 100%; }
+.plotbox canvas { display: block; width: 100%; border-radius: 8px; background: var(--surface); }
+.plotbox canvas.drag { touch-action: none; cursor: ew-resize; }
+canvas { user-select: none; -webkit-user-select: none; }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+.readout div { background: var(--bg); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.readout span { display: block; font: 600 0.64rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.readout b { font: 600 0.98rem/1.3 var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.readout div.big { grid-column: 1 / -1; }
+.readout div.big b { font-size: 1.35rem; }
+.readout div.ok b { color: var(--ok); } .readout div.bad b { color: var(--bad); }
+.status { font: 600 0.9rem/1.35 var(--body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); }
+.status.ok { color: var(--ok); border-color: var(--ok); }
+.status.bad { color: var(--bad); border-color: var(--bad); }
+.status.warn { color: var(--c-fdtd); border-color: var(--c-fdtd); }
+.slider { display: grid; gap: 4px; min-width: 0; }
+.slider label { font: 600 0.7rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.slider label .mono { text-transform: none; letter-spacing: 0; color: var(--ink); }
+.slider input[type=range] { width: 100%; accent-color: var(--ink); margin: 0; }
+.sl2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 14px; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 500 0.78rem/1.3 var(--mono); color: var(--muted); }
+.legend2 i { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid currentColor; vertical-align: middle; margin-right: 5px; }
+.legend2 i.dot { border-top-style: dotted; } .legend2 i.dash { border-top-style: dashed; }
+.legend2 i.sq { width: 10px; height: 10px; border: 0; border-radius: 2px; background: currentColor; vertical-align: -1px; }
+.formula { font: 500 0.86rem/1.5 var(--mono); background: var(--bg); border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: nowrap; }
+.formula sub, .formula sup { font-size: 0.72em; }
+.lines { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.94rem; max-width: 76ch; }
+.demo-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 1.25rem; margin-top: 10px; }
+.demo-h .tagx { font: 600 0.66rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.cbar { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto; gap: 8px; align-items: center; font: 600 0.72rem/1 var(--mono); color: var(--muted); }
+.cbar i { display: block; height: 10px; border-radius: 3px; background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #fde725); }
+
+/* regime map */
+.regime { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .regime { grid-template-columns: 1fr; } }
+.exs { display: flex; flex-wrap: wrap; gap: 6px; }
+.exs button, .chips button { font: 500 0.8rem/1.1 var(--body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.exs button:hover, .chips button:hover { border-color: var(--ink); }
+.exs button[aria-pressed="true"], .chips button[aria-checked="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.mlist { display: grid; gap: 6px; }
+.mrow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 4px 10px; align-items: start; padding: 8px 10px; border-radius: 8px; background: var(--bg); }
+.mrow i { width: 10px; height: 10px; border-radius: 50%; background: currentColor; margin-top: 5px; }
+.mrow b { font: 700 0.92rem/1.3 var(--body); color: var(--ink); }
+.mrow .st { font: 600 0.7rem/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 6px; border-radius: 4px; border: 1px solid currentColor; white-space: nowrap; }
+.mrow .st.good { color: var(--ok); } .mrow .st.maybe { color: var(--c-fdtd); } .mrow .st.no { color: var(--muted); }
+.mrow p { grid-column: 2 / -1; font-size: 0.86rem; color: var(--muted); }
+.mrow.dim b { color: var(--muted); font-weight: 600; }
+.bigsz { font: 800 2.1rem/1 var(--display); }
+.bigsz small { font: 600 0.9rem/1 var(--mono); color: var(--muted); margin-left: 6px; }
+
+/* planning comparison */
+.vs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .vs { grid-template-columns: 1fr; } }
+.vs .card { border-top: 4px solid currentColor; }
+.vs dl { margin: 0; display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 6px 10px; font-size: 0.9rem; color: var(--ink); }
+.vs dt { font: 600 0.68rem/1.6 var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.vs dd { margin: 0; }
+.models { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+.model { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; align-content: start; }
+.model b { font: 800 1rem/1.2 var(--display); }
+.model .rg { font: 600 0.72rem/1.4 var(--mono); color: var(--muted); }
+.model p { font-size: 0.86rem; }
+
+/* picker */
+.picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .picker { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.pick { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--c-asym); border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; min-width: 0; }
+.pick .big { font: 800 1.6rem/1.1 var(--display); }
+.pick .sz { font: 600 0.78rem/1.3 var(--mono); color: var(--muted); }
+.pick ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pick li { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: 2px 10px; font-size: 0.9rem; padding: 6px 0; border-top: 1px solid var(--line); }
+.pick li b { font-weight: 700; }
+.pick li span { color: var(--muted); }
+.pick li .free { font: 600 0.62rem/1 var(--mono); color: var(--ok); border: 1px solid var(--ok); border-radius: 4px; padding: 2px 4px; margin-left: 6px; vertical-align: 1px; }
+@media (max-width: 520px) { .pick li { grid-template-columns: 1fr; } .pick { padding: 14px; } }
+
+.refs { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 0.9rem; max-width: 90ch; }
+.refs li span { color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<nav class="topnav" aria-label="Sections">
+  <ul id="topnav">
+    <li class="grp" aria-hidden="true">Learn</li>
+    <li><a href="#top">Regimes</a></li>
+    <li><a href="#rays">Rays</a></li>
+    <li><a href="#diffraction">Diffraction</a></li>
+    <li><a href="#po">Physical optics</a></li>
+    <li><a href="#sbr">SBR</a></li>
+    <li><a href="#planning">Planning models</a></li>
+    <li class="grp" aria-hidden="true">Choose</li>
+    <li><a href="#picker">Your problem</a></li>
+    <li><a href="#refs">References</a></li>
+    <li class="grp" aria-hidden="true">Also</li>
+    <li><a href="index.html">FDTD, FEM or MoM? &rarr;</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO: REGIME MAP -->
+  <section class="hero-head" id="top" aria-labelledby="top-h">
+    <p class="eyebrow">Computational electromagnetics &middot; high-frequency methods</p>
+    <h1 id="top-h">Rays, PO or Hata?</h1>
+    <p class="lede">Full-wave solvers become too slow when the object is many wavelengths long. Asymptotic methods replace the solve with rays and currents. Planning models replace the geometry with statistics. Drag the size to see which method is valid, and why.</p>
+    <div class="regime">
+      <div class="panel">
+        <p class="eyebrow">Electrical size L/&lambda; and the methods that are valid</p>
+        <div class="plotbox"><canvas id="reg-cv" class="drag" role="img" aria-label="Regime map: electrical size from 0.1 to one million wavelengths on a log axis, with the valid range of each method as a bar, and a size marker"></canvas></div>
+        <div class="slider"><label for="reg-x">Electrical size L/&lambda;: <span id="reg-xv" class="mono"></span></label><input type="range" id="reg-x" min="-1" max="6" step="0.01" value="2.7"></div>
+        <div class="exs" id="reg-ex" aria-label="Examples"></div>
+        <p class="legend2"><span><i class="sq" style="color:var(--ink)"></i>good choice</span><span><i class="sq" style="color:var(--muted);opacity:.45"></i>possible, with care or large compute</span></p>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="row" style="justify-content:space-between;align-items:baseline"><span class="bigsz" id="reg-big"></span><span class="mono note" id="reg-phys"></span></div>
+        <div class="row"><span class="lbl">Physical size at</span><div class="seg" id="reg-f" role="group" aria-label="Frequency for the physical size"></div></div>
+        <div class="mlist" id="reg-list"></div>
+      </div>
+    </div>
+    <ol class="path" aria-label="Learning path">
+      <li><span><a href="#rays">Trace rays</a> in a street. See reflection, multipath and the GO shadow.</span></li>
+      <li><span><a href="#diffraction">Add diffraction</a>: UTD at corners, knife-edge over hills.</span></li>
+      <li><span><a href="#po">Compare PO</a> and <a href="#sbr">SBR</a> with exact solutions.</span></li>
+      <li><span><a href="#planning">Compare planning models</a>, then <a href="#picker">select a method</a>.</span></li>
+    </ol>
+  </section>
+
+  <!-- RAYS -->
+  <section id="rays" aria-labelledby="rays-h">
+    <div class="read"><h2 id="rays-h">Geometrical optics: the field travels on rays</h2>
+      <p>Drag the transmitter, the receiver or a building. Each ray is one path. The receiver adds the paths.</p></div>
+    <div class="demo">
+      <div class="viewer" id="rv1">
+        <div class="vbar">
+          <div class="seg" data-k="scene" role="group" aria-label="Scene"><button type="button" data-v="street" aria-pressed="true">Street</button><button type="button" data-v="room" aria-pressed="false">Room</button></div>
+          <div class="seg" data-k="view" role="group" aria-label="View"><button type="button" data-v="paths" aria-pressed="true">Paths to Rx</button><button type="button" data-v="fan" aria-pressed="false">Ray launching</button><button type="button" data-v="map" aria-pressed="false">Coverage</button></div>
+        </div>
+        <div class="stage"><canvas tabindex="0" role="application" aria-label="Ray tracing scene. Drag Tx, Rx or a building. With the keyboard: Tab to the canvas, press 1 to 9 to select an object, then use the arrow keys."></canvas><span class="tag" data-r="tag"></span></div>
+        <div class="vctl">
+          <span class="grp"><span class="lbl">Reflections</span><span class="seg" data-k="K" role="group" aria-label="Maximum number of reflections"><button type="button" data-v="0" aria-pressed="false">0</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="true">2</button><button type="button" data-v="3" aria-pressed="false">3</button></span></span>
+          <span class="grp"><span class="lbl">Sum</span><span class="seg" data-k="coh" role="group" aria-label="Sum of paths"><button type="button" data-v="1" aria-pressed="true">Coherent</button><button type="button" data-v="0" aria-pressed="false">Power</button></span></span>
+          <span class="grp"><button type="button" class="ibtn" data-k="utd" aria-pressed="false">UTD diffraction</button></span>
+          <span class="grp"><label class="lbl" for="rv1-f">f</label><select id="rv1-f" data-k="f"><option value="0.9">900 MHz</option><option value="2.4">2.4 GHz</option><option value="3.5" selected>3.5 GHz</option><option value="28">28 GHz</option></select></span>
+        </div>
+        <div class="caption" data-r="cap"></div>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div class="big"><span>Path gain at Rx (isotropic antennas)</span><b data-r="pg"></b></div>
+          <div><span>Free space, same distance</span><b data-r="fs"></b></div>
+          <div><span>Paths</span><b data-r="np"></b></div>
+          <div><span>RMS delay spread</span><b data-r="ds"></b></div>
+        </div>
+        <p class="eyebrow">Power-delay profile</p>
+        <div class="plotbox"><canvas data-r="pdp" role="img" aria-label="Power of each path against its delay"></canvas></div>
+        <p class="legend2" data-r="pleg"></p>
+        <div class="row"><label class="lbl" for="rv1-mat">Wall material</label><select id="rv1-mat" data-k="mat"></select></div>
+        <div class="sl2">
+          <div class="slider"><label for="rv1-er">&epsilon;<sub>r</sub>: <span class="mono" data-r="erv"></span></label><input type="range" id="rv1-er" data-k="er" min="1" max="30" step="0.01"></div>
+          <div class="slider"><label for="rv1-sg">&sigma; (S/m): <span class="mono" data-r="sgv"></span></label><input type="range" id="rv1-sg" data-k="sg" min="-4" max="7" step="0.01"></div>
+        </div>
+        <div class="row"><span class="lbl">Polarization</span><span class="seg" data-k="pol" role="group" aria-label="Polarization"><button type="button" data-v="TE" aria-pressed="true">TE (E vertical)</button><button type="button" data-v="TM" aria-pressed="false">TM (E horizontal)</button></span></div>
+        <p class="eyebrow">Fresnel reflection |&Gamma;| against the angle of incidence</p>
+        <div class="plotbox"><canvas data-r="gam" role="img" aria-label="Magnitude of the Fresnel reflection coefficient for TE and TM against the angle of incidence"></canvas></div>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>GO assumes a local plane wave.</b> Each ray carries amplitude, phase and polarization. A wall multiplies the ray by &Gamma;<sub>TE</sub> or &Gamma;<sub>TM</sub>.</li>
+      <li><b>Image method:</b> mirror the source in each wall to get exact paths. The cost grows as (walls)<sup>reflections</sup>. <b>Ray launching (SBR):</b> shoot many rays and catch them in a sphere at Rx. The cost grows with the number of rays.</li>
+      <li><b>GO gives zero field in the shadow.</b> Set Reflections to 0 and move Rx behind a building. Real fields are not zero there: that is diffraction.</li>
+    </ul>
+    <p class="formula">&Gamma;<sub>TE</sub> = (cos&theta; &minus; &radic;(&epsilon;<sub>c</sub> &minus; sin&sup2;&theta;)) / (cos&theta; + &radic;(&epsilon;<sub>c</sub> &minus; sin&sup2;&theta;)) &nbsp;&middot;&nbsp; &Gamma;<sub>TM</sub> = (&epsilon;<sub>c</sub>cos&theta; &minus; &radic;(&epsilon;<sub>c</sub> &minus; sin&sup2;&theta;)) / (&epsilon;<sub>c</sub>cos&theta; + &radic;(&epsilon;<sub>c</sub> &minus; sin&sup2;&theta;)) &nbsp;&middot;&nbsp; &epsilon;<sub>c</sub> = &epsilon;<sub>r</sub> &minus; j&sigma;/(&omega;&epsilon;<sub>0</sub>)</p>
+    <p class="note">Top view: the walls are tall and the rays stay in the horizontal plane (2.5-D), so the field spreads as 1/r. TE: the scalar field is vertical E. TM: the scalar field is vertical H (&Gamma;<sub>TM</sub> is the H ratio). Walls are opaque here; real tools also add transmission through walls. Materials: ITU-R P.2040-3, Table 3 (now superseded by P.2040-4). Its frequency ranges are indicative: most materials are fitted from 1 GHz, brick to 10 GHz, ground 1&ndash;10 GHz only, so 900 MHz and 28 GHz values are extrapolated.</p>
+  </section>
+
+  <!-- DIFFRACTION -->
+  <section id="diffraction" aria-labelledby="dif-h">
+    <div class="read"><h2 id="dif-h">Diffraction fills the shadow</h2>
+      <p>At an edge, one incident ray makes a cone of diffracted rays. UTD gives each diffracted ray its amplitude.</p></div>
+    <h3 class="demo-h m-asym"><span class="tagx">UTD</span><span style="color:var(--ink)">A building corner</span></h3>
+    <div class="demo">
+      <div class="viewer" id="rv2">
+        <div class="vbar">
+          <div class="row"><button type="button" class="ibtn" data-k="utd" aria-pressed="true">UTD diffraction</button>
+          <span class="seg" data-k="gtd" role="group" aria-label="Diffraction coefficient"><button type="button" data-v="0" aria-pressed="true">UTD (with F)</button><button type="button" data-v="1" aria-pressed="false">GTD (Keller)</button></span></div>
+          <div class="seg" data-k="view" role="group" aria-label="View"><button type="button" data-v="map" aria-pressed="true">Field map</button><button type="button" data-v="paths" aria-pressed="false">Paths to Rx</button></div>
+        </div>
+        <div class="stage"><canvas tabindex="0" role="application" aria-label="Building corner scene. Drag Tx or Rx. Keyboard: press 1 or 2 to select, then arrow keys."></canvas><span class="tag" data-r="tag"></span></div>
+        <div class="vctl">
+          <span class="grp"><span class="lbl">Polarization</span><span class="seg" data-k="pol" role="group" aria-label="Polarization"><button type="button" data-v="TE" aria-pressed="true">TE</button><button type="button" data-v="TM" aria-pressed="false">TM</button></span></span>
+          <span class="grp"><label class="lbl" for="rv2-f">f</label><select id="rv2-f" data-k="f"><option value="0.9" selected>900 MHz</option><option value="3.5">3.5 GHz</option><option value="28">28 GHz</option></select></span>
+          <span class="cbar" style="flex:1 1 180px"><span data-r="cb0"></span><i></i><span data-r="cb1"></span></span>
+        </div>
+      </div>
+      <div class="card">
+        <p class="eyebrow">Field on the dashed arc around the corner</p>
+        <div class="plotbox"><canvas id="cut-cv" role="img" aria-label="Path gain along an arc around the corner: GO only, and GO plus diffraction, with the shadow boundaries marked"></canvas></div>
+        <p class="legend2"><span style="color:var(--muted)"><i class="dash"></i>GO only</span><span class="m-asym"><i></i>GO + diffraction</span></p>
+        <div class="slider"><label for="cut-r">Arc radius: <span id="cut-rv" class="mono"></span></label><input type="range" id="cut-r" min="3" max="30" step="0.5" value="15"></div>
+        <div class="readout"><div><span>Field at ISB, GO+UTD vs incident</span><b id="cut-isb"></b></div><div><span>Tx to edge s&prime;</span><b id="cut-sp"></b></div></div>
+        <p class="note">ISB: incident shadow boundary. RSB: reflection shadow boundary. GO jumps at both. UTD adds a diffracted field that cancels each jump. At the ISB the total is about 6 dB below the incident field: the ISB term gives exactly half the field; the other wedge terms add a little, most when the ISB is near the RSB. Keller's GTD is infinite at the boundaries; the UTD transition function F removes the singularity.</p>
+      </div>
+    </div>
+    <p class="formula">E<sup>d</sup> = E<sup>i</sup>(Q) &middot; D(&phi;, &phi;&prime;, L, n) &middot; &radic;(s&prime; / (s (s + s&prime;))) &middot; e<sup>&minus;jks</sup> &nbsp;&middot;&nbsp; D: Kouyoumjian&ndash;Pathak (1974), lossy faces after Luebbers (1984)</p>
+
+    <h3 class="demo-h m-asym"><span class="tagx">P.526</span><span style="color:var(--ink)">Knife-edge over a hill</span></h3>
+    <div class="demo">
+      <div class="panel">
+        <p class="eyebrow">Side view (vertical scale exaggerated). Drag the top of the obstacle.</p>
+        <div class="plotbox"><canvas id="ke-cv" tabindex="0" role="application" aria-label="Side view of a radio link over a knife-edge obstacle with the first Fresnel zone. Drag the obstacle, or use the arrow keys after focus."></canvas></div>
+        <div class="sl2">
+          <div class="slider"><label for="ke-h">Obstacle height h above the line of sight: <span id="ke-hv" class="mono"></span></label><input type="range" id="ke-h" min="-2.2" max="3.4" step="0.01" value="0"></div>
+          <div class="slider"><label for="ke-p">Obstacle position d&#8321;/d: <span id="ke-pv" class="mono"></span></label><input type="range" id="ke-p" min="0.05" max="0.95" step="0.01" value="0.5"></div>
+          <div class="slider"><label for="ke-f">Frequency: <span id="ke-fv" class="mono"></span></label><input type="range" id="ke-f" min="2" max="4.6" step="0.01" value="3"></div>
+          <div class="slider"><label for="ke-d">Path length d: <span id="ke-dv" class="mono"></span></label><input type="range" id="ke-d" min="-0.3" max="1.7" step="0.01" value="1"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div class="big"><span>Diffraction loss J(v), exact</span><b id="ke-j"></b></div>
+          <div><span>Fresnel parameter v</span><b id="ke-v"></b></div>
+          <div><span>P.526 eq. approx.</span><b id="ke-ja"></b></div>
+          <div><span>First Fresnel radius r&#8321;</span><b id="ke-r1"></b></div>
+          <div><span>h / r&#8321;</span><b id="ke-cl"></b></div>
+        </div>
+        <div class="plotbox"><canvas id="kej-cv" role="img" aria-label="Knife-edge loss J(v) against v, exact and the P.526 approximation, with the current point"></canvas></div>
+        <p class="legend2"><span style="color:var(--ink)"><i></i>exact (Fresnel integrals)</span><span class="m-asym"><i class="dash"></i>P.526 approximation</span></p>
+      </div>
+    </div>
+    <p class="formula">v = h &radic;(2/&lambda; &middot; (1/d&#8321; + 1/d&#8322;)) &nbsp;&middot;&nbsp; J(v) = 6.9 + 20 log<sub>10</sub>(&radic;((v&minus;0.1)&sup2;+1) + v &minus; 0.1) for v &gt; &minus;0.78 &nbsp;&middot;&nbsp; r&#8321; = &radic;(&lambda; d&#8321; d&#8322; / d)</p>
+    <ul class="lines">
+      <li>At grazing (h = 0) the loss is 6 dB. Keep 0.6 r&#8321; clear (v &asymp; &minus;0.85) and the loss is about 0 dB.</li>
+      <li>The knife-edge is the planning-tool form of diffraction. ITU-R P.526 adds rounded obstacles and multiple edges (Deygout, Bullington).</li>
+    </ul>
+  </section>
+
+  <!-- PHYSICAL OPTICS -->
+  <section id="po" aria-labelledby="po-h">
+    <div class="read"><h2 id="po-h">Physical optics: currents from the tangent plane</h2>
+      <p>PO does not trace the field to the observer. It puts the current of an infinite flat mirror on each lit point, then radiates that current.</p></div>
+    <p class="formula">J<sub>s</sub> = 2 n&#770; &times; H<sup>inc</sup> on lit faces &nbsp;&middot;&nbsp; J<sub>s</sub> = 0 in the shadow</p>
+
+    <h3 class="demo-h m-asym"><span class="tagx">Current</span><span style="color:var(--ink)">PO current on a cylinder vs the exact series</span></h3>
+    <div class="demo">
+      <div class="panel">
+        <div class="plotbox"><canvas id="cy-cv" role="img" aria-label="Circular PEC cylinder lit from the left, with the surface current magnitude drawn around it: exact series and PO"></canvas></div>
+        <div class="slider"><label for="cy-ka">Electrical size ka: <span id="cy-kav" class="mono"></span></label><input type="range" id="cy-ka" min="0" max="1.7" step="0.01" value="1"></div>
+        <p class="legend2"><span style="color:var(--ink)"><i></i>exact (Bessel series)</span><span class="m-asym"><i class="dash"></i>PO: 2|cos&phi;| lit, 0 shadow</span></p>
+      </div>
+      <div class="card">
+        <div class="plotbox"><canvas id="cyu-cv" role="img" aria-label="Surface current against angle around the cylinder, exact and PO"></canvas></div>
+        <div class="readout">
+          <div><span>At the shadow boundary, exact</span><b id="cy-sb"></b></div>
+          <div><span>Deep shadow, exact</span><b id="cy-ds"></b></div>
+          <div><span>Lit point, exact / PO</span><b id="cy-lp"></b></div>
+        </div>
+        <p class="note">TM<sub>z</sub> plane wave (E along the axis), |J<sub>s</sub>| / |H<sup>inc</sup>|. PO is good on the lit side when ka is large. It misses the creeping wave in the shadow and the smooth change at the shadow boundary.</p>
+      </div>
+    </div>
+
+    <h3 class="demo-h m-asym"><span class="tagx">RCS</span><span style="color:var(--ink)">Flat strip: PO vs MoM vs PO + PTD</span></h3>
+    <div class="demo">
+      <div class="panel">
+        <div class="plotbox"><canvas id="st-cv" class="drag" role="img" aria-label="Monostatic echo width of a flat strip against angle from the normal: MoM reference, PO and PO plus PTD"></canvas></div>
+        <div class="sl2">
+          <div class="slider"><label for="st-w">Strip width w/&lambda;: <span id="st-wv" class="mono"></span></label><input type="range" id="st-w" min="1" max="12" step="0.5" value="5"></div>
+          <div class="slider"><label for="st-a">Angle from normal &theta;: <span id="st-av" class="mono"></span></label><input type="range" id="st-a" min="0" max="90" step="0.5" value="40"></div>
+        </div>
+        <div class="row"><button type="button" class="ibtn" id="st-ptd" aria-pressed="true">Show PO + PTD</button><span class="legend2"><span style="color:var(--ink)"><i></i>MoM (reference)</span><span class="m-asym"><i class="dash"></i>PO</span><span class="m-fdtd" data-ptdleg><i></i>PO + PTD</span></span></div>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div class="big"><span>Echo width at &theta;, MoM</span><b id="st-mom"></b></div>
+          <div><span>PO error</span><b id="st-epo"></b></div>
+          <div><span>PO + PTD error</span><b id="st-eptd"></b></div>
+          <div><span>MoM unknowns</span><b id="st-n"></b></div>
+        </div>
+        <p class="note">2-D strip, TM<sub>z</sub> (E parallel to the edges), PEC. MoM: EFIE, pulse basis, 20 cells/&lambda;, solved in your browser. PTD adds the fringe field of each edge: Keller's half-plane coefficient minus the PO edge term.</p>
+        <p class="formula">&sigma;<sub>2D</sub><sup>PO</sup> = k w&sup2; cos&sup2;&theta; &middot; sinc&sup2;(k w sin&theta;)</p>
+        <p class="formula">3-D plate a &times; b, rotating in the plane of side a: &sigma;<sup>PO</sup> = (4&pi;A&sup2;/&lambda;&sup2;) cos&sup2;&theta; &middot; sinc&sup2;(k a sin&theta;)</p>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Near specular, PO is correct.</b> The peak k w&sup2; matches MoM within 0.1 dB.</li>
+      <li><b>Away from specular, edges dominate.</b> PO gives deep false nulls and the wrong level. Near edge-on it is far too low.</li>
+      <li><b>PTD corrects the edges.</b> PO + PTD follows MoM within a fraction of a dB here. Real tools add PTD or MEC on every wedge.</li>
+    </ul>
+
+    <h3 class="demo-h m-asym"><span class="tagx">Sphere</span><span style="color:var(--ink)">PO vs the exact Mie series</span></h3>
+    <div class="demo">
+      <div class="panel">
+        <div class="plotbox"><canvas id="sp-cv" class="drag" role="img" aria-label="Monostatic RCS of a PEC sphere normalized to pi a squared against ka: Mie series, PO, Rayleigh law and the optical limit"></canvas></div>
+        <div class="slider"><label for="sp-ka">ka: <span id="sp-kav" class="mono"></span></label><input type="range" id="sp-ka" min="-1" max="1.6" step="0.005" value="0"></div>
+        <p class="legend2"><span style="color:var(--ink)"><i></i>Mie (exact)</span><span class="m-asym"><i class="dash"></i>PO</span><span style="color:var(--muted)"><i class="dot"></i>Rayleigh 9(ka)&#8308; &middot; optical limit 1</span></p>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div><span>Mie &sigma;/&pi;a&sup2;</span><b id="sp-m"></b></div>
+          <div><span>PO &sigma;/&pi;a&sup2;</span><b id="sp-p"></b></div>
+          <div class="big"><span>PO error</span><b id="sp-e"></b></div>
+        </div>
+        <p class="formula">&sigma;<sup>PO</sup>/&pi;a&sup2; = 1 &minus; sin(2ka)/ka + sin&sup2;(ka)/(ka)&sup2;</p>
+        <p class="note">Rayleigh region (ka &lt; 0.5): PO scales as (ka)&sup2;, not 9(ka)&#8308;; the error is 10 dB at ka = 0.1. Resonance region: the creeping wave interferes with the specular return. Optical region: PO is within about 1 dB for ka &gt; 10 and about 0.4 dB for ka &gt; 20; both tend to &pi;a&sup2;. Mie ripples because of the creeping wave, which PO does not have. PO ripples a little too, from its abrupt shadow boundary.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SBR -->
+  <section id="sbr" aria-labelledby="sbr-h">
+    <div class="read"><h2 id="sbr-h">Shooting and bouncing rays</h2>
+      <p>SBR shoots a dense grid of GO rays at the target. Each ray bounces. At each hit, a PO integral over the ray tube gives that ray's share of the scattered field.</p></div>
+    <div class="demo even">
+      <div class="viewer" id="sb">
+        <div class="vbar">
+          <div class="seg" id="sb-shape" role="group" aria-label="Target"><button type="button" data-v="dih" aria-pressed="true">90&deg; dihedral</button><button type="button" data-v="cav" aria-pressed="false">Open cavity</button><button type="button" data-v="plate" aria-pressed="false">Flat plate</button></div>
+          <div class="row"><span class="lbl">Bounces</span><span class="seg" id="sb-b" role="group" aria-label="Maximum number of bounces"><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="true">2</button><button type="button" data-v="10" aria-pressed="false">10</button></span></div>
+        </div>
+        <div class="stage"><canvas id="sb-cv" tabindex="0" role="application" aria-label="Target cross-section with an incident ray bundle and the bounced rays. Drag to change the angle, or use the arrow keys."></canvas><span class="tag" id="sb-tag"></span></div>
+        <div class="vctl"><div class="slider" style="flex:1 1 220px"><label for="sb-a">Radar angle &phi;: <span id="sb-av" class="mono"></span></label><input type="range" id="sb-a" min="-90" max="90" step="0.5" value="20"></div></div>
+      </div>
+      <div class="card">
+        <div class="plotbox"><canvas id="sbp-cv" class="drag" role="img" aria-label="Monostatic echo width against angle: MoM reference, SBR with one bounce, SBR with more bounces"></canvas></div>
+        <p class="legend2"><span style="color:var(--ink)"><i></i>MoM (reference)</span><span style="color:var(--muted)"><i class="dash"></i>SBR, 1 bounce (PO)</span><span class="m-asym"><i></i>SBR, selected bounces</span></p>
+        <div class="readout">
+          <div><span>MoM at &phi;</span><b id="sb-mom"></b></div>
+          <div><span>SBR 1 bounce</span><b id="sb-s1"></b></div>
+          <div><span>SBR selected</span><b id="sb-sn"></b></div>
+        </div>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>One bounce is PO with shadowing.</b> It gives the two plate flashes of the dihedral, but not its wide return.</li>
+      <li><b>Two bounces add the double reflection.</b> The 90&deg; dihedral retro-reflects over &plusmn;45&deg;: &sigma;<sub>2D</sub> = 2k w&sup2; on the bisector, falling as the aperture 2w sin(45&deg; &minus; |&phi;|) shrinks. SBR follows MoM within about 1 dB over &plusmn;30&deg;. Near &plusmn;40&deg;, edge diffraction (not in SBR) gives errors of 2&ndash;3 dB.</li>
+      <li><b>SBR has no edges.</b> Production codes add PTD or MEC for wedges and UTD for creeping waves (Ling, Chou &amp; Lee 1989; Xpatch).</li>
+    </ul>
+    <p class="note">2-D, TM<sub>z</sub>, PEC, plates 5&lambda; long, 10 rays per &lambda;. Tools on SBR: Ansys HFSS SBR+ (SBR with PTD and UTD edge corrections and creeping waves), CST Studio Suite Asymptotic Solver (SBR). Remcom Wireless InSite X3D shoots and bounces rays for propagation, then moves each path to the exact receiver point. Remcom XGtd uses GO, UTD, PO and MEC. Sionna RT uses SBR to find candidate paths, then the image method.</p>
+  </section>
+
+  <!-- PLANNING -->
+  <section id="planning" aria-labelledby="pl-h">
+    <div class="read"><h2 id="pl-h">Planning models: statistics instead of geometry</h2>
+      <p>Empirical models fit curves to measured path loss. They need no building map. They give a median and a spread, not a field.</p></div>
+    <div class="demo">
+      <div class="panel">
+        <div class="plotbox"><canvas id="pl-cv" class="drag" role="img" aria-label="Path loss against distance: free space, two-ray ground reflection, Okumura-Hata and COST-231 Hata with their validity ranges and a shadowing band"></canvas></div>
+        <div class="sl2">
+          <div class="slider"><label for="pl-f">Frequency: <span id="pl-fv" class="mono"></span></label><input type="range" id="pl-f" min="2" max="3.5" step="0.005" value="2.954"></div>
+          <div class="slider"><label for="pl-hb">Base height h<sub>b</sub>: <span id="pl-hbv" class="mono"></span></label><input type="range" id="pl-hb" min="10" max="300" step="1" value="30"></div>
+          <div class="slider"><label for="pl-hm">Mobile height h<sub>m</sub>: <span id="pl-hmv" class="mono"></span></label><input type="range" id="pl-hm" min="1" max="10" step="0.1" value="1.5"></div>
+          <div class="slider"><label for="pl-s">Shadowing &sigma;: <span id="pl-sv" class="mono"></span></label><input type="range" id="pl-s" min="0" max="12" step="0.5" value="8"></div>
+        </div>
+        <div class="row"><span class="lbl">Environment</span><span class="seg" id="pl-env" role="group" aria-label="Environment"><button type="button" data-v="large" aria-pressed="false">Large city</button><button type="button" data-v="urban" aria-pressed="true">Medium city</button><button type="button" data-v="sub" aria-pressed="false">Suburban</button><button type="button" data-v="open" aria-pressed="false">Open</button></span></div>
+        <p class="legend2"><span style="color:var(--muted)"><i class="dot"></i>free space</span><span class="m-fem"><i></i>two-ray (ground &epsilon;<sub>r</sub> 15, &sigma; 0.005 S/m, horizontal pol.)</span><span class="m-fdtd"><i></i>Okumura&ndash;Hata</span><span class="m-mom3d"><i></i>COST-231 Hata</span><span><i class="dash" style="color:var(--muted)"></i>outside the valid range</span></p>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div class="big"><span>Path loss at d = <span id="pl-dv" class="nt"></span></span><b id="pl-l"></b></div>
+          <div><span>Free space</span><b id="pl-fs"></b></div>
+          <div><span>Two-ray</span><b id="pl-tr"></b></div>
+          <div><span>Breakpoint 4h<sub>b</sub>h<sub>m</sub>/&lambda;</span><b id="pl-bp"></b></div>
+          <div><span>Median &plusmn; 1&sigma;</span><b id="pl-band"></b></div>
+        </div>
+        <p class="status" id="pl-st" role="status"></p>
+        <p class="formula">Hata (urban): L = 69.55 + 26.16 log f &minus; 13.82 log h<sub>b</sub> &minus; a(h<sub>m</sub>) + (44.9 &minus; 6.55 log h<sub>b</sub>) log d</p>
+        <p class="note">f in MHz, d in km, heights in m. Hata: 150&ndash;1500 MHz, h<sub>b</sub> 30&ndash;200 m, h<sub>m</sub> 1&ndash;10 m, d 1&ndash;20 km. COST-231 Hata: 1500&ndash;2000 MHz, constant 46.3 + 33.9 log f, plus 3 dB in large-city centres. Large-city a(h<sub>m</sub>) is defined for f &le; 200 and f &ge; 400 MHz; between them this page interpolates. Drag on the plot to move d.</p>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Two-ray:</b> past the breakpoint the direct and ground rays cancel, and the loss grows 40 dB per decade instead of 20.</li>
+      <li><b>Hata grows about 30&ndash;35 dB per decade</b> over its valid h<sub>b</sub> of 30&ndash;200 m (slope 44.9 &minus; 6.55 log h<sub>b</sub>). Real signals scatter about the median: lognormal shadowing, &sigma; &asymp; 6&ndash;10 dB.</li>
+    </ul>
+    <div class="vs">
+      <div class="card m-q2d"><h3 style="color:var(--ink)">Empirical model (Hata, COST-231, P.1546)</h3>
+        <dl><dt>Inputs</dt><dd>f, d, antenna heights, an environment class. For terrain models: a terrain profile.</dd>
+        <dt>Outputs</dt><dd>Median path loss. A location spread &sigma;. No delay, no angle.</dd>
+        <dt>Speed</dt><dd>Microseconds per point. A country in minutes.</dd>
+        <dt>Limit</dt><dd>Valid only inside its fitted range. Calibrate with drive tests.</dd></dl></div>
+      <div class="card m-asym"><h3 style="color:var(--ink)">Ray tracing (GO + UTD, SBR)</h3>
+        <dl><dt>Inputs</dt><dd>A 3-D map of buildings and terrain, materials, antenna patterns.</dd>
+        <dt>Outputs</dt><dd>Each path: power, phase, delay, angle of departure and arrival.</dd>
+        <dt>Speed</dt><dd>Milliseconds to seconds per point. A city in hours, or faster on a GPU.</dd>
+        <dt>Limit</dt><dd>Only as good as the map and the materials. Misses foliage, people and small clutter.</dd></dl></div>
+    </div>
+    <p class="eyebrow">Terrain and point-to-area models</p>
+    <div class="models">
+      <div class="model"><b>ITU-R P.1546</b><span class="rg">30&ndash;4000 MHz &middot; 1&ndash;1000 km</span><p>Point-to-area curves of field strength from measurements. For broadcast and mobile coverage.</p></div>
+      <div class="model"><b>ITU-R P.1812</b><span class="rg">30 MHz&ndash;6 GHz &middot; 0.25&ndash;3000 km</span><p>Path-specific: uses the terrain profile, clutter and diffraction (P.526 Bullington).</p></div>
+      <div class="model"><b>ITU-R P.452</b><span class="rg">about 0.1&ndash;50 GHz</span><p>Interference between stations: diffraction, ducting, troposcatter, small time percentages.</p></div>
+      <div class="model"><b>ITU-R P.526</b><span class="rg">diffraction</span><p>Knife-edge, rounded obstacles, multiple edges, spherical earth. Used inside the others.</p></div>
+      <div class="model"><b>Longley&ndash;Rice (ITM)</b><span class="rg">20 MHz&ndash;20 GHz &middot; 1&ndash;2000 km</span><p>Irregular terrain model from NTIA/ITS. Used by SPLAT! and many planning tools.</p></div>
+    </div>
+  </section>
+
+  <!-- PICKER -->
+  <section id="picker" aria-labelledby="pk-h">
+    <div class="read"><h2 id="pk-h">Which method for my problem?</h2>
+      <p>Select a task. Methods and tools are typical choices, not recommendations.</p></div>
+    <div class="picker">
+      <div class="panel">
+        <span class="lbl">Task</span>
+        <div class="chips" id="pk-tasks" role="radiogroup" aria-label="Task"></div>
+      </div>
+      <div class="pick" id="pk-out" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- REFERENCES -->
+  <section id="refs" aria-labelledby="refs-h">
+    <div class="read"><h2 id="refs-h">References</h2></div>
+    <ol class="refs">
+      <li>C. A. Balanis, <i>Advanced Engineering Electromagnetics</i>, 2nd ed., Wiley, 2012. <span>Fresnel coefficients, PO, cylinder series, GTD/UTD.</span></li>
+      <li>E. F. Knott, J. F. Shaeffer, M. T. Tuley, <i>Radar Cross Section</i>, 2nd ed., Artech House, 1993. <span>Plate and sphere PO, edge diffraction.</span></li>
+      <li>J. B. Keller, &ldquo;Geometrical theory of diffraction,&rdquo; <i>J. Opt. Soc. Am.</i> 52(2), 116&ndash;130, 1962.</li>
+      <li>R. G. Kouyoumjian, P. H. Pathak, &ldquo;A uniform geometrical theory of diffraction for an edge in a perfectly conducting surface,&rdquo; <i>Proc. IEEE</i> 62(11), 1448&ndash;1461, 1974.</li>
+      <li>R. J. Luebbers, &ldquo;Finite conductivity uniform GTD versus knife edge diffraction in prediction of propagation path loss,&rdquo; <i>IEEE Trans. Antennas Propag.</i> 32(1), 70&ndash;76, 1984.</li>
+      <li>P. Ya. Ufimtsev, <i>Fundamentals of the Physical Theory of Diffraction</i>, Wiley, 2007.</li>
+      <li>H. Ling, R.-C. Chou, S.-W. Lee, &ldquo;Shooting and bouncing rays: calculating the RCS of an arbitrarily shaped cavity,&rdquo; <i>IEEE Trans. Antennas Propag.</i> 37(2), 194&ndash;205, 1989.</li>
+      <li>G. T. Ruck et al., <i>Radar Cross Section Handbook</i>, Plenum, 1970. <span>Mie series for the PEC sphere.</span></li>
+      <li>W. C. Gibson, <i>The Method of Moments in Electromagnetics</i>, 2nd ed., CRC, 2014. <span>2-D TM EFIE and its self term.</span></li>
+      <li>M. Hata, &ldquo;Empirical formula for propagation loss in land mobile radio services,&rdquo; <i>IEEE Trans. Veh. Technol.</i> VT-29(3), 317&ndash;325, 1980.</li>
+      <li>COST Action 231, <i>Digital mobile radio towards future generation systems</i>, final report, EUR 18957, 1999.</li>
+      <li>ITU-R P.526 (diffraction), P.1546, P.1812, P.452, P.2040 (building materials). International Telecommunication Union.</li>
+      <li>A. G. Longley, P. L. Rice, &ldquo;Prediction of tropospheric radio transmission loss over irregular terrain,&rdquo; ESSA Tech. Rep. ERL 79-ITS 67, 1968.</li>
+      <li>T. S. Rappaport, <i>Wireless Communications: Principles and Practice</i>, 2nd ed., Prentice Hall, 2002. <span>Two-ray model and breakpoint.</span></li>
+      <li>F. A&iuml;t Aoudia, J. Hoydis, M. Nimier-David, B. Nicolet, S. Cammerer, A. Keller, &ldquo;Sionna RT: Technical Report,&rdquo; arXiv:2504.21719, 2025.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <p class="note">Made by Ben Hardy. Companion to <a href="index.html">FDTD, FEM or MoM?</a></p>
+    <p class="note">All demos are 2-D or 2.5-D and run in your browser. The MoM, Mie, cylinder and Fresnel-integral references are computed here; they are exact to plotting accuracy. Tool methods come from vendor documentation, checked on 17 October 2026. Product names are the property of their owners.</p>
+  </footer>
+</div>
+<script>
+/* ---------- numerical core: complex numbers, Bessel, Fresnel, UTD, Mie, 2-D MoM ---------- */
+const NUM = (() => {
+  const PI = Math.PI;
+  // complex helpers on [re, im]
+  const C = (r, i = 0) => [r, i];
+  const cadd = (a, b) => [a[0] + b[0], a[1] + b[1]];
+  const csub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+  const cmul = (a, b) => [a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]];
+  const cdiv = (a, b) => { const d = b[0] * b[0] + b[1] * b[1]; return [(a[0] * b[0] + a[1] * b[1]) / d, (a[1] * b[0] - a[0] * b[1]) / d]; };
+  const cscale = (a, s) => [a[0] * s, a[1] * s];
+  const cexpj = (ph) => [Math.cos(ph), Math.sin(ph)];          // e^{j ph}
+  const cabs = (a) => Math.hypot(a[0], a[1]);
+  const cabs2 = (a) => a[0] * a[0] + a[1] * a[1];
+  const csqrt = (a) => { const r = cabs(a); let re = Math.sqrt((r + a[0]) / 2), im = Math.sqrt(Math.max(0, (r - a[0]) / 2)); if (a[1] < 0) im = -im; return [re, im]; };
+
+  // Bessel J0, J1, Y0, Y1 (rational approximations, Numerical Recipes; |error| ~ 1e-8)
+  function j0(x) {
+    const ax = Math.abs(x);
+    if (ax < 8) { const y = x * x;
+      const a1 = 57568490574.0 + y * (-13362590354.0 + y * (651619640.7 + y * (-11214424.18 + y * (77392.33017 + y * (-184.9052456)))));
+      const a2 = 57568490411.0 + y * (1029532985.0 + y * (9494680.718 + y * (59272.64853 + y * (267.8532712 + y))));
+      return a1 / a2; }
+    const z = 8 / ax, y = z * z, xx = ax - 0.785398164;
+    const a1 = 1 + y * (-0.1098628627e-2 + y * (0.2734510407e-4 + y * (-0.2073370639e-5 + y * 0.2093887211e-6)));
+    const a2 = -0.1562499995e-1 + y * (0.1430488765e-3 + y * (-0.6911147651e-5 + y * (0.7621095161e-6 - y * 0.934935152e-7)));
+    return Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * a1 - z * Math.sin(xx) * a2);
+  }
+  function y0(x) {
+    if (x < 8) { const y = x * x;
+      const a1 = -2957821389.0 + y * (7062834065.0 + y * (-512359803.6 + y * (10879881.29 + y * (-86327.92757 + y * 228.4622733))));
+      const a2 = 40076544269.0 + y * (745249964.8 + y * (7189466.438 + y * (47447.26470 + y * (226.1030244 + y))));
+      return a1 / a2 + 0.636619772 * j0(x) * Math.log(x); }
+    const z = 8 / x, y = z * z, xx = x - 0.785398164;
+    const a1 = 1 + y * (-0.1098628627e-2 + y * (0.2734510407e-4 + y * (-0.2073370639e-5 + y * 0.2093887211e-6)));
+    const a2 = -0.1562499995e-1 + y * (0.1430488765e-3 + y * (-0.6911147651e-5 + y * (0.7621095161e-6 - y * 0.934935152e-7)));
+    return Math.sqrt(0.636619772 / x) * (Math.sin(xx) * a1 + z * Math.cos(xx) * a2);
+  }
+  function j1(x) {
+    const ax = Math.abs(x);
+    if (ax < 8) { const y = x * x;
+      const a1 = x * (72362614232.0 + y * (-7895059235.0 + y * (242396853.1 + y * (-2972611.439 + y * (15704.48260 + y * (-30.16036606))))));
+      const a2 = 144725228442.0 + y * (2300535178.0 + y * (18583304.74 + y * (99447.43394 + y * (376.9991397 + y))));
+      return a1 / a2; }
+    const z = 8 / ax, y = z * z, xx = ax - 2.356194491;
+    const a1 = 1 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * (0.2457520174e-5 + y * (-0.240337019e-6))));
+    const a2 = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199096e-5 + y * (-0.88228987e-6 + y * 0.105787412e-6)));
+    const r = Math.sqrt(0.636619772 / ax) * (Math.cos(xx) * a1 - z * Math.sin(xx) * a2);
+    return x < 0 ? -r : r;
+  }
+  function y1(x) {
+    if (x < 8) { const y = x * x;
+      const a1 = x * (-0.4900604943e13 + y * (0.1275274390e13 + y * (-0.5153438139e11 + y * (0.7349264551e9 + y * (-0.4237922726e7 + y * 0.8511937935e4)))));
+      const a2 = 0.2499580570e14 + y * (0.4244419664e12 + y * (0.3733650367e10 + y * (0.2245904002e8 + y * (0.1020426050e6 + y * (0.3549632885e3 + y)))));
+      return a1 / a2 + 0.636619772 * (j1(x) * Math.log(x) - 1 / x); }
+    const z = 8 / x, y = z * z, xx = x - 2.356194491;
+    const a1 = 1 + y * (0.183105e-2 + y * (-0.3516396496e-4 + y * (0.2457520174e-5 + y * (-0.240337019e-6))));
+    const a2 = 0.04687499995 + y * (-0.2002690873e-3 + y * (0.8449199096e-5 + y * (-0.88228987e-6 + y * 0.105787412e-6)));
+    return Math.sqrt(0.636619772 / x) * (Math.sin(xx) * a1 + z * Math.cos(xx) * a2);
+  }
+  const h02 = (x) => [j0(x), -y0(x)];   // Hankel H0^(2) = J0 - jY0
+
+  // integer-order J_n (Miller downward recurrence) and Y_n (upward), n = 0..nmax
+  function besselJn(nmax, x) {
+    const out = new Float64Array(nmax + 1);
+    const m = 2 * Math.ceil((Math.max(nmax, x) + 30 + Math.sqrt(40 * Math.max(nmax, x))) / 2);
+    let jp = 0, jc = 1e-30, sum = 0;
+    for (let k = m; k > 0; k--) {
+      const jm = (2 * k / x) * jc - jp;
+      jp = jc; jc = jm;
+      if (k - 1 <= nmax) out[k - 1] = jc;
+      if ((k - 1) % 2 === 0 && k - 1 > 0) sum += 2 * jc;
+      if (Math.abs(jc) > 1e200) { jc *= 1e-200; jp *= 1e-200; sum *= 1e-200; for (let i = 0; i <= nmax; i++) out[i] *= 1e-200; }
+    }
+    sum += jc; // J0 term
+    for (let i = 0; i <= nmax; i++) out[i] /= sum;
+    return out;
+  }
+  function besselYn(nmax, x) {
+    const out = new Float64Array(nmax + 1);
+    out[0] = y0(x); if (nmax > 0) out[1] = y1(x);
+    for (let n = 1; n < nmax; n++) out[n + 1] = (2 * n / x) * out[n] - out[n - 1];
+    return out;
+  }
+
+  // Fresnel integrals C(x), S(x) with C(x) = int_0^x cos(pi t^2/2) dt
+  function fresnelCS(x) {
+    const s = x < 0 ? -1 : 1; x = Math.abs(x);
+    let c, si;
+    if (x < 2.5) {
+      const t = PI * x * x / 2; let term = x, n = 0; c = 0; si = 0;
+      // C = sum (-1)^n t^{2n} x/((2n)!(4n+1)), S = sum (-1)^n t^{2n+1} x/((2n+1)!(4n+3))
+      let tc = x, ts = x * t; // running t^k x / k!
+      for (n = 0; n < 60; n++) {
+        const kC = 2 * n, kS = 2 * n + 1;
+        const tcv = tc / (2 * kC + 1), tsv = ts / (2 * kS + 1);
+        c += (n % 2 ? -1 : 1) * tcv; si += (n % 2 ? -1 : 1) * tsv;
+        tc *= t * t / ((kC + 1) * (kC + 2)); ts *= t * t / ((kS + 1) * (kS + 2));
+        if (Math.abs(tcv) < 1e-17 && Math.abs(tsv) < 1e-17) break;
+      }
+    } else {
+      const z = PI * x * x;  // asymptotic auxiliary functions f, g
+      let f = 0, g = 0, tf = 1, tg = 1;
+      for (let n = 0; n < 12; n++) {
+        f += tf; g += tg;
+        const nf = -tf * (4 * n + 1) * (4 * n + 3) / (z * z), ng = -tg * (4 * n + 3) * (4 * n + 5) / (z * z);
+        if (Math.abs(nf) > Math.abs(tf)) break;
+        tf = nf; tg = ng;
+      }
+      f /= (PI * x); g /= (PI * PI * x * x * x);
+      const a = PI * x * x / 2;
+      c = 0.5 + f * Math.sin(a) - g * Math.cos(a);
+      si = 0.5 - f * Math.cos(a) - g * Math.sin(a);
+    }
+    return [s * c, s * si];
+  }
+  // UTD transition function F(X) = 2j sqrt(X) e^{jX} int_{sqrt X}^inf e^{-j tau^2} d tau  (X >= 0)
+  function utdF(X) {
+    if (X <= 0) return [0, 0];
+    if (X > 1e4) return [1 + 0, 0.5 / X];             // large-argument limit
+    const sx = Math.sqrt(X), u = sx * Math.sqrt(2 / PI);
+    const [Cu, Su] = fresnelCS(u);
+    const I = cscale([0.5 - Cu, -(0.5 - Su)], Math.sqrt(PI / 2));    // int_{sx}^inf e^{-j t^2}
+    return cmul(cmul([0, 2 * sx], cexpj(X)), I);
+  }
+  // Kouyoumjian-Pathak wedge coefficient with Luebbers' heuristic for lossy faces.
+  // phi, phip measured from face 0 (rad); n = exterior angle / pi; L distance parameter; R0, Rn complex.
+  // gtd = true uses F = 1 (Keller GTD).
+  function utdD(phi, phip, n, k, L, R0, Rn, gtd) {
+    const pre = cscale(cexpj(-PI / 4), -1 / (2 * n * Math.sqrt(2 * PI * k)));
+    const term = (beta, sgn) => {
+      let arg = (PI + sgn * beta) / (2 * n);
+      if (Math.abs(Math.sin(arg)) < 1e-7) { beta += 1e-5; arg = (PI + sgn * beta) / (2 * n); }   // on a shadow boundary: step off it (finite limit)
+      const sn = Math.sin(arg);
+      const cot = Math.cos(arg) / sn;
+      const N = Math.round((beta + sgn * PI) / (2 * n * PI));
+      const a = 2 * Math.cos((2 * n * PI * N - beta) / 2) ** 2;
+      const F = gtd ? [1, 0] : utdF(k * L * a);
+      return cscale(F, cot);
+    };
+    const bm = phi - phip, bp = phi + phip;
+    let s = cadd(term(bm, 1), term(bm, -1));
+    s = cadd(s, cmul(Rn, term(bp, 1)));
+    s = cadd(s, cmul(R0, term(bp, -1)));
+    return cmul(pre, s);
+  }
+
+  // Fresnel reflection, complex permittivity eps = er - j*60*sigma*lambda ; theta from normal
+  function epsC(er, sigma, fGHz) { return [er, -17.975 * sigma / fGHz]; }
+  function fresnelGamma(eps, cosT, pol) {   // pol 'TE' (E perpendicular to plane of incidence) or 'TM'
+    const sin2 = 1 - cosT * cosT;
+    const root = csqrt(csub(eps, [sin2, 0]));
+    if (pol === "TE") return cdiv(csub([cosT, 0], root), cadd([cosT, 0], root));
+    const ec = cscale(eps, cosT);
+    return cdiv(csub(ec, root), cadd(ec, root));
+  }
+
+  // Mie monostatic RCS of a PEC sphere, sigma / (pi a^2)
+  function mieMono(x) {
+    const nmax = Math.max(3, Math.ceil(x + 4.05 * Math.cbrt(x) + 4));
+    // spherical Bessel j_n by downward recurrence, y_n upward
+    const M = nmax + 30 + Math.ceil(x);
+    const jn = new Float64Array(M + 2); jn[M + 1] = 0; jn[M] = 1e-30;
+    for (let n = M; n > 0; n--) { jn[n - 1] = (2 * n + 1) / x * jn[n] - jn[n + 1]; if (Math.abs(jn[n - 1]) > 1e200) for (let i = n - 1; i <= M + 1; i++) jn[i] *= 1e-200; }
+    const scale = (Math.sin(x) / x) / jn[0];
+    for (let n = 0; n <= M; n++) jn[n] *= scale;
+    const yn = new Float64Array(nmax + 2); yn[0] = -Math.cos(x) / x; yn[1] = -Math.cos(x) / (x * x) - Math.sin(x) / x;
+    for (let n = 1; n <= nmax; n++) yn[n + 1] = (2 * n + 1) / x * yn[n] - yn[n - 1];
+    let S = [0, 0];
+    for (let n = 1; n <= nmax; n++) {
+      const h = [jn[n], -yn[n]], hm = [jn[n - 1], -yn[n - 1]];
+      const a = cdiv([jn[n], 0], h);                                    // j_n / h_n
+      const dj = x * jn[n - 1] - n * jn[n];                             // [x j_n]'
+      const dh = csub(cscale(hm, x), cscale(h, n));                     // [x h_n]'
+      const b = cdiv([dj, 0], dh);
+      S = cadd(S, cscale(csub(b, a), (n % 2 ? -1 : 1) * (n + 0.5)));
+    }
+    return 4 / (x * x) * cabs2(S);
+  }
+  const poSphere = (x) => 1 - Math.sin(2 * x) / x + (Math.sin(x) / x) ** 2;
+
+  // exact surface current on a PEC circular cylinder, TMz plane wave E = e^{-jkx}: |J| / |H_inc| at angle phi
+  function cylCurrent(ka, phis) {
+    const nmax = Math.ceil(ka + 12 + 2 * Math.cbrt(ka));
+    const J = besselJn(nmax, ka), Y = besselYn(nmax, ka);
+    const inv = []; for (let n = 0; n <= nmax; n++) inv.push(cdiv([1, 0], [J[n], -Y[n]]));
+    return phis.map((ph) => {
+      let s = [0, 0];
+      for (let n = -nmax; n <= nmax; n++) {
+        const m = Math.abs(n);
+        // H_{-n} = (-1)^n H_n
+        const hinv = (n < 0 && m % 2) ? cscale(inv[m], -1) : inv[m];
+        // j^{-n} e^{j n phi}
+        s = cadd(s, cmul(cexpj(-n * PI / 2 + n * ph), hinv));
+      }
+      return 2 / (PI * ka) * cabs(s);
+    });
+  }
+
+  // complex LU solve (dense), A is array of Float64Array rows of length 2N (re,im interleaved)
+  function luFactor(A, N) {
+    const piv = new Int32Array(N);
+    for (let k = 0; k < N; k++) {
+      let p = k, best = 0;
+      for (let i = k; i < N; i++) { const v = A[i][2 * k] ** 2 + A[i][2 * k + 1] ** 2; if (v > best) { best = v; p = i; } }
+      piv[k] = p; if (p !== k) { const t = A[p]; A[p] = A[k]; A[k] = t; }
+      const rk = A[k], pr = rk[2 * k], pi = rk[2 * k + 1], d = pr * pr + pi * pi;
+      for (let i = k + 1; i < N; i++) {
+        const ri = A[i]; const ar = ri[2 * k], ai = ri[2 * k + 1];
+        const lr = (ar * pr + ai * pi) / d, li = (ai * pr - ar * pi) / d;
+        ri[2 * k] = lr; ri[2 * k + 1] = li;
+        for (let j = k + 1; j < N; j++) {
+          const br = rk[2 * j], bi = rk[2 * j + 1];
+          ri[2 * j] -= lr * br - li * bi; ri[2 * j + 1] -= lr * bi + li * br;
+        }
+      }
+    }
+    return piv;
+  }
+  function luSolve(A, piv, N, b) {   // b Float64Array 2N, in place
+    for (let k = 0; k < N; k++) { const p = piv[k]; if (p !== k) { let t = b[2 * k]; b[2 * k] = b[2 * p]; b[2 * p] = t; t = b[2 * k + 1]; b[2 * k + 1] = b[2 * p + 1]; b[2 * p + 1] = t; } }
+    for (let i = 0; i < N; i++) { const r = A[i]; let sr = b[2 * i], si = b[2 * i + 1];
+      for (let j = 0; j < i; j++) { sr -= r[2 * j] * b[2 * j] - r[2 * j + 1] * b[2 * j + 1]; si -= r[2 * j] * b[2 * j + 1] + r[2 * j + 1] * b[2 * j]; }
+      b[2 * i] = sr; b[2 * i + 1] = si; }
+    for (let i = N - 1; i >= 0; i--) { const r = A[i]; let sr = b[2 * i], si = b[2 * i + 1];
+      for (let j = i + 1; j < N; j++) { sr -= r[2 * j] * b[2 * j] - r[2 * j + 1] * b[2 * j + 1]; si -= r[2 * j] * b[2 * j + 1] + r[2 * j + 1] * b[2 * j]; }
+      const dr = r[2 * i], di = r[2 * i + 1], d = dr * dr + di * di;
+      b[2 * i] = (sr * dr + si * di) / d; b[2 * i + 1] = (si * dr - sr * di) / d; }
+    return b;
+  }
+
+  // 2-D TMz EFIE MoM for open PEC polylines (units: wavelengths, k = 2 pi). Pulse basis, point matching.
+  // polys: array of polylines [[x,y],...]; cellsPerLambda. Returns object with monostatic(phi) -> echo width / lambda.
+  function momTM(polys, cellsPerLambda = 20) {
+    const k = 2 * PI, cells = [];
+    for (const pl of polys) for (let s = 0; s < pl.length - 1; s++) {
+      const [ax, ay] = pl[s], [bx, by] = pl[s + 1], len = Math.hypot(bx - ax, by - ay);
+      const n = Math.max(1, Math.ceil(len * cellsPerLambda));
+      for (let i = 0; i < n; i++) { const t0 = i / n, t1 = (i + 1) / n;
+        cells.push({ x: ax + (bx - ax) * (t0 + t1) / 2, y: ay + (by - ay) * (t0 + t1) / 2, d: len / n, ux: (bx - ax) / len, uy: (by - ay) / len }); }
+    }
+    const N = cells.length, A = [];
+    const gl = [-0.861136311594053, -0.339981043584856, 0.339981043584856, 0.861136311594053], gw = [0.347854845137454, 0.652145154862546, 0.652145154862546, 0.347854845137454];
+    const gam = 1.781072418, E = Math.E;
+    for (let m = 0; m < N; m++) {
+      const row = new Float64Array(2 * N), cm = cells[m];
+      for (let n = 0; n < N; n++) {
+        const cn = cells[n];
+        if (m === n) { const f = k * cn.d / 4; row[2 * n] = f; row[2 * n + 1] = -f * (2 / PI) * Math.log(gam * k * cn.d / (4 * E)); continue; }
+        const r = Math.hypot(cm.x - cn.x, cm.y - cn.y);
+        if (r < 3 * cn.d) { let sr = 0, si = 0;
+          for (let q = 0; q < 4; q++) { const t = gl[q] * cn.d / 2, px = cn.x + cn.ux * t, py = cn.y + cn.uy * t;
+            const rr = Math.hypot(cm.x - px, cm.y - py), h = h02(k * rr); sr += gw[q] * h[0]; si += gw[q] * h[1]; }
+          const f = k * cn.d / 8; row[2 * n] = f * sr; row[2 * n + 1] = f * si;
+        } else { const h = h02(k * r), f = k * cn.d / 4; row[2 * n] = f * h[0]; row[2 * n + 1] = f * h[1]; }
+      }
+      A.push(row);
+    }
+    // eta factored out: Z/eta * J*eta = E_inc
+    const piv = luFactor(A, N);
+    function monostatic(phi) {   // phi: direction toward the radar (incident wave arrives from phi)
+      const cx = Math.cos(phi), cy = Math.sin(phi), b = new Float64Array(2 * N);
+      for (let m = 0; m < N; m++) { const ph = k * (cells[m].x * cx + cells[m].y * cy); b[2 * m] = Math.cos(ph); b[2 * m + 1] = Math.sin(ph); }
+      luSolve(A, piv, N, b);   // b = eta * J
+      let sr = 0, si = 0;
+      for (let n = 0; n < N; n++) { const ph = k * (cells[n].x * cx + cells[n].y * cy), c = Math.cos(ph), s = Math.sin(ph);
+        sr += cells[n].d * (b[2 * n] * c - b[2 * n + 1] * s); si += cells[n].d * (b[2 * n] * s + b[2 * n + 1] * c); }
+      return k / 4 * (sr * sr + si * si);   // sigma_2D / lambda (lengths in lambda): (k eta^2/4)|sum J d|^2 with eta J -> b
+    }
+    return { N, monostatic };
+  }
+
+  // P.526 knife-edge: exact (Fresnel integrals) and approximation eq. (31)
+  function knifeExact(v) { const [c, s] = fresnelCS(v); return -20 * Math.log10(Math.hypot(1 - c - s, c - s) / 2); }
+  function knifeApprox(v) { return v > -0.78 ? 6.9 + 20 * Math.log10(Math.sqrt((v - 0.1) ** 2 + 1) + v - 0.1) : 0; }
+
+  return { PI, C, cadd, csub, cmul, cdiv, cscale, cexpj, cabs, cabs2, csqrt, j0, y0, j1, y1, h02, besselJn, besselYn,
+    fresnelCS, utdF, utdD, epsC, fresnelGamma, mieMono, poSphere, cylCurrent, momTM, knifeExact, knifeApprox };
+})();
+/* 2-D SBR (TMz, PEC, lengths in wavelengths): GO ray bundle + PO integral at every hit point */
+function sbrMono(polys, phi, maxB, raysPerLambda = 10, keepRays = false) {
+  const PI = Math.PI, k = 2 * PI, segs = [];
+  for (const pl of polys) for (let i = 0; i < pl.length - 1; i++) { const [ax, ay] = pl[i], [bx, by] = pl[i + 1], L = Math.hypot(bx - ax, by - ay); segs.push({ ax, ay, bx, by, ux: (bx - ax) / L, uy: (by - ay) / L, L }); }
+  const sx = Math.cos(phi), sy = Math.sin(phi), dx0 = -sx, dy0 = -sy, tx = -sy, ty = sx;
+  let tmin = 1e9, tmax = -1e9, smax = -1e9;
+  for (const s of segs) for (const [x, y] of [[s.ax, s.ay], [s.bx, s.by]]) { const t = x * tx + y * ty; tmin = Math.min(tmin, t); tmax = Math.max(tmax, t); smax = Math.max(smax, x * sx + y * sy); }
+  const D = 1 / raysPerLambda, nr = Math.max(1, Math.ceil((tmax - tmin) / D)), R = smax + 5;
+  function hit(px, py, dx, dy, skip) {
+    let best = 1e18, bi = -1;
+    for (let i = 0; i < segs.length; i++) { if (i === skip) continue; const s = segs[i];
+      const ex = s.bx - s.ax, ey = s.by - s.ay, den = dx * ey - dy * ex; if (Math.abs(den) < 1e-14) continue;
+      const qx = s.ax - px, qy = s.ay - py, t = (qx * ey - qy * ex) / den, u = (qx * dy - qy * dx) / den;
+      if (t > 1e-9 && u >= 0 && u <= 1 && t < best) { best = t; bi = i; } }
+    return [bi, best];
+  }
+  let Sr = 0, Si = 0; const rays = [];
+  for (let r = 0; r < nr; r++) {
+    const t0 = tmin + (r + 0.5) * (tmax - tmin) / nr, dW = (tmax - tmin) / nr;
+    let px = t0 * tx + R * sx, py = t0 * ty + R * sy, dx = dx0, dy = dy0, amp = 1, psi = -R, last = -1;
+    const path = keepRays ? [[px, py]] : null;
+    for (let b = 0; b < maxB; b++) {
+      const [i, t] = hit(px, py, dx, dy, last); if (i < 0) break;
+      const s = segs[i], hx = px + dx * t, hy = py + dy * t; psi += t;
+      let nx = -s.uy, ny = s.ux; if (nx * dx + ny * dy > 0) { nx = -nx; ny = -ny; }
+      const cosi = -(nx * dx + ny * dy);
+      if (sx * nx + sy * ny > 0 && hit(hx, hy, sx, sy, i)[0] < 0) {     // observer sees the lit side of this facet
+        const ell = dW / Math.max(cosi, 1e-6), q = k * ell * ((sx - dx) * s.ux + (sy - dy) * s.uy) / 2;
+        const sc = Math.abs(q) < 1e-9 ? 1 : Math.sin(q) / q;
+        const ph = -k * psi + k * (sx * hx + sy * hy), a = amp * dW * sc;
+        Sr += a * Math.cos(ph); Si += a * Math.sin(ph);
+      }
+      const dn = dx * nx + dy * ny; dx -= 2 * dn * nx; dy -= 2 * dn * ny; amp *= -1; px = hx; py = hy; last = i;
+      if (path) path.push([hx, hy]);
+    }
+    if (path) { path.push([px + dx * 6, py + dy * 6]); rays.push(path); }
+  }
+  return { sigma: k * (Sr * Sr + Si * Si), rays };
+}
+/* ---------- 2.5-D ray engine: image method (exact paths), single UTD diffraction, ray launching ---------- */
+const RAYS = (() => {
+  const { cadd, cmul, cscale, cexpj, cabs2, fresnelGamma, epsC, utdD } = NUM;
+  const PI = Math.PI;
+
+  // build walls and diffracting edges from blocks (solid rectangles) and free walls (thin, two-sided)
+  function build(scene) {
+    const walls = [], edges = [];
+    scene.blocks.forEach((b, bi) => {
+      const p = [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]];
+      for (let i = 0; i < 4; i++) { const a = p[i], c = p[(i + 1) % 4];
+        const L = Math.hypot(c[0] - a[0], c[1] - a[1]), ux = (c[0] - a[0]) / L, uy = (c[1] - a[1]) / L;
+        // counter-clockwise polygon (y up): outward normal = (uy, -ux)
+        walls.push({ ax: a[0], ay: a[1], bx: c[0], by: c[1], ux, uy, nx: uy, ny: -ux, two: false, L, owner: "b" + bi }); }
+      if (scene.cornersDiffract !== false) for (let i = 0; i < 4; i++) {
+        const c = p[i], prev = p[(i + 3) % 4], next = p[(i + 1) % 4];
+        const u = norm(next[0] - c[0], next[1] - c[1]), v = norm(prev[0] - c[0], prev[1] - c[1]);
+        // exterior wedge: from face0 counter-clockwise by 1.5 pi to the other face
+        const face0 = ccw(u, v) > PI ? u : v;
+        edges.push({ x: c[0], y: c[1], f0: face0, n: 1.5, owner: "b" + bi });
+      }
+    });
+    (scene.walls || []).forEach((w, wi) => {
+      const L = Math.hypot(w.x2 - w.x1, w.y2 - w.y1), ux = (w.x2 - w.x1) / L, uy = (w.y2 - w.y1) / L;
+      walls.push({ ax: w.x1, ay: w.y1, bx: w.x2, by: w.y2, ux, uy, nx: uy, ny: -ux, two: true, L, owner: "w" + wi });
+      if (w.free1) edges.push({ x: w.x1, y: w.y1, f0: [ux, uy], n: 2, owner: "w" + wi });
+      if (w.free2) edges.push({ x: w.x2, y: w.y2, f0: [-ux, -uy], n: 2, owner: "w" + wi });
+    });
+    return { walls, edges };
+  }
+  const norm = (x, y) => { const l = Math.hypot(x, y); return [x / l, y / l]; };
+  const ccw = (a, b) => { let t = Math.atan2(a[0] * b[1] - a[1] * b[0], a[0] * b[0] + a[1] * b[1]); return t < 0 ? t + 2 * PI : t; };
+
+  // segment p->q blocked by any wall? (strict interior test)
+  function blocked(walls, px, py, qx, qy) {
+    const dx = qx - px, dy = qy - py;
+    const minx = Math.min(px, qx), maxx = Math.max(px, qx), miny = Math.min(py, qy), maxy = Math.max(py, qy);
+    for (let i = 0; i < walls.length; i++) { const w = walls[i];
+      if (Math.max(w.ax, w.bx) < minx || Math.min(w.ax, w.bx) > maxx || Math.max(w.ay, w.by) < miny || Math.min(w.ay, w.by) > maxy) continue;
+      const ex = w.bx - w.ax, ey = w.by - w.ay, den = dx * ey - dy * ex; if (den === 0) continue;
+      const ax = w.ax - px, ay = w.ay - py, t = (ax * ey - ay * ex) / den, u = (ax * dy - ay * dx) / den;
+      if (t > 1e-7 && t < 1 - 1e-7 && u > -1e-9 && u < 1 + 1e-9) return true; }
+    return false;
+  }
+  // inside a block?
+  const inside = (scene, x, y) => scene.blocks.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h);
+
+  // image tree from the transmitter, up to order K
+  function imageTree(geo, tx, K) {
+    const nodes = [];
+    function rec(src, parent, depth, lastW) {
+      if (depth >= K) return;
+      geo.walls.forEach((w, wi) => {
+        if (wi === lastW) return;
+        const side = (src[0] - w.ax) * w.nx + (src[1] - w.ay) * w.ny;   // source must be on a reflecting side
+        if (!w.two && side <= 0) return; if (Math.abs(side) < 1e-9) return;
+        const img = [src[0] - 2 * side * w.nx, src[1] - 2 * side * w.ny];
+        const node = { img, w: wi, parent, depth: depth + 1 }; nodes.push(node);
+        rec(img, node, depth + 1, wi);
+      });
+    }
+    rec([tx.x, tx.y], null, 0, -1);
+    return nodes;
+  }
+
+  // all exact paths from tx to point (rx); opts: {K, utd, gtd, pol, eps, k}
+  function paths(scene, geo, tree, tx, rx, o) {
+    const out = [], walls = geo.walls;
+    // LOS
+    if (!blocked(walls, tx.x, tx.y, rx.x, rx.y)) { const L = Math.hypot(rx.x - tx.x, rx.y - tx.y); out.push({ type: 0, pts: [[tx.x, tx.y], [rx.x, rx.y]], L, g: [1, 0] }); }
+    // reflections
+    for (const nd of tree) {
+      if (nd.depth > o.K) continue;
+      let qx = rx.x, qy = rx.y, ok = true, g = [1, 0]; const pts = [[rx.x, rx.y]];
+      let node = nd, chainNext = null;
+      const L = Math.hypot(rx.x - nd.img[0], rx.y - nd.img[1]);
+      while (node) {
+        const w = walls[node.w], ix = node.img[0], iy = node.img[1];
+        // q must be on the reflecting side
+        const sq = (qx - w.ax) * w.nx + (qy - w.ay) * w.ny, si = (ix - w.ax) * w.nx + (iy - w.ay) * w.ny;
+        if (sq * si >= 0) { ok = false; break; }
+        const t = sq / (sq - si), hx = qx + (ix - qx) * t, hy = qy + (iy - qy) * t;
+        const u = ((hx - w.ax) * w.ux + (hy - w.ay) * w.uy) / w.L; if (u < 0 || u > 1) { ok = false; break; }
+        if (blocked(walls, qx, qy, hx, hy)) { ok = false; break; }
+        const dl = Math.hypot(ix - qx, iy - qy), cosT = Math.abs(((ix - qx) * w.nx + (iy - qy) * w.ny) / dl);
+        g = cmul(g, fresnelGamma(o.eps, cosT, o.pol));
+        pts.push([hx, hy]); qx = hx; qy = hy; node = node.parent;
+      }
+      if (!ok) continue;
+      if (blocked(walls, qx, qy, tx.x, tx.y)) continue;
+      pts.push([tx.x, tx.y]); pts.reverse();
+      out.push({ type: nd.depth, pts, L, g });
+    }
+    // single diffraction
+    if (o.utd) for (const e of geo.edges) {
+      const phip = angleAt(e, tx.x, tx.y), phi = angleAt(e, rx.x, rx.y);
+      if (phip > e.n * PI || phi > e.n * PI) continue;
+      const ex = e.x + (tx.x - e.x) * 1e-6, ey = e.y + (tx.y - e.y) * 1e-6, fx = e.x + (rx.x - e.x) * 1e-6, fy = e.y + (rx.y - e.y) * 1e-6;
+      if (blocked(walls, tx.x, tx.y, ex, ey) || blocked(walls, fx, fy, rx.x, rx.y)) continue;
+      const sp = Math.hypot(tx.x - e.x, tx.y - e.y), s = Math.hypot(rx.x - e.x, rx.y - e.y);
+      if (sp < 1e-6 || s < 1e-6) continue;
+      const R0 = fresnelGamma(o.eps, Math.abs(Math.sin(phip)), o.pol), Rn = fresnelGamma(o.eps, Math.abs(Math.sin(e.n * PI - phi)), o.pol);
+      const D = utdD(phi, phip, e.n, o.k, s * sp / (s + sp), R0, Rn, o.gtd);
+      // field: (1/s') * D * sqrt(s'/(s(s+s'))) relative to the 1/r form; store as gain g and length L so that a = g e^{-jkL}/L
+      const A = Math.sqrt(sp / (s * (s + sp))) / sp, L = s + sp;
+      out.push({ type: -1, pts: [[tx.x, tx.y], [e.x, e.y], [rx.x, rx.y]], L, g: cscale(D, A * L), edge: e });
+    }
+    return out;
+  }
+  function angleAt(e, x, y) { const d = norm(x - e.x, y - e.y); return ccw(e.f0, d); }
+
+  // sum: path gain in dB (isotropic antennas), coherent or not
+  function sum(ps, k, coherent) {
+    const lam = 2 * PI / k, f = lam / (4 * PI);
+    if (!ps.length) return -Infinity;
+    if (coherent) { let s = [0, 0]; for (const p of ps) s = cadd(s, cscale(cmul(p.g, cexpj(-k * p.L)), 1 / p.L)); return 10 * Math.log10(cabs2(s) * f * f + 1e-300); }
+    let s = 0; for (const p of ps) s += cabs2(p.g) / (p.L * p.L); return 10 * Math.log10(s * f * f + 1e-300);
+  }
+  function delaySpread(ps) {   // rms delay spread (ns)
+    if (ps.length < 2) return 0;
+    let P = 0, m1 = 0, m2 = 0;
+    for (const p of ps) { const pw = cabs2(p.g) / (p.L * p.L), t = p.L / 0.299792458; P += pw; m1 += pw * t; m2 += pw * t * t; }
+    m1 /= P; m2 /= P; return Math.sqrt(Math.max(0, m2 - m1 * m1));
+  }
+
+  // ray launching (for the picture): returns polylines
+  function launch(geo, tx, nRays, maxB, maxLen) {
+    const out = [], walls = geo.walls;
+    for (let r = 0; r < nRays; r++) {
+      const a = (r + 0.5) * 2 * PI / nRays; let dx = Math.cos(a), dy = Math.sin(a), px = tx.x, py = tx.y, last = -1, len = 0;
+      const pl = [[px, py]];
+      for (let b = 0; b <= maxB; b++) {
+        let best = 1e18, bi = -1;
+        for (let i = 0; i < walls.length; i++) { if (i === last) continue; const w = walls[i];
+          const ex = w.bx - w.ax, ey = w.by - w.ay, den = dx * ey - dy * ex; if (Math.abs(den) < 1e-12) continue;
+          const qx = w.ax - px, qy = w.ay - py, t = (qx * ey - qy * ex) / den, u = (qx * dy - qy * dx) / den;
+          if (t > 1e-9 && u >= 0 && u <= 1 && t < best) { best = t; bi = i; } }
+        if (bi < 0 || len + best > maxLen) { const t = maxLen - len; pl.push([px + dx * t, py + dy * t]); break; }
+        px += dx * best; py += dy * best; len += best; pl.push([px, py]);
+        if (b === maxB) break;
+        const w = walls[bi], dn = dx * w.nx + dy * w.ny; dx -= 2 * dn * w.nx; dy -= 2 * dn * w.ny; last = bi;
+      }
+      out.push(pl);
+    }
+    return out;
+  }
+  return { build, imageTree, paths, sum, delaySpread, launch, inside, blocked, angleAt };
+})();
+/* ---------- page: shared drawing helpers ---------- */
+(() => {
+  "use strict";
+  const PI = Math.PI, D2R = PI / 180;
+  const $ = (s, r = document) => r.querySelector(s);
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const clock = { now: () => performance.now() };
+  let COL = {};
+  function readCols() {
+    COL = { ink: css("--ink"), muted: css("--muted"), line: css("--line"), grid: css("--grid"), surface: css("--surface"), bg: css("--bg"),
+      asym: css("--c-asym"), fem: css("--c-fem"), fdtd: css("--c-fdtd"), mom: css("--c-mom3d"), q2d: css("--c-q2d"),
+      field: css("--field"), hfield: css("--hfield"), ok: css("--ok"), bad: css("--bad"), mono: css("--mono"), body: css("--body") };
+  }
+  readCols();
+  const redraws = [];
+  const themeChange = () => { readCols(); redraws.forEach((f) => f()); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeChange);
+  new MutationObserver(themeChange).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  function size(cv, aspect) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.max(200, cv.parentElement.clientWidth), h = Math.round(aspect(w));
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + "px"; }
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    return { ctx, w, h };
+  }
+  function auto(cv, draw) { let last = 0; const ro = new ResizeObserver(() => { const w = cv.parentElement.clientWidth; if (w !== last) { last = w; draw(); } }); ro.observe(cv.parentElement); redraws.push(draw); }
+  const font = (px, w = 500) => `${w} ${px}px ${COL.mono || "monospace"}`;
+  const lg = Math.log10;
+  const fmtDb = (v, d = 1) => (isFinite(v) ? (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(d) + " dB" : "no field");
+  const fmtNum = (v, d = 1) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(d);
+  const sup = (e) => String(e).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"["0123456789".indexOf(c)] || (c === "-" ? "⁻" : c)).join("");
+  function sci(v) { if (v < 1000) return v < 10 ? v.toFixed(v < 1 ? 2 : 1) : Math.round(v).toString(); const e = Math.floor(lg(v)), m = v / 10 ** e; return (m >= 9.95 ? "10" + sup(e + 1) : m.toFixed(1).replace(/\.0$/, "") + "·" + "10" + sup(e)); }
+  function fmtLen(m) { return m < 0.01 ? (m * 1000).toFixed(1) + " mm" : m < 1 ? (m * 100).toFixed(m < 0.1 ? 1 : 0) + " cm" : m < 1000 ? (m < 10 ? m.toFixed(1) : Math.round(m)) + " m" : (m / 1000).toFixed(m < 1e4 ? 1 : 0) + " km"; }
+
+  // plot axes. o: x0,x1,y0,y1,xlog,ylog,xt,yt,xf,yf,xl,yl
+  function axes(ctx, b, o) {
+    const tx = (v) => (o.xlog ? (lg(v) - lg(o.x0)) / (lg(o.x1) - lg(o.x0)) : (v - o.x0) / (o.x1 - o.x0));
+    const ty = (v) => (o.ylog ? (lg(v) - lg(o.y0)) / (lg(o.y1) - lg(o.y0)) : (v - o.y0) / (o.y1 - o.y0));
+    const X = (v) => b.x + tx(v) * b.w, Y = (v) => b.y + b.h - ty(v) * b.h;
+    const ix = (px) => { const t = (px - b.x) / b.w; return o.xlog ? 10 ** (lg(o.x0) + t * (lg(o.x1) - lg(o.x0))) : o.x0 + t * (o.x1 - o.x0); };
+    ctx.save(); ctx.lineWidth = 1; ctx.strokeStyle = COL.grid; ctx.fillStyle = COL.muted; ctx.font = font(10.5);
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (const v of o.xt || []) { const x = Math.round(X(v)) + 0.5; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.fillText(o.xf ? o.xf(v) : v, x, b.y + b.h + 5); }
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (const v of o.yt || []) { const y = Math.round(Y(v)) + 0.5; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillText(o.yf ? o.yf(v) : v, b.x - 5, y); }
+    ctx.strokeStyle = COL.line; ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w, b.h);
+    ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600);
+    if (o.xl) { ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(o.xl, b.x + b.w, b.y + b.h + 32); }
+    if (o.yl) { ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(o.yl, b.x + 6, b.y + 5); }
+    ctx.restore();
+    return { X, Y, ix };
+  }
+  function curve(ctx, b, pts, color, w = 2, dash = null, alpha = 1) {
+    ctx.save(); ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.globalAlpha = alpha; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); let pen = false;
+    for (const [x, y] of pts) { if (!isFinite(x) || !isFinite(y)) { pen = false; continue; } const yy = Math.max(b.y - 50, Math.min(b.y + b.h + 50, y)); if (pen) ctx.lineTo(x, yy); else ctx.moveTo(x, yy); pen = true; }
+    ctx.stroke(); ctx.restore();
+  }
+  function vline(ctx, b, x, color, label, dash = [4, 4], top = true) {
+    ctx.save(); ctx.strokeStyle = color; ctx.setLineDash(dash); ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.setLineDash([]);
+    if (label) { ctx.fillStyle = color; ctx.font = font(10.5, 600); ctx.textAlign = x > b.x + b.w * 0.8 ? "right" : "left"; ctx.textBaseline = "top"; ctx.fillText(label, x + (ctx.textAlign === "left" ? 4 : -4), top ? b.y + 4 : b.y + b.h - 16); }
+    ctx.restore();
+  }
+  function marker(ctx, b, x, color) {
+    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke();
+    ctx.fillStyle = COL.surface; ctx.beginPath(); ctx.arc(x, b.y + 1, 6, 0, 2 * PI); ctx.fill(); ctx.stroke(); ctx.restore();
+  }
+  function dot(ctx, x, y, color, r = 4.5) { ctx.save(); ctx.fillStyle = color; ctx.strokeStyle = COL.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * PI); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  const box = (w, h, l = 46, r = 12, t = 10, bt = 36) => ({ x: l, y: t, w: w - l - r, h: h - t - bt });
+  // drag on a plot to set an x value; also with the keyboard through a linked range input
+  function plotDrag(cv, getB, onX) {
+    let on = false;
+    const go = (e) => { const r = cv.getBoundingClientRect(), b = getB(); if (!b) return; onX(Math.max(b.x, Math.min(b.x + b.w, e.clientX - r.left))); };
+    cv.addEventListener("pointerdown", (e) => { on = true; cv.setPointerCapture(e.pointerId); e.preventDefault(); go(e); });
+    cv.addEventListener("pointermove", (e) => { if (on) go(e); });
+    const stop = () => { on = false; }; cv.addEventListener("pointerup", stop); cv.addEventListener("pointercancel", stop);
+  }
+  function seg(el, cb) {
+    el.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); cb(b.dataset.v); });
+  }
+  function setSeg(el, v) { el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x.dataset.v === String(v) ? "true" : "false")); }
+  const viridis = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+  function cmap(t) { t = Math.max(0, Math.min(1, t)) * 4; const i = Math.min(3, Math.floor(t)), f = t - i, a = viridis[i], c = viridis[i + 1]; return [a[0] + (c[0] - a[0]) * f, a[1] + (c[1] - a[1]) * f, a[2] + (c[2] - a[2]) * f]; }
+
+  /* ---------- 1. regime map ---------- */
+  const REG = (() => {
+    const M = [
+      { id: "fem", name: "FEM", col: "fem", r: [[0.02, 15, "good"], [15, 80, "maybe"]] },
+      { id: "fdtd", name: "FDTD", col: "fdtd", r: [[0.05, 30, "good"], [30, 250, "maybe"]] },
+      { id: "mom", name: "MoM with MLFMM", col: "mom", r: [[0.01, 100, "good"], [100, 3000, "maybe"]] },
+      { id: "po", name: "PO + PTD", col: "asym", r: [[2, 10, "maybe"], [10, 1e5, "good"], [1e5, 1e6, "maybe"]] },
+      { id: "ray", name: "GO + UTD ray tracing", col: "asym", r: [[3, 20, "maybe"], [20, 1e6, "good"]] },
+      { id: "sbr", name: "SBR (rays + PO)", col: "asym", r: [[5, 20, "maybe"], [20, 1e5, "good"], [1e5, 1e6, "maybe"]] },
+      { id: "emp", name: "Empirical and statistical models", col: "q2d", r: [[50, 1000, "maybe"], [1000, 1e6, "good"]] },
+    ];
+    const n = (x) => sci(x);
+    const why = {
+      fem: { good: (x) => `Exact Maxwell. A full volume mesh at λ/10 needs about ${n(6 * (10 * (x + 0.5)) ** 3)} tetrahedra (fewer if the box is mostly empty).`,
+        maybe: (x) => `About ${n(6 * (10 * (x + 0.5)) ** 3)} tetrahedra. Needs domain decomposition and a cluster.`,
+        no: (x) => x < 1 ? "Very small: a quasi-static solver is faster." : `Too large: about ${n(6 * (10 * (x + 0.5)) ** 3)} tetrahedra.` },
+      fdtd: { good: (x) => `Exact Maxwell on a grid at λ/20: about ${n((20 * (x + 1)) ** 3)} cells for a full box. One run gives a wide band.`,
+        maybe: (x) => `About ${n((20 * (x + 1)) ** 3)} cells. Possible on large GPU systems.`,
+        no: (x) => x < 1 ? "Very small: the time step becomes tiny. Use a quasi-static or FEM solver." : `Too large: about ${n((20 * (x + 1)) ** 3)} cells.` },
+      mom: { good: (x) => `Exact Maxwell on the surface: about ${n(300 * x * x + 30)} unknowns. MLFMM keeps the cost near N log N.`,
+        maybe: (x) => `About ${n(300 * x * x)} unknowns. Record MLFMM runs on clusters reach this size.`,
+        no: (x) => x < 1 ? "Very small: low-frequency breakdown. Use a stable formulation or a quasi-static solver." : `Too large: about ${n(300 * x * x)} unknowns.` },
+      po: { good: () => "Radius of curvature ≫ λ: each lit point acts as a flat tangent plane. J = 2n̂×H. Cost grows with the lit area, not with the volume.",
+        maybe: (x) => x < 100 ? "Edges and curvature are only a few λ: errors of several dB. Add PTD, or check with full-wave." : "The PO integral needs λ/10 facets on a huge area. Use large-element PO or rays.",
+        no: () => "Too small: the current is not local. PO is wrong; use a full-wave solver." },
+      ray: { good: () => "Local plane-wave assumption: the field travels on rays. Edges need diffraction coefficients (UTD) to fill the shadows.",
+        maybe: () => "Close to the limit of the ray picture. Check one case with a full-wave solver.",
+        no: () => "Below a few λ, rays do not describe the field." },
+      sbr: { good: () => "GO rays carry the field into cavities and multiple bounces. A PO integral at each hit gives the scattered field.",
+        maybe: (x) => x < 100 ? "Few ray tubes per feature. Check the ray density and add edge terms." : "Very many rays. Use GPU ray tracing, or a propagation model.",
+        no: () => "Below a few λ, rays do not describe the field." },
+      emp: { good: () => "No geometry, only statistics: a curve fit to measurements gives the median loss and a spread σ ≈ 6–10 dB.",
+        maybe: () => "Short range: only indoor one-slope or multi-wall models apply. Check the range of the model.",
+        no: () => "Too small for statistics: there are too few obstacles between Tx and Rx." },
+    };
+    const EX = [["Patch antenna, 2.4 GHz", 0.06, 2.4], ["Phone, 3.5 GHz", 0.15, 3.5], ["Office floor, 2.4 GHz", 40, 2.4], ["Fighter jet, 10 GHz", 15, 10],
+      ["Car, 77 GHz", 4.5, 77], ["City block, 3.5 GHz", 100, 3.5], ["Ship, 10 GHz", 150, 10], ["Urban cell, 1 km, 3.5 GHz", 1000, 3.5], ["Rural cell, 20 km, 900 MHz", 2e4, 0.9], ["Long link, 100 km, 900 MHz", 1e5, 0.9]];
+    const FS = [0.9, 2.4, 3.5, 10, 77];
+    const cv = $("#reg-cv"), rng = $("#reg-x"), st = { lx: 2.7, f: 10, ex: -1 };
+    let B = null;
+    $("#reg-f").innerHTML = FS.map((f) => `<button type="button" data-v="${f}" aria-pressed="${f === st.f}">${f < 1 ? f * 1000 + " MHz" : f + " GHz"}</button>`).join("");
+    seg($("#reg-f"), (v) => { st.f = +v; st.ex = -1; upd(); });
+    $("#reg-ex").innerHTML = EX.map((e, i) => `<button type="button" data-i="${i}" aria-pressed="false">${e[0]}</button>`).join("");
+    $("#reg-ex").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; const ex = EX[+b.dataset.i]; st.ex = +b.dataset.i; st.f = ex[2]; setSeg($("#reg-f"), st.f); set(lg(ex[1] * ex[2] / 0.299792458), true); });
+    rng.addEventListener("input", () => { st.ex = -1; set(+rng.value); });
+    function set(lx, keepEx) { st.lx = Math.max(-1, Math.min(6, lx)); rng.value = st.lx; if (!keepEx) st.ex = -1; upd(); }
+    const status = (m, x) => { for (const [a, b, s] of m.r) if (x >= a && x < b) return s; return "no"; };
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => (w < 560 ? 330 : 300));
+      const narrow = w < 560;
+      B = { x: 12, y: 30, w: w - 24, h: h - 30 - 30 };
+      const A = axes(ctx, B, { x0: 0.1, x1: 1e6, xlog: true, xt: [0.1, 1, 10, 100, 1e3, 1e4, 1e5, 1e6], xf: (v) => (v < 1 ? "0.1" : v < 1000 ? String(v) : "10" + sup(Math.round(lg(v)))), xl: narrow ? "" : "L / λ" });
+      const x = 10 ** st.lx, rowH = B.h / M.length;
+      M.forEach((m, i) => {
+        const y = B.y + i * rowH, s = status(m, x), c = COL[m.col];
+        ctx.font = `${s === "good" ? 700 : 500} ${narrow ? 11 : 12}px ${COL.body}`; ctx.fillStyle = s === "no" ? COL.muted : COL.ink; ctx.textAlign = "left"; ctx.textBaseline = "top";
+        for (const [a, b, kind] of m.r) {
+          const xa = A.X(Math.max(a, 0.1)), xb = A.X(Math.min(b, 1e6)); ctx.fillStyle = c; ctx.globalAlpha = kind === "good" ? (s === "no" ? 0.55 : 0.95) : 0.28;
+          ctx.beginPath(); ctx.roundRect ? ctx.roundRect(xa, y + rowH * 0.52, xb - xa, Math.min(11, rowH * 0.32), 3) : ctx.rect(xa, y + rowH * 0.52, xb - xa, 10); ctx.fill(); ctx.globalAlpha = 1;
+        }
+        const lx = A.X(Math.max(m.r[0][0], 0.1));
+        ctx.fillStyle = s === "no" ? COL.muted : COL.ink;
+        const tw = ctx.measureText(m.name).width, tx0 = Math.min(lx, B.x + B.w - tw - 4);
+        ctx.save(); ctx.strokeStyle = COL.surface; ctx.lineWidth = 4; ctx.lineJoin = "round"; ctx.strokeText(m.name, tx0, y + rowH * 0.12); ctx.restore(); ctx.fillText(m.name, tx0, y + rowH * 0.12);
+      });
+      // marker
+      const mx = A.X(x);
+      ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mx, B.y - 8); ctx.lineTo(mx, B.y + B.h); ctx.stroke();
+      ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(mx, B.y - 12, 8, 0, 2 * PI); ctx.fill();
+      ctx.fillStyle = COL.surface; ctx.font = font(9, 700); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("↔", mx, B.y - 12); ctx.restore();
+    }
+    plotDrag(cv, () => B, (px) => { const t = (px - B.x) / B.w; set(-1 + t * 7); });
+    function upd() {
+      const x = 10 ** st.lx, lam = 0.299792458 / st.f;
+      $("#reg-xv").textContent = sci(x) + " λ";
+      $("#reg-big").innerHTML = `L = ${sci(x)} λ`;
+      $("#reg-phys").textContent = (st.ex >= 0 ? EX[st.ex][0] + ": " : "") + "L = " + fmtLen(x * lam) + " at " + (st.f < 1 ? st.f * 1000 + " MHz" : st.f + " GHz");
+      $("#reg-ex").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.i === st.ex ? "true" : "false"));
+      const order = { good: 0, maybe: 1, no: 2 };
+      const rows = M.map((m) => ({ m, s: status(m, x) })).sort((a, b) => order[a.s] - order[b.s]);
+      $("#reg-list").innerHTML = rows.map(({ m, s }) => `<div class="mrow${s === "no" ? " dim" : ""}" style="color:var(--c-${m.col === "mom" ? "mom3d" : m.col})"><i></i><b>${m.name}</b><span class="st ${s}">${s === "good" ? "Valid" : s === "maybe" ? "Possible" : "Not valid"}</span><p>${why[m.id][s](x)}</p></div>`).join("");
+      draw();
+    }
+    auto(cv, draw); upd();
+    return { set: (lx) => set(lx), get: () => st.lx };
+  })();
+
+  /* ---------- 2/3. ray scenes ---------- */
+  const MATS = {
+    concrete: { n: "Concrete", a: 5.24, b: 0, c: 0.0462, d: 0.7822 }, brick: { n: "Brick", a: 3.91, b: 0, c: 0.0238, d: 0.16 },
+    plaster: { n: "Plasterboard", a: 2.73, b: 0, c: 0.0085, d: 0.9395 }, wood: { n: "Wood", a: 1.99, b: 0, c: 0.0047, d: 1.0718 },
+    glass: { n: "Glass", a: 6.31, b: 0, c: 0.0036, d: 1.3394 }, metal: { n: "Metal", a: 1, b: 0, c: 1e7, d: 0 },
+    ground: { n: "Medium dry ground", a: 15, b: -0.1, c: 0.035, d: 1.63 }, custom: { n: "Custom" },
+  };
+  const PRESETS = {
+    street: () => ({ W: 120, H: 80, grid: 1, maxLen: 260, nr: 360, blocks: [{ x: 0, y: 0, w: 50, h: 30 }, { x: 70, y: 0, w: 50, h: 30 }, { x: 0, y: 50, w: 50, h: 30 }, { x: 70, y: 50, w: 50, h: 30 }], walls: [], tx: { x: 22, y: 36 }, rx: { x: 62, y: 60 }, step: 1 }),
+    room: () => ({ W: 30, H: 20, grid: 0.25, maxLen: 90, nr: 300, blocks: [{ x: 15.5, y: 14.5, w: 1.5, h: 1.5 }],
+      walls: [{ x1: 0, y1: 0, x2: 30, y2: 0, fixed: true }, { x1: 30, y1: 0, x2: 30, y2: 20, fixed: true }, { x1: 30, y1: 20, x2: 0, y2: 20, fixed: true }, { x1: 0, y1: 20, x2: 0, y2: 0, fixed: true },
+        { x1: 11, y1: 0, x2: 11, y2: 12, free2: true }, { x1: 21, y1: 20, x2: 21, y2: 8, free2: true }], tx: { x: 5, y: 10 }, rx: { x: 26, y: 5 }, step: 0.25 }),
+    corner: () => ({ W: 80, H: 60, grid: 0.5, maxLen: 200, nr: 360, blocks: [{ x: 40, y: 0, w: 40, h: 35 }], walls: [], tx: { x: 60, y: 50 }, rx: { x: 22, y: 14 }, step: 0.5, onlyEdge: [40, 35] }),
+  };
+  const TYPE_COL = (t) => (t === 0 ? COL.ink : t === 1 ? COL.asym : t === 2 ? COL.hfield : t === 3 ? COL.mom : COL.field);
+  const TYPE_NAME = (t) => (t === 0 ? "LOS" : t > 0 ? t + "× reflected" : "diffracted");
+
+  class RayView {
+    constructor(root, o) {
+      this.root = root; this.o = o; this.cv = root.querySelector("canvas"); this.r = (k) => root.querySelector(`[data-r="${k}"]`) || (o.card && o.card.querySelector(`[data-r="${k}"]`));
+      this.k = (k) => root.querySelector(`[data-k="${k}"]`) || (o.card && o.card.querySelector(`[data-k="${k}"]`));
+      this.s = { scene: o.scene, view: o.view, K: o.K, coh: true, utd: o.utd, gtd: false, pol: "TE", f: o.f, mat: "concrete", er: 5.24, sg: 0.1 };
+      this.sel = 1; this.map = null; this.mapGen = 0; this.fanT0 = 0; this.anim = 0;
+      this.load(o.scene); this.bind(); auto(this.cv, () => this.draw());
+      this.matUpdate(); this.recompute(true);
+    }
+    load(name) { this.sc = PRESETS[name](); this.s.scene = name; this.items(); }
+    items() { const sc = this.sc; this.its = [{ k: "tx", o: sc.tx }, { k: "rx", o: sc.rx }]; sc.blocks.forEach((b) => this.its.push({ k: "b", o: b })); sc.walls.forEach((w) => { if (!w.fixed) this.its.push({ k: "w", o: w }); }); }
+    get kk() { return 2 * PI * this.s.f / 0.299792458; }
+    eps() { return NUM.epsC(this.s.er, this.s.sg, this.s.f); }
+    matUpdate() { const m = MATS[this.s.mat]; if (m && m.a) { this.s.er = m.a * this.s.f ** m.b; this.s.sg = m.c * this.s.f ** m.d; } const er = this.k("er"), sg = this.k("sg"); if (er) { er.value = this.s.er; sg.value = lg(this.s.sg); this.r("erv").textContent = this.s.er.toFixed(2); this.r("sgv").textContent = this.s.sg >= 1e4 ? "10" + sup(Math.round(lg(this.s.sg))) : this.s.sg.toPrecision(3); } }
+    bind() {
+      const self = this;
+      this.root.querySelectorAll(".seg[data-k]").forEach((el) => seg(el, (v) => {
+        const k = el.dataset.k;
+        if (k === "scene") { self.load(v); self.recompute(true); return; }
+        if (k === "view") { self.s.view = v; if (v === "fan") self.fanT0 = clock.now(); self.loop(); self.recompute(v === "map"); return; }
+        if (k === "K") self.s.K = +v; if (k === "coh") self.s.coh = v === "1"; if (k === "gtd") self.s.gtd = v === "1"; if (k === "pol") self.s.pol = v;
+        if (k === "K" && self.s.view === "fan") self.fanT0 = clock.now();
+        self.recompute(true);
+      }));
+      if (this.o.card) this.o.card.querySelectorAll(".seg[data-k]").forEach((el) => seg(el, (v) => { if (el.dataset.k === "pol") self.s.pol = v; self.recompute(true); }));
+      const u = this.k("utd"); if (u) u.addEventListener("click", () => { self.s.utd = !self.s.utd; u.setAttribute("aria-pressed", self.s.utd); self.recompute(true); });
+      const f = this.k("f"); if (f) f.addEventListener("change", () => { self.s.f = +f.value; self.matUpdate(); self.recompute(true); });
+      const mat = this.k("mat");
+      if (mat) { mat.innerHTML = Object.entries(MATS).map(([k, m]) => `<option value="${k}">${m.n}</option>`).join(""); mat.value = this.s.mat;
+        mat.addEventListener("change", () => { self.s.mat = mat.value; self.matUpdate(); self.recompute(true); });
+        this.k("er").addEventListener("input", (e) => { self.s.er = +e.target.value; self.s.mat = "custom"; mat.value = "custom"; self.matUpdate(); self.recompute(false); });
+        this.k("sg").addEventListener("input", (e) => { self.s.sg = 10 ** +e.target.value; self.s.mat = "custom"; mat.value = "custom"; self.matUpdate(); self.recompute(false); });
+        this.k("er").addEventListener("change", () => self.recompute(true)); this.k("sg").addEventListener("change", () => self.recompute(true)); }
+      // dragging
+      const cv = this.cv; let drag = null;
+      cv.addEventListener("pointerdown", (e) => {
+        const p = this.toW(e); const it = this.hit(e); if (!it) return;
+        this.sel = this.its.indexOf(it); drag = { it, px: p[0], py: p[1], moved: false }; cv.setPointerCapture(e.pointerId); e.preventDefault();
+      });
+      cv.addEventListener("pointermove", (e) => {
+        if (!drag) { cv.style.cursor = this.hit(e) ? "grab" : "crosshair"; return; }
+        const p = this.toW(e), dx = p[0] - drag.px, dy = p[1] - drag.py;
+        if (this.move(drag.it, dx, dy)) { drag.px = p[0]; drag.py = p[1]; drag.moved = true; this.recompute(false); }
+      });
+      const end = () => { if (drag && drag.moved && drag.it.k !== "rx") this.recompute(true); drag = null; };
+      cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+      cv.addEventListener("keydown", (e) => {
+        if (/^[1-9]$/.test(e.key) && +e.key <= this.its.length) { this.sel = +e.key - 1; this.draw(); e.preventDefault(); return; }
+        const st = (e.shiftKey ? 5 : 1) * this.sc.step, d = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, st], ArrowDown: [0, -st] }[e.key];
+        if (!d) return; e.preventDefault(); const it = this.its[this.sel]; if (this.move(it, d[0], d[1])) this.recompute(it.k !== "rx");
+      });
+    }
+    // world <-> screen
+    xf() { const w = this.cw, h = this.ch, sc = this.sc, m = 10, top = 26, s = Math.min((w - 2 * m) / sc.W, (h - m - top) / sc.H); return { s, ox: (w - sc.W * s) / 2, oy: top + (h - m - top - sc.H * s) / 2 }; }
+    S(x, y) { const t = this.T; return [t.ox + x * t.s, t.oy + (this.sc.H - y) * t.s]; }
+    toW(e) { const r = this.cv.getBoundingClientRect(), t = this.T; return [(e.clientX - r.left - t.ox) / t.s, this.sc.H - (e.clientY - r.top - t.oy) / t.s]; }
+    hit(e) {
+      const p = this.toW(e), t = this.T, tol = 16 / t.s;
+      for (const it of this.its.slice(0, 2)) if (Math.hypot(it.o.x - p[0], it.o.y - p[1]) < tol) return it;
+      for (const it of this.its) { if (it.k === "w") { const w = it.o, ux = w.x2 - w.x1, uy = w.y2 - w.y1, L2 = ux * ux + uy * uy, tt = Math.max(0, Math.min(1, ((p[0] - w.x1) * ux + (p[1] - w.y1) * uy) / L2));
+          if (Math.hypot(w.x1 + ux * tt - p[0], w.y1 + uy * tt - p[1]) < 10 / t.s) return it; }
+        if (it.k === "b") { const b = it.o; if (p[0] > b.x && p[0] < b.x + b.w && p[1] > b.y && p[1] < b.y + b.h) return it; } }
+      return null;
+    }
+    move(it, dx, dy) {
+      const sc = this.sc, q = sc.step, snap = (v) => Math.round(v / q) * q;
+      const bak = JSON.stringify([it.o]);
+      if (it.k === "tx" || it.k === "rx") { it.o.x = Math.max(0.5, Math.min(sc.W - 0.5, it.o.x + dx)); it.o.y = Math.max(0.5, Math.min(sc.H - 0.5, it.o.y + dy)); }
+      else if (it.k === "b") { it.o.x = Math.max(-it.o.w + 2, Math.min(sc.W - 2, it.o.x + dx)); it.o.y = Math.max(-it.o.h + 2, Math.min(sc.H - 2, it.o.y + dy)); }
+      else if (it.k === "w") { const w = it.o; w.x1 += dx; w.x2 += dx; w.y1 += dy; w.y2 += dy; }
+      const ok = !RAYS.inside(sc, sc.tx.x, sc.tx.y) && !RAYS.inside(sc, sc.rx.x, sc.rx.y);
+      if (!ok) { Object.assign(it.o, JSON.parse(bak)[0]); return false; }
+      return true;
+    }
+    geo() {
+      const sc = this.sc, g = RAYS.build(sc);
+      if (sc.onlyEdge) g.edges = g.edges.filter((e) => Math.hypot(e.x - sc.onlyEdge[0], e.y - sc.onlyEdge[1]) < 1e-6);
+      return g;
+    }
+    opts() { return { K: this.s.K, utd: this.s.utd, gtd: this.s.gtd, pol: this.s.pol, eps: this.eps(), k: this.kk }; }
+    recompute(mapToo) {
+      this.g = this.geo(); this.tree = RAYS.imageTree(this.g, this.sc.tx, this.s.K);
+      this.ps = RAYS.paths(this.sc, this.g, this.tree, this.sc.tx, this.sc.rx, this.opts());
+      this.visPoly();
+      if (mapToo) this.computeMap(); else 
+      this.readouts(); this.draw();
+      if (this.o.after) this.o.after(this);
+    }
+    visPoly() {   // region lit by the transmitter (no reflections)
+      const sc = this.sc, tx = sc.tx, W = this.g.walls.concat([{ ax: 0, ay: 0, bx: sc.W, by: 0 }, { ax: sc.W, ay: 0, bx: sc.W, by: sc.H }, { ax: sc.W, ay: sc.H, bx: 0, by: sc.H }, { ax: 0, ay: sc.H, bx: 0, by: 0 }]);
+      const n = 1440, pts = [];
+      for (let i = 0; i < n; i++) { const a = i * 2 * PI / n, dx = Math.cos(a), dy = Math.sin(a); let best = 1e9;
+        for (const w of W) { const ex = w.bx - w.ax, ey = w.by - w.ay, den = dx * ey - dy * ex; if (Math.abs(den) < 1e-12) continue;
+          const qx = w.ax - tx.x, qy = w.ay - tx.y, t = (qx * ey - qy * ex) / den, u = (qx * dy - qy * dx) / den; if (t > 1e-9 && u >= 0 && u <= 1 && t < best) best = t; }
+        pts.push([tx.x + dx * best, tx.y + dy * best]); }
+      this.vis = pts;
+    }
+    computeMap() {
+      const sc = this.sc, g = this.g, tree = this.tree, o = this.opts(), k = this.kk, gen = ++this.mapGen, SUB = [[-0.31, -0.13], [0.12, -0.33], [0.3, 0.17], [-0.16, 0.29]];
+      const nx = Math.round(sc.W / sc.grid), ny = Math.round(sc.H / sc.grid), vals = new Float32Array(nx * ny).fill(NaN);
+      let j = 0; const self = this; this.mapBusy = true;
+      const step = () => {
+        if (gen !== self.mapGen) return;
+        const t0 = performance.now();
+        while (j < ny && performance.now() - t0 < 14) {
+          const y = (ny - j - 0.5) * sc.grid;
+          for (let i = 0; i < nx; i++) { const x = (i + 0.5) * sc.grid; if (RAYS.inside(sc, x, y)) continue;
+            if (self.o.cellAvg) { let acc = 0; for (const [a, c] of SUB) acc += 10 ** (RAYS.sum(RAYS.paths(sc, g, tree, sc.tx, { x: x + a * sc.grid, y: y + c * sc.grid }, o), k, true) / 10); vals[j * nx + i] = 10 * lg(acc / SUB.length); }
+            else vals[j * nx + i] = RAYS.sum(RAYS.paths(sc, g, tree, sc.tx, { x, y }, o), k, false); }
+          j++;
+        }
+        if (j < ny) { setTimeout(step, 0); return; }
+        let mx = -Infinity; for (const v of vals) if (isFinite(v) && v > mx) mx = v;
+        const top = Math.ceil(mx / 10) * 10 - 10, bot = top - 60;
+        const oc = document.createElement("canvas"); oc.width = nx; oc.height = ny; const octx = oc.getContext("2d"), id = octx.createImageData(nx, ny);
+        for (let q = 0; q < nx * ny; q++) { const v = vals[q]; if (!isFinite(v)) { id.data[q * 4 + 3] = 0; continue; } const c = cmap((v - bot) / (top - bot)); id.data[q * 4] = c[0]; id.data[q * 4 + 1] = c[1]; id.data[q * 4 + 2] = c[2]; id.data[q * 4 + 3] = 255; }
+        octx.putImageData(id, 0, 0);
+        self.map = { oc, top, bot, stale: false }; self.mapBusy = false;
+        const c0 = self.r("cb0"), c1 = self.r("cb1"); if (c0) { c0.textContent = bot + " dB"; c1.textContent = top + " dB"; }
+        self.readouts(); self.draw();
+      };
+      step();
+    }
+    readouts() {
+      const ps = this.ps, k = this.kk, sc = this.sc, d = Math.hypot(sc.rx.x - sc.tx.x, sc.rx.y - sc.tx.y), lam = 0.299792458 / this.s.f;
+      const pg = RAYS.sum(ps, k, this.s.coh), fs = 20 * lg(lam / (4 * PI * d));
+      const cnt = {}; ps.forEach((p) => { const n = p.type === 0 ? "LOS" : p.type > 0 ? "R" + p.type : "D"; cnt[n] = (cnt[n] || 0) + 1; });
+      this.pg = pg;
+      if (this.r("pg")) {
+        this.r("pg").textContent = isFinite(pg) ? fmtNum(pg) + " dB" : "no path: GO field = 0";
+        this.r("fs").textContent = fmtNum(fs) + " dB";
+        this.r("np").textContent = ps.length ? ["LOS", "R1", "R2", "R3", "D"].filter((n) => cnt[n]).map((n) => n + " " + cnt[n]).join(" · ") : "0";
+        this.r("ds").textContent = ps.length ? RAYS.delaySpread(ps).toFixed(1) + " ns" : "–";
+        this.drawPdp(); this.drawGamma();
+      }
+      const cap = this.r("cap");
+      if (cap) {
+        const v = this.s.view;
+        cap.innerHTML = v === "paths" ? `Each line is one exact path (image method). Bright = strong. The tinted area is lit by the direct ray; GO has no direct field outside it.`
+          : v === "fan" ? `${sc.nr} rays launched, up to ${Math.max(1, this.s.K)} bounces. The circle at Rx catches rays; its radius grows with the path length. <b>${this.caught || 0}</b> rays caught (several rays can be one path).`
+          : `<span class="cbar"><span>${this.map ? this.map.bot + " dB" : ""}</span><i></i><span>${this.map ? this.map.top + " dB" : ""}</span></span> Local mean path gain (power sum of the paths) on a ${sc.grid} m grid. Hatched: no ray reaches it, GO field = 0. The Rx readout uses your Sum setting.`;
+      }
+    }
+    drawPdp() {
+      const cv = this.r("pdp"); if (!cv) return; const { ctx, w, h } = size(cv, () => 120), b = box(w, h, 40, 10, 8, 30);
+      const ps = this.ps; const t = ps.map((p) => p.L / 0.299792458), pw = ps.map((p) => 10 * lg(NUM.cabs2(p.g) / (p.L * p.L) + 1e-300));
+      const t0 = ps.length ? Math.min(...t) : 0, tmax = ps.length ? Math.max(...t) : 100, pmax = ps.length ? Math.max(...pw) : 0;
+      const span = Math.max(20, (tmax - t0) * 1.15);
+      const A = axes(ctx, b, { x0: t0 - span * 0.04, x1: t0 + span, y0: -40, y1: 0, xt: [], yt: [0, -20, -40], yf: (v) => v + " dB", xl: "delay → (" + Math.round(span) + " ns span)" });
+      ps.forEach((p, i) => { const x = A.X(t[i]), y = A.Y(Math.max(-40, pw[i] - pmax)); ctx.strokeStyle = TYPE_COL(p.type); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, A.Y(-40)); ctx.lineTo(x, y); ctx.stroke(); dot(ctx, x, y, TYPE_COL(p.type), 3); });
+      const pl = this.r("pleg"); if (pl) { const ty = [...new Set(ps.map((p) => p.type))].sort((a, b) => (a < 0) - (b < 0) || a - b); pl.innerHTML = ty.map((q) => `<span style="color:${TYPE_COL(q)}"><i class="sq"></i>${TYPE_NAME(q)}</span>`).join(""); }
+    }
+    drawGamma() {
+      const cv = this.r("gam"); if (!cv) return; const { ctx, w, h } = size(cv, () => 150), b = box(w, h, 40, 10, 8, 30), eps = this.eps();
+      const A = axes(ctx, b, { x0: 0, x1: 90, y0: 0, y1: 1, xt: [0, 30, 60, 90], xf: (v) => v + "°", yt: [0, 0.5, 1], xl: "θ from normal" });
+      for (const pol of ["TE", "TM"]) { const pts = []; let mn = 9, mnA = 0;
+        for (let a = 0; a <= 90; a += 0.5) { const g = NUM.cabs(NUM.fresnelGamma(eps, Math.cos(a * D2R), pol)); pts.push([A.X(a), A.Y(g)]); if (g < mn) { mn = g; mnA = a; } }
+        const on = pol === this.s.pol; curve(ctx, b, pts, on ? COL.ink : COL.muted, on ? 2.4 : 1.4, pol === "TM" ? [5, 4] : null);
+        ctx.fillStyle = on ? COL.ink : COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "left"; const yy = pts[60][1]; ctx.fillText(pol, A.X(30) + 4, yy + (pol === "TE" ? -9 : 10));
+        if (pol === "TM" && mnA > 1 && mnA < 89 && mn < 0.9) { ctx.fillStyle = COL.muted; ctx.textAlign = "center"; ctx.fillText("θB " + mnA.toFixed(0) + "°", A.X(mnA), A.Y(mn) - 10); }
+      }
+    }
+    loop() { if (this.anim) return; const f = () => { this.anim = 0; this.draw(); if (this.s.view === "fan" && clock.now() - this.fanT0 < 1700) this.anim = requestAnimationFrame(f); }; this.anim = requestAnimationFrame(f); }
+    draw() {
+      const asp = this.o.aspect || ((w) => (w < 560 ? 0.8 : 0.62) * w);
+      const { ctx, w, h } = size(this.cv, asp); this.cw = w; this.ch = h; this.T = this.xf();
+      const sc = this.sc, S = (x, y) => this.S(x, y), t = this.T, v = this.s.view;
+      const [x0, y0] = S(0, sc.H), [x1, y1] = S(sc.W, 0);
+      // hatch where GO has no field (seen in map view)
+      if (v === "map") {
+        const pc = document.createElement("canvas"); pc.width = pc.height = 8; const p = pc.getContext("2d"); p.strokeStyle = COL.line; p.lineWidth = 1.2; p.beginPath(); p.moveTo(0, 8); p.lineTo(8, 0); p.stroke();
+        ctx.fillStyle = ctx.createPattern(pc, "repeat"); ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        if (this.map) { ctx.imageSmoothingEnabled = false; ctx.globalAlpha = this.mapBusy ? 0.55 : 1; ctx.drawImage(this.map.oc, x0, y0, x1 - x0, y1 - y0); ctx.globalAlpha = 1; }
+      } else {
+        ctx.fillStyle = COL.bg; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+        if (this.vis) { ctx.save(); ctx.beginPath(); this.vis.forEach((p, i) => { const q = S(p[0], p[1]); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); }); ctx.closePath(); ctx.fillStyle = COL.asym; ctx.globalAlpha = 0.1; ctx.fill(); ctx.restore(); }
+      }
+      ctx.strokeStyle = COL.line; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y0 + 0.5, x1 - x0, y1 - y0);
+      // geometry
+      sc.blocks.forEach((b, i) => { const [a, c] = S(b.x, b.y + b.h), [d, e] = S(b.x + b.w, b.y); ctx.fillStyle = COL.grid; ctx.fillRect(a, c, d - a, e - c); ctx.strokeStyle = COL.ink; ctx.lineWidth = this.its[this.sel] && this.its[this.sel].o === b ? 2.5 : 1.5; ctx.strokeRect(a, c, d - a, e - c); });
+      sc.walls.forEach((wl) => { const [a, c] = S(wl.x1, wl.y1), [d, e] = S(wl.x2, wl.y2); ctx.strokeStyle = COL.ink; ctx.lineWidth = this.its[this.sel] && this.its[this.sel].o === wl ? 5 : wl.fixed ? 3 : 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(a, c); ctx.lineTo(d, e); ctx.stroke(); });
+      if (this.s.utd) this.g.edges.forEach((e) => { const [a, c] = S(e.x, e.y); ctx.fillStyle = COL.field; ctx.beginPath(); ctx.arc(a, c, 3.5, 0, 2 * PI); ctx.fill(); });
+      // arc for the cut
+      ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip();
+      if (this.o.arc) { const r = this.o.arc(), [cx, cy] = S(sc.onlyEdge[0], sc.onlyEdge[1]); ctx.save(); ctx.strokeStyle = COL.ink; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.3; ctx.beginPath(); ctx.arc(cx, cy, r * t.s, 0, -1.5 * PI, true); ctx.stroke(); ctx.restore();
+        if (this.o.bounds) for (const [ang, lab] of this.o.bounds(this)) { const ex = sc.onlyEdge[0] + 200 * Math.cos(ang), ey = sc.onlyEdge[1] + 200 * Math.sin(ang), [qx, qy] = S(ex, ey); ctx.save(); ctx.strokeStyle = COL.muted; ctx.setLineDash([2, 4]); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(qx, qy); ctx.stroke(); ctx.restore();
+          const [lx, ly] = S(sc.onlyEdge[0] + (r + 4) * Math.cos(ang), sc.onlyEdge[1] + (r + 4) * Math.sin(ang)); ctx.fillStyle = COL.ink; ctx.font = font(10.5, 700); ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(lab, lx, ly); } }
+      ctx.restore();
+      // paths or fan
+      if (v === "paths" || (v === "map" && this.o.pathsOnMap)) {
+        const pw = this.ps.map((p) => 10 * lg(NUM.cabs2(p.g) / (p.L * p.L) + 1e-300)), pm = Math.max(...pw, -300);
+        this.ps.forEach((p, i) => { ctx.save(); ctx.strokeStyle = TYPE_COL(p.type); ctx.lineWidth = v === "map" ? 1.6 : 2; ctx.globalAlpha = Math.max(0.25, 1 + (pw[i] - pm) / 40); if (p.type < 0) ctx.setLineDash([5, 3]);
+          ctx.beginPath(); p.pts.forEach((q, j) => { const [a, c] = S(q[0], q[1]); j ? ctx.lineTo(a, c) : ctx.moveTo(a, c); }); ctx.stroke(); ctx.restore();
+          if (p.type > 0) p.pts.slice(1, -1).forEach((q) => { const [a, c] = S(q[0], q[1]); dot(ctx, a, c, TYPE_COL(p.type), 2.5); }); });
+      }
+      if (v === "fan") {
+        const prog = Math.min(1, (clock.now() - this.fanT0) / 1500), Lmax = prog * sc.maxLen, K = Math.max(1, this.s.K);
+        const rays = RAYS.launch(this.g, sc.tx, sc.nr, K, sc.maxLen), da = 2 * PI / sc.nr, rx = sc.rx; let caught = 0;
+        ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, x1 - x0, y1 - y0); ctx.clip(); ctx.lineWidth = 1; ctx.globalAlpha = 0.5;
+        for (const pl of rays) { let acc = 0, got = false;
+          for (let j = 0; j < pl.length - 1; j++) { const [ax, ay] = pl[j], [bx, by] = pl[j + 1], L = Math.hypot(bx - ax, by - ay); if (acc >= Lmax) break;
+            const tt = Math.min(1, (Lmax - acc) / L), ex = ax + (bx - ax) * tt, ey = ay + (by - ay) * tt;
+            ctx.strokeStyle = j === 0 ? COL.muted : TYPE_COL(Math.min(3, j)); ctx.beginPath(); const [p1, p2] = S(ax, ay), [p3, p4] = S(ex, ey); ctx.moveTo(p1, p2); ctx.lineTo(p3, p4); ctx.stroke();
+            // reception sphere test on the full segment
+            const ux = (bx - ax) / L, uy = (by - ay) / L, s = Math.max(0, Math.min(L, (rx.x - ax) * ux + (rx.y - ay) * uy)), cx = ax + ux * s, cy = ay + uy * s;
+            if (!got && Math.hypot(rx.x - cx, rx.y - cy) <= da * (acc + s) / 2 + 1e-9 && acc + s <= Lmax) got = true;
+            acc += L; }
+          if (got) caught++; }
+        ctx.restore(); this.caught = caught;
+        const d = Math.hypot(rx.x - sc.tx.x, rx.y - sc.tx.y), [qx, qy] = S(rx.x, rx.y); ctx.save(); ctx.strokeStyle = COL.ink; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.arc(qx, qy, Math.max(4, da * d / 2 * t.s), 0, 2 * PI); ctx.stroke(); ctx.restore();
+        if (prog >= 1) { const cap = this.r("cap"); if (cap && !cap.dataset.done) this.readouts(); }
+      }
+      // tx, rx
+      const [tx, ty] = S(sc.tx.x, sc.tx.y), [rx, ry] = S(sc.rx.x, sc.rx.y), selK = this.its[this.sel] && this.its[this.sel].k;
+      ctx.save(); ctx.fillStyle = COL.field; ctx.strokeStyle = COL.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(tx, ty - 9); ctx.lineTo(tx + 8, ty + 6); ctx.lineTo(tx - 8, ty + 6); ctx.closePath(); ctx.fill(); ctx.stroke();
+      if (selK === "tx") { ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(tx, ty, 13, 0, 2 * PI); ctx.stroke(); }
+      ctx.fillStyle = COL.surface; ctx.strokeStyle = COL.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(rx, ry, 7, 0, 2 * PI); ctx.fill(); ctx.stroke();
+      if (selK === "rx") { ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(rx, ry, 13, 0, 2 * PI); ctx.stroke(); }
+      ctx.font = font(11, 700); ctx.fillStyle = COL.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("Tx", tx + 11, ty - 8); ctx.fillText("Rx", rx + 11, ry - 8); ctx.restore();
+      // scale bar
+      const L = sc.W > 60 ? 20 : 5, [sx0, sy0] = S(sc.W - L - 2, 2); ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx0, sy0 - 6); ctx.lineTo(sx0 + L * t.s, sy0 - 6); ctx.stroke(); ctx.fillStyle = COL.ink; ctx.font = font(10, 600); ctx.textAlign = "center"; ctx.fillText(L + " m", sx0 + L * t.s / 2, sy0 - 13); ctx.restore();
+      const tag = this.r("tag");
+      if (tag) { const it = this.its[this.sel]; const nm = it ? (it.k === "tx" ? "Tx" : it.k === "rx" ? "Rx" : it.k === "b" ? "building" : "wall") : "";
+        tag.textContent = (this.o.tagRx ? (isFinite(this.pg) ? "Rx " + fmtNum(this.pg) + " dB" : "Rx: no GO ray, field = 0") + " · " : "") + (this.mapBusy && v === "map" ? "computing map… · " : "") + "selected: " + nm; }
+    }
+  }
+  const RV1 = new RayView($("#rv1"), { card: $("#rv1").nextElementSibling, scene: "street", view: "paths", K: 2, utd: false, f: 3.5 });
+
+  // corner scene + cut
+  let cutR = 15;
+  const cutCv = $("#cut-cv"); let RV2;
+  function cutDraw() {
+    if (!RV2) return;
+    const { ctx, w, h } = size(cutCv, (w) => Math.min(300, 0.66 * w)), b = box(w, h, 44, 10, 10, 36), sc = RV2.sc, E = sc.onlyEdge, o = RV2.opts(), k = RV2.kk;
+    const go = [], tot = [];
+    const lamC = 0.299792458 / RV2.s.f, da = Math.min(0.25, (lamC / 5) / cutR / D2R);
+    for (let a = da / 2; a < 270; a += da) { const p = { x: E[0] + cutR * Math.cos(a * D2R), y: E[1] + cutR * Math.sin(a * D2R) };
+      const ps = RAYS.paths(sc, RV2.g, RV2.tree, sc.tx, p, o); go.push([a, RAYS.sum(ps.filter((q) => q.type >= 0), k, true)]); tot.push([a, RAYS.sum(ps, k, true)]); }
+    let mx = -Infinity; tot.concat(go).forEach((q) => { if (isFinite(q[1]) && q[1] > mx) mx = q[1]; });
+    const top = Math.ceil(mx / 5) * 5 + 5, bot = top - 50;
+    const A = axes(ctx, b, { x0: 0, x1: 270, y0: bot, y1: top, xt: [0, 90, 180, 270], xf: (v) => v + "°", yt: [top - 10, top - 30, top - 50].filter((v) => v >= bot), yf: (v) => v + " dB", xl: "φ from the top face" });
+    const phip = RAYS.angleAt(RV2.g.edges[0], sc.tx.x, sc.tx.y) / D2R;
+    const isb = 180 + phip, rsb = 180 - phip;
+    if (isb < 270) vline(ctx, b, A.X(isb), COL.muted, "ISB"); if (rsb > 0) vline(ctx, b, A.X(rsb), COL.muted, "RSB");
+    curve(ctx, b, go.map(([a, v]) => [A.X(a), isFinite(v) ? A.Y(v) : A.Y(bot - 20)]), COL.muted, 1.6, [5, 4]);
+    curve(ctx, b, tot.map(([a, v]) => [A.X(a), A.Y(v)]), COL.asym, 2.2);
+    // ISB readout: total at the boundary vs incident field there
+    const pI = { x: E[0] + cutR * Math.cos((isb + 0.02) * D2R), y: E[1] + cutR * Math.sin((isb + 0.02) * D2R) };
+    const L = Math.hypot(pI.x - sc.tx.x, pI.y - sc.tx.y), lam = 0.299792458 / RV2.s.f, inc = 20 * lg(lam / (4 * PI * L));
+    const all = RAYS.sum(RAYS.paths(sc, RV2.g, RV2.tree, sc.tx, pI, o), k, true);
+    $("#cut-isb").textContent = isb < 270 && RV2.s.utd ? fmtDb(all - inc) : "–";
+    $("#cut-sp").textContent = Math.hypot(sc.tx.x - E[0], sc.tx.y - E[1]).toFixed(1) + " m";
+    $("#cut-rv").textContent = cutR.toFixed(1) + " m";
+  }
+  RV2 = new RayView($("#rv2"), { scene: "corner", view: "map", K: 1, utd: true, f: 0.9, cellAvg: true, tagRx: true, pathsOnMap: true, arc: () => cutR,
+    bounds: (v) => { const sc = v.sc, pp = RAYS.angleAt({ x: sc.onlyEdge[0], y: sc.onlyEdge[1], f0: [1, 0] }, sc.tx.x, sc.tx.y); return [[PI + pp, "ISB"], [PI - pp, "RSB"]].filter(([a]) => a > 0 && a < 1.5 * PI); },
+    after: () => cutDraw() });
+  auto(cutCv, cutDraw); cutDraw();
+  $("#cut-r").addEventListener("input", (e) => { cutR = +e.target.value; RV2.draw(); cutDraw(); });
+
+  /* ---------- knife-edge ---------- */
+  const KE = (() => {
+    const cv = $("#ke-cv"), jc = $("#kej-cv"), st = { hr: 0, p: 0.5, lf: 3, ld: 1 };
+    let T = null;
+    const get = () => { const f = 10 ** st.lf * 1e6, lam = 299792458 / f, d = 10 ** st.ld * 1000, d1 = st.p * d, d2 = d - d1, r1 = Math.sqrt(lam * d1 * d2 / d), h = st.hr * r1, v = h * Math.sqrt(2 / lam * (1 / d1 + 1 / d2)); return { f, lam, d, d1, d2, r1, h, v, r1m: Math.sqrt(lam * d / 4) }; };
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => (w < 560 ? 0.75 : 0.5) * w), q = get();
+      const m = 18, yTop = 3.6, yBot = -2.6;   // vertical range in units of r1 at mid path
+      const X = (x) => m + (x / q.d) * (w - 2 * m), Y = (u) => 12 + (yTop - u) / (yTop - yBot) * (h - 24);
+      T = { Y, q, yTop, yBot, h };
+      // ground
+      ctx.fillStyle = COL.grid; ctx.fillRect(0, Y(yBot + 0.3), w, h - Y(yBot + 0.3));
+      // Fresnel ellipse
+      ctx.save(); ctx.beginPath(); for (let i = 0; i <= 200; i++) { const x = q.d * i / 200, r = Math.sqrt(q.lam * x * (q.d - x) / q.d) / q.r1m; const [a, b] = [X(x), Y(r)]; i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }
+      for (let i = 200; i >= 0; i--) { const x = q.d * i / 200, r = Math.sqrt(q.lam * x * (q.d - x) / q.d) / q.r1m; ctx.lineTo(X(x), Y(-r)); }
+      ctx.closePath(); ctx.fillStyle = COL.hfield; ctx.globalAlpha = 0.12; ctx.fill(); ctx.globalAlpha = 1; ctx.strokeStyle = COL.hfield; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.stroke(); ctx.restore();
+      // LOS
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(q.d), Y(0)); ctx.stroke();
+      // masts
+      ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(0), Y(yBot + 0.3)); ctx.moveTo(X(q.d), Y(0)); ctx.lineTo(X(q.d), Y(yBot + 0.3)); ctx.stroke();
+      dot(ctx, X(0), Y(0), COL.field, 6); dot(ctx, X(q.d), Y(0), COL.ink, 6);
+      ctx.fillStyle = COL.ink; ctx.font = font(11, 700); ctx.textBaseline = "bottom"; ctx.textAlign = "left"; ctx.fillText("Tx", X(0) + 8, Y(0) - 6); ctx.textAlign = "right"; ctx.fillText("Rx", X(q.d) - 8, Y(0) - 6);
+      // obstacle (wedge)
+      const ox = X(q.d1), oy = Y(q.h / q.r1m), base = Y(yBot + 0.3), hw = Math.max(10, w * 0.035);
+      ctx.fillStyle = COL.muted; ctx.globalAlpha = 0.85; ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox + hw, base); ctx.lineTo(ox - hw, base); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.stroke();
+      dot(ctx, ox, oy, COL.ink, 6);
+      // diffracted path when blocked
+      if (q.h > 0) { ctx.save(); ctx.strokeStyle = COL.field; ctx.lineWidth = 1.8; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(ox, oy); ctx.lineTo(X(q.d), Y(0)); ctx.stroke(); ctx.restore(); }
+      // labels
+      ctx.fillStyle = COL.hfield; ctx.font = font(10.5, 600); ctx.textAlign = "center"; ctx.textBaseline = "bottom"; ctx.fillText("1st Fresnel zone", X(q.d * 0.25), Y(Math.sqrt(q.lam * q.d * 0.1875) / q.r1m) - 4);
+      ctx.fillStyle = COL.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("h = " + fmtLen(Math.abs(q.h)).replace(/^/, q.h < 0 ? "−" : ""), ox + hw * 0.5 + 6, oy);
+    }
+    function drawJ() {
+      const { ctx, w, h } = size(jc, () => 170), b = box(w, h, 40, 10, 8, 30), q = get();
+      const A = axes(ctx, b, { x0: -3, x1: 4, y0: -2, y1: 26, xt: [-3, -2, -1, 0, 1, 2, 3, 4], xf: (v) => (v < 0 ? "−" + -v : v), yt: [0, 6, 12, 18, 24], yf: (v) => v + " dB", xl: "v" });
+      const ex = [], ap = []; for (let v = -3; v <= 4; v += 0.01) { ex.push([A.X(v), A.Y(NUM.knifeExact(v))]); ap.push([A.X(v), A.Y(NUM.knifeApprox(v))]); }
+      curve(ctx, b, ex, COL.ink, 2); curve(ctx, b, ap, COL.asym, 2, [5, 4]);
+      const v = Math.max(-3, Math.min(4, q.v)); dot(ctx, A.X(v), A.Y(NUM.knifeExact(v)), COL.field, 5);
+    }
+    function upd() {
+      const q = get();
+      $("#ke-h").value = st.hr; $("#ke-hv").textContent = (q.h < 0 ? "−" : "") + fmtLen(Math.abs(q.h)) + " (h/r₁ = " + fmtNum(st.hr, 2) + ")";
+      $("#ke-pv").textContent = st.p.toFixed(2); $("#ke-fv").textContent = q.f >= 1e9 ? (q.f / 1e9).toFixed(2) + " GHz" : (q.f / 1e6).toFixed(0) + " MHz"; $("#ke-dv").textContent = (q.d / 1000).toFixed(q.d < 1e4 ? 2 : 1) + " km";
+      $("#ke-j").textContent = NUM.knifeExact(q.v).toFixed(2) + " dB"; $("#ke-v").textContent = fmtNum(q.v, 3); $("#ke-ja").textContent = NUM.knifeApprox(q.v).toFixed(2) + " dB";
+      $("#ke-r1").textContent = fmtLen(q.r1); $("#ke-cl").textContent = fmtNum(st.hr, 2);
+      draw(); drawJ();
+    }
+    $("#ke-h").addEventListener("input", (e) => { st.hr = +e.target.value; upd(); });
+    $("#ke-p").addEventListener("input", (e) => { st.p = +e.target.value; upd(); });
+    $("#ke-f").addEventListener("input", (e) => { st.lf = +e.target.value; upd(); });
+    $("#ke-d").addEventListener("input", (e) => { st.ld = +e.target.value; upd(); });
+        let drag = false;
+    const go = (e) => { if (!T) return; const r = cv.getBoundingClientRect(), y = e.clientY - r.top, x = e.clientX - r.left, q = T.q;
+      const u = T.yTop - (y - 12) / (T.h - 24) * (T.yTop - T.yBot), p = Math.max(0.05, Math.min(0.95, (x - 18) / (r.width - 36)));
+      st.p = Math.round(p * 100) / 100; $("#ke-p").value = st.p; const r1 = Math.sqrt(q.lam * st.p * q.d * (1 - st.p) * q.d / q.d);
+      st.hr = Math.max(-2.2, Math.min(3.4, u * q.r1m / r1)); upd(); };
+    cv.addEventListener("pointerdown", (e) => { drag = true; cv.setPointerCapture(e.pointerId); e.preventDefault(); go(e); });
+    cv.addEventListener("pointermove", (e) => { if (drag) go(e); });
+    cv.addEventListener("pointerup", () => (drag = false)); cv.addEventListener("pointercancel", () => (drag = false));
+    cv.addEventListener("keydown", (e) => { const d = { ArrowUp: [0, 0.05], ArrowDown: [0, -0.05], ArrowLeft: [-0.01, 0], ArrowRight: [0.01, 0] }[e.key]; if (!d) return; e.preventDefault();
+      st.p = Math.max(0.05, Math.min(0.95, st.p + d[0])); st.hr = Math.max(-2.2, Math.min(3.4, st.hr + d[1])); $("#ke-p").value = st.p; upd(); });
+    auto(cv, draw); auto(jc, drawJ); upd();
+    return { set: (hr) => { st.hr = hr; upd(); } };
+  })();
+
+  /* ---------- physical optics: cylinder current ---------- */
+  (() => {
+    const cv = $("#cy-cv"), uc = $("#cyu-cv"), rng = $("#cy-ka"); let ka = 10, data = null;
+    function compute() { const ph = []; for (let i = 0; i <= 360; i++) ph.push(i * D2R); data = { ex: NUM.cylCurrent(ka, ph), po: ph.map((p) => Math.max(0, -2 * Math.cos(p))) }; }
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => Math.min(340, 0.62 * w)); if (!data) return;
+      const cx = w * 0.56, cy = h / 2, R = Math.min(h * 0.26, w * 0.18), sc = R * 0.45;
+      // incident wave
+      ctx.save(); ctx.strokeStyle = COL.field; ctx.lineWidth = 1.4; for (let i = -2; i <= 2; i++) { const y = cy + i * R * 0.6; ctx.beginPath(); ctx.moveTo(12, y); ctx.lineTo(cx - R * 2.3, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx - R * 2.3, y); ctx.lineTo(cx - R * 2.3 - 7, y - 4); ctx.lineTo(cx - R * 2.3 - 7, y + 4); ctx.closePath(); ctx.fillStyle = COL.field; ctx.fill(); }
+      ctx.fillStyle = COL.field; ctx.font = font(10.5, 600); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("Hⁱⁿᶜ, k̂ →", 12, cy - R * 1.25); ctx.restore();
+      // shadow region
+      ctx.save(); ctx.fillStyle = COL.grid; ctx.globalAlpha = 0.6; ctx.fillRect(cx, cy - R, w - cx, 2 * R); ctx.restore();
+      ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "right"; ctx.textBaseline = "middle"; ctx.fillText("GO shadow", w - 10, cy);
+      // body
+      ctx.fillStyle = COL.surface; ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, 2 * PI); ctx.fill(); ctx.stroke();
+      // current ribbons
+      const ring = (vals, col, dash, wd) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = wd; if (dash) ctx.setLineDash(dash); ctx.beginPath();
+        vals.forEach((v, i) => { const p = i * D2R, r = R + v * sc; const x = cx + r * Math.cos(p), y = cy - r * Math.sin(p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.stroke(); ctx.restore(); };
+      ctx.save(); ctx.beginPath(); data.ex.forEach((v, i) => { const p = i * D2R, r = R + v * sc; const x = cx + r * Math.cos(p), y = cy - r * Math.sin(p); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }); ctx.closePath();
+      ctx.arc(cx, cy, R, 0, 2 * PI, true); ctx.fillStyle = COL.ink; ctx.globalAlpha = 0.1; ctx.fill("evenodd"); ctx.restore();
+      ring(data.po, COL.asym, [5, 4], 2); ring(data.ex, COL.ink, null, 2);
+      ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "center"; ctx.fillText("|J| scale: 1 = " + (sc / R).toFixed(2) + " a", cx, h - 10);
+    }
+    function drawU() {
+      const { ctx, w, h } = size(uc, () => 180), b = box(w, h, 36, 10, 8, 30); if (!data) return;
+      const A = axes(ctx, b, { x0: -180, x1: 180, y0: 0, y1: 2.6, xt: [-180, -90, 0, 90, 180], xf: (v) => v + "°", yt: [0, 1, 2], xl: "angle from the lit point" });
+      vline(ctx, b, A.X(-90), COL.muted, "SB", [3, 3]); vline(ctx, b, A.X(90), COL.muted, "", [3, 3]);
+      const map = (arr) => { const pts = []; for (let a = -180; a <= 180; a++) { const i = (a + 180 + 360) % 360; pts.push([A.X(a), A.Y(arr[i])]); } return pts; };
+      curve(ctx, b, map(data.po), COL.asym, 2, [5, 4]); curve(ctx, b, map(data.ex), COL.ink, 2);
+    }
+    function upd() { ka = 10 ** +rng.value; $("#cy-kav").textContent = ka.toFixed(ka < 10 ? 2 : 1); compute();
+      $("#cy-sb").textContent = data.ex[90].toFixed(3) + " (PO: 0)"; $("#cy-ds").textContent = data.ex[0] < 0.001 ? data.ex[0].toExponential(1) : data.ex[0].toFixed(3); $("#cy-lp").textContent = data.ex[180].toFixed(3) + " / 2.000"; draw(); drawU(); }
+    rng.addEventListener("input", upd); auto(cv, draw); auto(uc, drawU); upd();
+  })();
+
+  /* ---------- physical optics: strip RCS ---------- */
+  const STRIP = (() => {
+    const cv = $("#st-cv"), st = { w: 5, a: 40, ptd: true }; let B = null, A = null, data = null, timer = 0;
+    const k = 2 * PI, sinc = (x) => (Math.abs(x) < 1e-9 ? 1 : Math.sin(x) / x);
+    function po(w, phi) { return k * w * w * Math.sin(phi) ** 2 * sinc(k * w * Math.cos(phi)) ** 2; }
+    function ptd(w, phi) {
+      const pref = NUM.cscale(NUM.csqrt([0, 2 / (PI * k)]), -k / 2), e = NUM.cexpj(-PI / 4), c0 = 1 / (2 * Math.sqrt(2 * PI * k));
+      let A = NUM.cscale(pref, Math.sin(phi) * w * sinc(k * w * Math.cos(phi)));
+      for (const [xe, pl] of [[-w / 2, phi], [w / 2, PI - phi]]) { let p = pl; if (Math.abs(Math.cos(p)) < 1e-6) p += 1e-6;
+        const Dk = NUM.cscale(e, -c0 * (1 - 1 / Math.cos(p))), Dpo = NUM.cscale(e, Math.sin(p) / (2 * Math.cos(p)) / Math.sqrt(2 * PI * k));
+        A = NUM.cadd(A, NUM.cmul(NUM.csub(Dk, Dpo), NUM.cexpj(2 * k * xe * Math.cos(phi)))); }
+      return 2 * PI * NUM.cabs2(A);
+    }
+    function compute() {
+      const w = st.w, m = NUM.momTM([[[-w / 2, 0], [w / 2, 0]]], 20), out = [];
+      for (let th = 0; th <= 90.001; th += 0.5) { const phi = Math.max(1e-4, (90 - th) * D2R); out.push({ th, mom: m.monostatic(phi), po: po(w, phi), ptd: ptd(w, phi) }); }
+      data = { out, N: m.N };
+    }
+    const at = (th) => { const i = Math.round(Math.abs(th) / 0.5); return data.out[Math.min(i, data.out.length - 1)]; };
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => (w < 560 ? 0.8 : 0.55) * w); B = box(w, h, 44, 10, 10, 36); if (!data) return;
+      const top = Math.ceil((10 * lg(k * st.w * st.w) + 3) / 10) * 10, bot = top - 60;
+      A = axes(ctx, B, { x0: -90, x1: 90, y0: bot, y1: top, xt: [-90, -60, -30, 0, 30, 60, 90], xf: (v) => v + "°", yt: [top - 10, top - 20, top - 30, top - 40, top - 50], yf: (v) => v + " dB", xl: "θ from the normal", yl: "σ₂D / λ" });
+      const arr = (key) => { const pts = []; for (let i = data.out.length - 1; i > 0; i--) pts.push([A.X(-data.out[i].th), A.Y(10 * lg(data.out[i][key] + 1e-30))]); data.out.forEach((d) => pts.push([A.X(d.th), A.Y(10 * lg(d[key] + 1e-30))])); return pts; };
+      curve(ctx, B, arr("mom"), COL.ink, 2.4);
+      curve(ctx, B, arr("po"), COL.asym, 2, [5, 4]);
+      if (st.ptd) curve(ctx, B, arr("ptd"), COL.fdtd, 1.6);
+      marker(ctx, B, A.X(st.a), COL.field);
+      ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "center"; ctx.fillText("specular", A.X(0), A.Y(10 * lg(k * st.w * st.w)) - 12);
+      // strip glyph
+      const gx = B.x + B.w - 46, gy = B.y + 30; ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx - 22, gy); ctx.lineTo(gx + 22, gy); ctx.stroke();
+      ctx.strokeStyle = COL.field; ctx.lineWidth = 1.5; const a = (st.a) * D2R; ctx.beginPath(); ctx.moveTo(gx + 30 * Math.sin(a), gy - 30 * Math.cos(a)); ctx.lineTo(gx + 6 * Math.sin(a), gy - 6 * Math.cos(a)); ctx.stroke(); ctx.restore();
+    }
+    function read() { if (!data) return; const d = at(st.a); $("#st-mom").textContent = fmtNum(10 * lg(d.mom)) + " dBλ";
+      $("#st-epo").textContent = fmtDb(10 * lg((d.po + 1e-30) / d.mom)); $("#st-eptd").textContent = fmtDb(10 * lg(d.ptd / d.mom), 2); $("#st-n").textContent = data.N;
+      $("#st-av").textContent = st.a.toFixed(1) + "°"; $("#st-wv").textContent = st.w.toFixed(1); $("#st-a").value = st.a; }
+    function full() { compute(); read(); draw(); }
+    $("#st-w").addEventListener("input", (e) => { st.w = +e.target.value; $("#st-wv").textContent = st.w.toFixed(1); clearTimeout(timer); timer = setTimeout(full, 40); });
+    $("#st-a").addEventListener("input", (e) => { st.a = +e.target.value; read(); draw(); });
+    $("#st-ptd").addEventListener("click", (e) => { st.ptd = !st.ptd; e.currentTarget.setAttribute("aria-pressed", st.ptd); document.querySelector("[data-ptdleg]").style.opacity = st.ptd ? 1 : 0.35; draw(); });
+    plotDrag(cv, () => B, (px) => { if (!A) return; const v = -90 + (px - B.x) / B.w * 180; st.a = Math.round(Math.abs(v) * 2) / 2; read(); draw(); });
+    auto(cv, draw); full();
+    return { set: (a) => { st.a = a; read(); draw(); }, setW: (w) => { st.w = w; $("#st-w").value = w; full(); } };
+  })();
+
+  /* ---------- physical optics: sphere ---------- */
+  const SPH = (() => {
+    const cv = $("#sp-cv"), rng = $("#sp-ka"); let B = null, x = 1;
+    const xs = [], mie = [], po = []; for (let i = 0; i <= 900; i++) { const v = 10 ** (-1 + i * 2.6 / 900); xs.push(v); mie.push(NUM.mieMono(v)); po.push(NUM.poSphere(v)); }
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => (w < 560 ? 0.8 : 0.55) * w); B = box(w, h, 46, 10, 10, 36);
+      const A = axes(ctx, B, { x0: 0.1, x1: 40, xlog: true, y0: 1e-4, y1: 10, ylog: true, xt: [0.1, 0.3, 1, 3, 10, 30], yt: [1e-4, 1e-3, 1e-2, 0.1, 1, 10], yf: (v) => (v >= 1 ? String(v) : v >= 0.01 ? String(v) : "10" + sup(Math.round(lg(v)))), xl: "ka", yl: "σ / πa²" });
+      ctx.save(); ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "center"; ctx.fillText("Rayleigh", A.X(0.22), B.y + 18); ctx.fillText("resonance", A.X(1.6), B.y + 18); ctx.fillText("optical", A.X(15), B.y + 18); ctx.restore();
+      curve(ctx, B, xs.map((v) => [A.X(v), A.Y(9 * v ** 4)]), COL.muted, 1.4, [2, 3]);
+      curve(ctx, B, [[A.X(0.1), A.Y(1)], [A.X(40), A.Y(1)]], COL.muted, 1.2, [2, 3]);
+      curve(ctx, B, xs.map((v, i) => [A.X(v), A.Y(po[i])]), COL.asym, 2, [5, 4]);
+      curve(ctx, B, xs.map((v, i) => [A.X(v), A.Y(mie[i])]), COL.ink, 2.2);
+      marker(ctx, B, A.X(x), COL.field); dot(ctx, A.X(x), A.Y(NUM.mieMono(x)), COL.ink); dot(ctx, A.X(x), A.Y(NUM.poSphere(x)), COL.asym);
+    }
+    function upd() { x = 10 ** +rng.value; $("#sp-kav").textContent = x.toFixed(x < 1 ? 3 : 2); const m = NUM.mieMono(x), p = NUM.poSphere(x);
+      $("#sp-m").textContent = m.toPrecision(4); $("#sp-p").textContent = p.toPrecision(4); $("#sp-e").textContent = fmtDb(10 * lg(p / m), 2); draw(); }
+    rng.addEventListener("input", upd);
+    plotDrag(cv, () => B, (px) => { const t = (px - B.x) / B.w; rng.value = Math.max(-1, Math.min(1.6, -1 + t * lg(400))).toFixed(3); upd(); });
+    auto(cv, draw); upd();
+    return { set: (lx) => { rng.value = lx; upd(); } };
+  })();
+
+  /* ---------- SBR ---------- */
+  const SB = (() => {
+    const c45 = Math.cos(PI / 4), w = 5;
+    const SH = { dih: [[[w * c45, w * c45], [0, 0], [w * c45, -w * c45]]], cav: [[[5, 1.5], [0, 1.5], [0, -1.5], [5, -1.5]]], plate: [[[0, -2.5], [0, 2.5]]] };
+    const st = { sh: "dih", nb: 2, a: 20 }, cache = {}; const cv = $("#sb-cv"), pc = $("#sbp-cv"); let PB = null;
+    function curves() {
+      const key = st.sh; if (!cache[key]) { const m = NUM.momTM(SH[key], 20), mom = []; for (let a = -90; a <= 90; a += 0.5) mom.push(m.monostatic(a * D2R)); cache[key] = { mom, s: {} }; }
+      const c = cache[key];
+      for (const nb of [1, st.nb]) if (!c.s[nb]) { const arr = []; for (let a = -90; a <= 90; a += 0.5) arr.push(sbrMono(SH[key], a * D2R, nb, 10).sigma); c.s[nb] = arr; }
+      return c;
+    }
+    function draw() {
+      const { ctx, w: W, h } = size(cv, (w) => Math.min(420, 0.85 * w)); const geom = SH[st.sh];
+      const s = Math.min(W, h) / 13, cx = W * 0.42, cy = h / 2, S = (x, y) => [cx + x * s, cy - y * s];
+      const r = sbrMono(geom, st.a * D2R, st.nb, 2, true);
+      ctx.save(); ctx.lineWidth = 1.2;
+      for (const pl of r.rays) { for (let j = 0; j < pl.length - 1; j++) { const [a, b] = S(pl[j][0], pl[j][1]), [c, d] = S(pl[j + 1][0], pl[j + 1][1]);
+          ctx.strokeStyle = j === 0 ? COL.muted : TYPE_COL(Math.min(3, j)); ctx.globalAlpha = j === 0 ? 0.45 : 0.85; ctx.beginPath(); ctx.moveTo(a, b); ctx.lineTo(c, d); ctx.stroke(); } }
+      ctx.restore();
+      ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 4; ctx.lineCap = "round"; ctx.lineJoin = "round"; for (const pl of geom) { ctx.beginPath(); pl.forEach((p, i) => { const [a, b] = S(p[0], p[1]); i ? ctx.lineTo(a, b) : ctx.moveTo(a, b); }); ctx.stroke(); } ctx.restore();
+      // radar direction
+      const ax = Math.cos(st.a * D2R), ay = Math.sin(st.a * D2R), [rx, ry] = S(ax * 5.6, ay * 5.6); ctx.save(); ctx.fillStyle = COL.field; ctx.beginPath(); ctx.arc(rx, ry, 7, 0, 2 * PI); ctx.fill();
+      ctx.font = font(11, 700); ctx.fillStyle = COL.ink; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText("radar", rx + 10, ry); ctx.restore();
+      const [l1, l2] = S(0, -5.8); ctx.fillStyle = COL.muted; ctx.font = font(10, 600); ctx.textAlign = "left"; ctx.fillText("5λ plates · rays drawn at 2/λ, solved at 10/λ", 10, h - 12);
+      $("#sb-tag").textContent = "φ = " + st.a.toFixed(1) + "° · grey: incident · colour: after bounce 1, 2, 3+";
+    }
+    function plot() {
+      const { ctx, w, h } = size(pc, (w) => (w < 560 ? 0.8 : 0.62) * w); PB = box(w, h, 44, 10, 10, 36); const c = curves();
+      let mx = -Infinity; c.mom.forEach((v) => (mx = Math.max(mx, 10 * lg(v)))); const top = Math.ceil(mx / 10) * 10 + 5, bot = top - 50;
+      const A = axes(ctx, PB, { x0: -90, x1: 90, y0: bot, y1: top, xt: [-90, -45, 0, 45, 90], xf: (v) => v + "°", yt: [top - 5, top - 15, top - 25, top - 35, top - 45], yf: (v) => v + " dB", xl: "radar angle φ", yl: "σ₂D / λ" });
+      const L = (arr) => arr.map((v, i) => [A.X(-90 + i * 0.5), A.Y(10 * lg(v + 1e-30))]);
+      curve(ctx, PB, L(c.mom), COL.ink, 2.4); curve(ctx, PB, L(c.s[1]), COL.muted, 1.6, [5, 4]); if (st.nb > 1) curve(ctx, PB, L(c.s[st.nb]), COL.asym, 2);
+      marker(ctx, PB, A.X(st.a), COL.field);
+      const i = Math.round((st.a + 90) * 2); $("#sb-mom").textContent = fmtNum(10 * lg(c.mom[i])) + " dBλ"; $("#sb-s1").textContent = fmtNum(10 * lg(c.s[1][i] + 1e-30)) + " dBλ"; $("#sb-sn").textContent = fmtNum(10 * lg(c.s[st.nb][i] + 1e-30)) + " dBλ";
+      $("#sb-av").textContent = st.a.toFixed(1) + "°";
+    }
+    function all() { draw(); plot(); }
+    seg($("#sb-shape"), (v) => { st.sh = v; all(); }); seg($("#sb-b"), (v) => { st.nb = +v; all(); });
+    $("#sb-a").addEventListener("input", (e) => { st.a = +e.target.value; all(); });
+    const setA = (a) => { st.a = Math.max(-90, Math.min(90, Math.round(a * 2) / 2)); $("#sb-a").value = st.a; all(); };
+    let drag = false; const go = (e) => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left - r.width * 0.42, y = -(e.clientY - r.top - r.height / 2); if (x <= 0) return; setA(Math.atan2(y, x) / D2R); };
+    cv.addEventListener("pointerdown", (e) => { drag = true; cv.setPointerCapture(e.pointerId); e.preventDefault(); go(e); }); cv.addEventListener("pointermove", (e) => { if (drag) go(e); });
+    cv.addEventListener("pointerup", () => (drag = false)); cv.addEventListener("pointercancel", () => (drag = false));
+    cv.addEventListener("keydown", (e) => { const d = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 }[e.key]; if (d) { e.preventDefault(); setA(st.a + d * (e.shiftKey ? 5 : 1)); } });
+    plotDrag(pc, () => PB, (px) => setA(-90 + (px - PB.x) / PB.w * 180));
+    auto(cv, draw); auto(pc, plot); all();
+    return { set: setA, setB: (b) => { st.nb = b; setSeg($("#sb-b"), b); all(); } };
+  })();
+
+  /* ---------- planning models ---------- */
+  const PL = (() => {
+    const cv = $("#pl-cv"), st = { lf: 2.954, hb: 30, hm: 1.5, sig: 8, env: "urban", d: 2 }; let B = null, A = null;
+    const aL = (f, hm) => (f <= 200 ? 8.29 * lg(1.54 * hm) ** 2 - 1.1 : f >= 400 ? 3.2 * lg(11.75 * hm) ** 2 - 4.97 : aL(200, hm) + (aL(400, hm) - aL(200, hm)) * (f - 200) / 200);   // Hata: f <= 200 or f >= 400 MHz; interpolated between
+    const ahm = (f, hm, large) => large ? aL(f, hm) : (1.1 * lg(f) - 0.7) * hm - (1.56 * lg(f) - 0.8);
+    function hata(f, hb, hm, d, env) {
+      const Lu = (large) => 69.55 + 26.16 * lg(f) - 13.82 * lg(hb) - ahm(f, hm, large) + (44.9 - 6.55 * lg(hb)) * lg(d);
+      if (env === "large") return Lu(true); if (env === "urban") return Lu(false);
+      if (env === "sub") return Lu(false) - 2 * lg(f / 28) ** 2 - 5.4;
+      return Lu(false) - 4.78 * lg(f) ** 2 + 18.33 * lg(f) - 40.94;
+    }
+    function cost(f, hb, hm, d, env) { if (env === "open") return NaN; return 46.3 + 33.9 * lg(f) - 13.82 * lg(hb) - ahm(f, hm, env === "large") + (44.9 - 6.55 * lg(hb)) * lg(d) + (env === "large" ? 3 : 0); }
+    const fspl = (f, d) => 32.45 + 20 * lg(f) + 20 * lg(d);
+    function tworay(f, hb, hm, dkm) {
+      const d = dkm * 1000, lam = 299.792458 / f, k = 2 * PI / lam, r1 = Math.hypot(d, hb - hm), r2 = Math.hypot(d, hb + hm);
+      const g = NUM.fresnelGamma(NUM.epsC(15, 0.005, f / 1000), (hb + hm) / r2, "TE");   // horizontal polarization: E normal to the plane of incidence
+      const s = NUM.cadd(NUM.cscale(NUM.cexpj(-k * r1), 1 / r1), NUM.cscale(NUM.cmul(g, NUM.cexpj(-k * r2)), 1 / r2));
+      return -20 * lg(lam / (4 * PI) * NUM.cabs(s));
+    }
+    const inH = (f, hb, hm) => f >= 150 && f <= 1500 && hb >= 30 && hb <= 200 && hm >= 1 && hm <= 10;
+    const inC = (f, hb, hm) => f >= 1500 && f <= 2000 && hb >= 30 && hb <= 200 && hm >= 1 && hm <= 10;
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => (w < 560 ? 0.9 : 0.58) * w); B = box(w, h, 46, 10, 10, 36);
+      const f = 10 ** st.lf, hb = st.hb, hm = st.hm;
+      A = axes(ctx, B, { x0: 0.01, x1: 50, xlog: true, y0: 40, y1: 200, xt: [0.01, 0.1, 1, 10], xf: (v) => (v < 1 ? v * 1000 + " m" : v + " km"), yt: [60, 80, 100, 120, 140, 160, 180], yf: (v) => v + " dB", xl: "distance d", yl: "path loss" });
+      const ds = []; for (let i = 0; i <= 1400; i++) ds.push(10 ** (-2 + i * lg(5000) / 1400));
+      // shadowing band of the active empirical model
+      const act = f > 1500 ? "cost" : "hata", fn = act === "cost" ? cost : hata;
+      if (st.sig > 0 && !(act === "cost" && st.env === "open")) { ctx.save(); ctx.beginPath(); const dd = ds.filter((d) => d >= 1 && d <= 20);
+        dd.forEach((d, i) => { const y = A.Y(fn(f, hb, hm, d, st.env) + st.sig); i ? ctx.lineTo(A.X(d), y) : ctx.moveTo(A.X(d), y); });
+        for (let i = dd.length - 1; i >= 0; i--) ctx.lineTo(A.X(dd[i]), A.Y(fn(f, hb, hm, dd[i], st.env) - st.sig)); ctx.closePath();
+        ctx.fillStyle = act === "cost" ? COL.mom : COL.fdtd; ctx.globalAlpha = 0.13; ctx.fill(); ctx.restore(); }
+      curve(ctx, B, ds.map((d) => [A.X(d), A.Y(fspl(f, d))]), COL.muted, 1.4, [2, 3]);
+      curve(ctx, B, ds.map((d) => [A.X(d), A.Y(tworay(f, hb, hm, d))]), COL.fem, 1.5);
+      const emp = (fun, ok, col) => { const inn = ds.filter((d) => d >= 1 && d <= 20), out1 = ds.filter((d) => d <= 1), out2 = ds.filter((d) => d >= 20);
+        curve(ctx, B, out1.map((d) => [A.X(d), A.Y(fun(f, hb, hm, d, st.env))]), col, 1.4, [5, 4], 0.7); curve(ctx, B, out2.map((d) => [A.X(d), A.Y(fun(f, hb, hm, d, st.env))]), col, 1.4, [5, 4], 0.7);
+        curve(ctx, B, inn.map((d) => [A.X(d), A.Y(fun(f, hb, hm, d, st.env))]), col, ok ? 2.6 : 1.6, ok ? null : [5, 4], ok ? 1 : 0.7); };
+      emp(hata, inH(f, hb, hm), COL.fdtd); emp(cost, inC(f, hb, hm), COL.mom);
+      const lam = 299.792458 / f, bp = 4 * hb * hm / lam / 1000;
+      if (bp > 0.01 && bp < 50) vline(ctx, B, A.X(bp), COL.fem, "breakpoint", [4, 4], false);
+      ctx.save(); ctx.fillStyle = COL.surface; ctx.globalAlpha = 0; ctx.restore();
+      ctx.save(); ctx.fillStyle = COL.muted; ctx.globalAlpha = 0.07; ctx.fillRect(A.X(1), B.y, A.X(20) - A.X(1), B.h); ctx.restore();
+      marker(ctx, B, A.X(st.d), COL.ink);
+      ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600); ctx.textAlign = "center"; ctx.textBaseline = "top"; ctx.fillText("Hata range 1–20 km", A.X(4.5), B.y + 20);
+    }
+    function read() {
+      const f = 10 ** st.lf, hb = st.hb, hm = st.hm, d = st.d, lam = 299.792458 / f;
+      $("#pl-fv").textContent = f >= 1000 ? (f / 1000).toFixed(2) + " GHz" : f.toFixed(0) + " MHz"; $("#pl-hbv").textContent = hb + " m"; $("#pl-hmv").textContent = hm.toFixed(1) + " m"; $("#pl-sv").textContent = st.sig.toFixed(1) + " dB";
+      $("#pl-dv").textContent = d < 1 ? Math.round(d * 1000) + " m" : d.toFixed(2) + " km";
+      const useC = f > 1500, L = useC ? cost(f, hb, hm, d, st.env) : hata(f, hb, hm, d, st.env);
+      $("#pl-l").textContent = isFinite(L) ? L.toFixed(1) + " dB (" + (useC ? "COST-231" : "Hata") + ")" : "COST-231 has no open-area form";
+      $("#pl-fs").textContent = fspl(f, d).toFixed(1) + " dB"; $("#pl-tr").textContent = tworay(f, hb, hm, d).toFixed(1) + " dB";
+      const bp = 4 * hb * hm / lam; $("#pl-bp").textContent = bp < 1000 ? Math.round(bp) + " m" : (bp / 1000).toFixed(2) + " km";
+      $("#pl-band").textContent = isFinite(L) ? (L - st.sig).toFixed(0) + "–" + (L + st.sig).toFixed(0) + " dB" : "–";
+      const issues = [];
+      if (useC) { if (f > 2000) issues.push(`f = ${(f / 1000).toFixed(2)} GHz is above 2 GHz`); } else { if (f < 150) issues.push(`f = ${f.toFixed(0)} MHz is below 150 MHz`); }
+      if (hb < 30 || hb > 200) issues.push(`h_b = ${hb} m is outside 30–200 m`);
+      if (d < 1 || d > 20) issues.push(`d is outside 1–20 km`);
+      const sEl = $("#pl-st");
+      if (!issues.length) { sEl.className = "status ok"; sEl.textContent = (useC ? "COST-231 Hata" : "Okumura–Hata") + " is valid here. Expect ±" + st.sig.toFixed(0) + " dB about the median."; }
+      else { sEl.className = "status bad"; sEl.textContent = "Outside the fitted range: " + issues.join("; ") + ". The curve is an extrapolation."; }
+    }
+    function upd() { read(); draw(); }
+    $("#pl-f").addEventListener("input", (e) => { st.lf = +e.target.value; upd(); }); $("#pl-hb").addEventListener("input", (e) => { st.hb = +e.target.value; upd(); });
+    $("#pl-hm").addEventListener("input", (e) => { st.hm = +e.target.value; upd(); }); $("#pl-s").addEventListener("input", (e) => { st.sig = +e.target.value; upd(); });
+    seg($("#pl-env"), (v) => { st.env = v; upd(); });
+    plotDrag(cv, () => B, (px) => { if (!A) return; st.d = A.ix(px); upd(); });
+    auto(cv, draw); upd();
+    return { setD: (d) => { st.d = d; upd(); }, setF: (lf) => { st.lf = lf; $("#pl-f").value = lf; upd(); } };
+  })();
+
+  /* ---------- picker ---------- */
+  (() => {
+    const T = [
+      { t: "RCS of an aircraft", sz: "15 m at 10 GHz ≈ 500 λ", m: "SBR + PTD edge terms", why: "Too large for full-wave at X-band. SBR finds the inlet, cavity and dihedral returns. PTD adds edge diffraction. Check one case with MLFMM at a lower band.",
+        tl: [["Ansys HFSS SBR+", "SBR with PTD and UTD edge corrections, creeping waves"], ["CST Studio Suite, Asymptotic Solver", "SBR"], ["Simcenter Feko (Siemens)", "PO, LE-PO, RL-GO (UTD has no RCS); MLFMM for the check"], ["Remcom XGtd", "GO, UTD, PO and MEC (PO-MEC for RCS)"], ["POFacets", "PO only: no multiple bounces or diffraction", 1]] },
+      { t: "Antenna placement on a ship", sz: "150 m at 1–10 GHz ≈ 500–5000 λ", m: "Full-wave antenna + SBR or UTD on the platform", why: "The antenna is small: solve it with FEM or MoM. The ship is thousands of λ: rays carry the antenna pattern over the deck and superstructure. UTD gives edge and curved-surface diffraction.",
+        tl: [["Ansys HFSS SBR+", "installed antenna pattern and coupling, with the HFSS antenna model"], ["Simcenter Feko (Siemens)", "MoM or MLFMM hybrid with PO, LE-PO, RL-GO or UTD"], ["Remcom XGtd", "GO and UTD; imports antenna patterns from XFdtd"], ["CST Studio Suite, Asymptotic Solver", "SBR; installed antenna performance and coupling"]] },
+      { t: "Indoor Wi-Fi coverage", sz: "40 m at 5 GHz ≈ 670 λ", m: "Multi-wall model, or 3-D ray tracing", why: "Multi-wall: fast, needs only the walls and their losses. Ray tracing: needs materials; gives multipath, delay spread and angles for MIMO.",
+        tl: [["iBwave Design", "COST-231 multi-wall and fast ray tracing"], ["WinProp (Siemens)", "multi-wall, dominant path model, intelligent ray tracing, SBR"], ["Remcom Wireless InSite", "X3D: 3-D ray model with exact path correction, GPU"], ["Sionna RT", "SBR path candidates + image method, differentiable", 1]] },
+      { t: "5G urban small cell", sz: "300 m at 3.5–28 GHz ≈ 3500–28,000 λ", m: "3-D ray tracing with diffraction, or a dominant path model", why: "Street canyons, blockage and beams need the geometry. A statistical model gives only a median per environment class.",
+        tl: [["Remcom Wireless InSite", "X3D ray model: reflection, transmission, diffraction"], ["WinProp (Siemens)", "urban intelligent ray tracing and dominant path model"], ["Forsk Atoll", "SPM (empirical, calibrated); Aster ray-launching model"], ["Infovista Planet", "3-D model (P3M); AI model with ray launching"], ["Sionna RT", "open source, GPU", 1]] },
+      { t: "Rural broadcast coverage", sz: "10–200 km at 100–700 MHz", m: "Terrain models: ITU-R P.1546 or P.1812, Longley–Rice", why: "Terrain diffraction (knife-edge, P.526) and statistics over time and location matter. Building detail does not.",
+        tl: [["SPLAT!", "Longley–Rice (ITM) and ITWOM with SRTM terrain", 1], ["CloudRF", "ITM, Hata, COST-231 and other models"], ["EDX SignalPro", "Longley–Rice, Hata and other models; Remcom X3D add-on"], ["Forsk Atoll, Infovista Planet", "with terrain and clutter data"]] },
+      { t: "Radar target signature (ISAR)", sz: "a vehicle or aircraft, many frequencies and angles", m: "SBR over a frequency band and an angle sweep", why: "SBR gives the complex scattered field at each frequency and angle. An inverse FFT gives the range profile and the ISAR image.",
+        tl: [["Ansys HFSS SBR+", "range profiles, ISAR, GPU"], ["CST Studio Suite, Asymptotic Solver", "RCS maps over angle and frequency"], ["Remcom WaveFarer", "3-D ray tracing, PO and MEC scattering"], ["Remcom XGtd", "PO-MEC RCS"]] },
+      { t: "Vehicle radar at 77 GHz", sz: "300 m at 77 GHz ≈ 75,000 λ", m: "Ray tracing in a moving scene + PO at the targets", why: "Rays give multipath from the road and buildings. PO gives the target returns. Motion gives Doppler. Full-wave is not possible at this size.",
+        tl: [["Remcom WaveFarer", "3-D ray tracing, near-field PO + MEC, UTD multipath"], ["Ansys HFSS SBR+", "SBR+ scenes (with the HFSS radar antenna)"]] },
+      { t: "Reflector antenna", sz: "dish 1–10 m at 10–30 GHz ≈ 30–1000 λ", m: "Feed by full-wave, dish by PO + PTD", why: "The feed is about 1 λ: solve it with FEM or MoM. The dish is large and smooth: PO is accurate. PTD corrects the rim. GTD is fast for far sidelobes.",
+        tl: [["TICRA GRASP", "PO + PTD; GTD and MoM options"], ["Simcenter Feko (Siemens)", "MoM feed + PO or LE-PO reflector"], ["Ansys HFSS", "FEM feed + HFSS SBR+ or PO for the dish"]] },
+    ];
+    const box = $("#pk-tasks"), out = $("#pk-out"); let cur = 0;
+    box.innerHTML = T.map((t, i) => `<button type="button" role="radio" aria-checked="${i === 0}" tabindex="${i === 0 ? 0 : -1}" data-i="${i}">${t.t}</button>`).join("");
+    function show(i) { cur = i; const t = T[i];
+      box.querySelectorAll("button").forEach((b, j) => { b.setAttribute("aria-checked", j === i); b.tabIndex = j === i ? 0 : -1; });
+      out.innerHTML = `<span class="lbl">Recommended</span><div class="big">${t.m}</div><span class="sz">${t.sz}</span><p>${t.why}</p><span class="lbl">Typical tools and their methods</span><ul>${t.tl.map(([n, d, fr]) => `<li><b>${n}${fr ? '<span class="free">FREE</span>' : ""}</b><span>${d}</span></li>`).join("")}</ul>`; }
+    box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) show(+b.dataset.i); });
+    box.addEventListener("keydown", (e) => { const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return; e.preventDefault(); const n = (cur + d + T.length) % T.length; show(n); box.querySelectorAll("button")[n].focus(); });
+    show(0);
+  })();
+
+  /* ---------- nav highlight ---------- */
+  (() => {
+    const links = [...document.querySelectorAll("#topnav a[href^='#']")], secs = links.map((a) => document.querySelector(a.getAttribute("href")));
+    const io = new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) { const i = secs.indexOf(e.target); links.forEach((a, j) => a.setAttribute("aria-current", i === j ? "true" : "false")); } }); }, { rootMargin: "-40% 0px -55% 0px" });
+    secs.forEach((s) => s && io.observe(s));
+  })();
+
+  document.querySelectorAll(".readout span, .slider label, .eyebrow, .lbl").forEach((el) => { if (/[Ͱ-Ͽ₀-ₜ²³]|<sub|ka |d₁|h\/r/.test(el.innerHTML)) { el.style.textTransform = "none"; el.style.letterSpacing = "0.02em"; } });
+  window.ASYM = { clock, REG, RV1, RV2, KE, STRIP, SPH, SB, PL, redraw: themeChange };
+})();
+</script>
+</body>
+</html>
