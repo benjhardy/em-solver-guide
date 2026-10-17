@@ -1,0 +1,1791 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Learn how FEM meshes are made and refined: Delaunay insertion, advancing front, Ruppert refinement, size fields, slivers and adaptive refinement, with live demos checked against known answers.">
+<meta property="og:title" content="Meshing for FEM">
+<meta property="og:description" content="An interactive guide to FEM meshing for EM engineers: Delaunay, advancing front, quality, size fields, slivers and adaptive refinement.">
+<meta property="og:image" content="https://benjhardy.github.io/2026/em-solver-guide/meshing.png">
+<meta property="og:url" content="https://benjhardy.github.io/em-solver-guide/meshing.html">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<title>Meshing for FEM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Companion to the FDTD/FEM/MoM guide (index.html): same tokens, cards, chips and controls. */
+:root {
+  --bg: #F1F4F7; --surface: #FFFFFF; --ink: #142230; --muted: #586678; --line: #D5DCE5; --grid: #E4E9EF;
+  --field: #D9472B; --hfield: #2B6CB0; --ok: #2A7F50; --bad: #C0392B;
+  --c-fem: #2160A8; --c-fdtd: #B85A0B; --c-mom3d: #7E3B9C; --c-mom25: #B8336F; --c-asym: #2A7F50; --c-q2d: #66727F;
+  --diel: #E8EEF6; --metal: #B8336F;
+  --display: "Bricolage Grotesque", "Arial Narrow", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0D131A; --surface: #141C26; --ink: #E3E9EF; --muted: #98A4B2; --line: #2A3644; --grid: #223040;
+    --field: #FF8A5C; --hfield: #6FB0F0; --ok: #6BCB93; --bad: #FF8A80;
+    --c-fem: #6FA8EA; --c-fdtd: #F0A050; --c-mom3d: #C690DE; --c-mom25: #EE7FB0; --c-asym: #6BCB93; --c-q2d: #9AA7B5;
+    --diel: #1C2836; --metal: #EE7FB0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0D131A; --surface: #141C26; --ink: #E3E9EF; --muted: #98A4B2; --line: #2A3644; --grid: #223040;
+  --field: #FF8A5C; --hfield: #6FB0F0; --ok: #6BCB93; --bad: #FF8A80;
+  --c-fem: #6FA8EA; --c-fdtd: #F0A050; --c-mom3d: #C690DE; --c-mom25: #EE7FB0; --c-asym: #6BCB93; --c-q2d: #9AA7B5;
+  --diel: #1C2836; --metal: #EE7FB0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 64px); }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 72px; display: grid; gap: 72px; }
+@media (max-width: 520px) { .wrap { padding-inline: 16px; gap: 56px; } }
+section { display: grid; gap: 18px; min-width: 0; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.08; margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(2.4rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: clamp(1.6rem, 3.4vw, 2.2rem); font-weight: 800; letter-spacing: -0.01em; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; }
+.eyebrow { font: 600 0.74rem/1.2 var(--mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.12rem; max-width: 70ch; color: var(--muted); }
+.read { max-width: 72ch; display: grid; gap: 8px; }
+.note { font-size: 0.88rem; color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+a { color: var(--c-fem); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+button { font-family: var(--body); }
+[hidden] { display: none !important; }
+
+.topnav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.topnav ul { list-style: none; margin: 0 auto; padding: 8px 20px; max-width: 1180px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.topnav a { display: block; padding: 8px 12px; border-radius: 8px; font: 600 0.86rem/1 var(--body); color: var(--muted); text-decoration: none; white-space: nowrap; }
+.topnav a[aria-current="true"] { background: var(--ink); color: var(--bg); }
+.topnav a:hover { color: var(--ink); }
+.topnav a[aria-current="true"]:hover { color: var(--bg); }
+.topnav li.grp { font: 600 0.66rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); align-self: center; padding: 0 4px 0 10px; border-left: 1px solid var(--line); white-space: nowrap; }
+.topnav li.grp:first-child { border-left: 0; padding-left: 0; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; font: 600 0.78rem/1 var(--mono); padding: 6px 9px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.m-fem { color: var(--c-fem); } .m-fdtd { color: var(--c-fdtd); } .m-mom3d { color: var(--c-mom3d); }
+.m-asym { color: var(--c-asym); } .m-q2d { color: var(--c-q2d); } .m-neutral { color: var(--muted); }
+
+.hero-head { display: grid; gap: 12px; }
+.path { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 6px; padding: 0; list-style: none; counter-reset: st; }
+.path li { counter-increment: st; display: grid; grid-template-columns: 28px 1fr; gap: 8px; align-items: start; font-size: 0.92rem; }
+.path li::before { content: counter(st); width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--ink); display: grid; place-items: center; font: 700 0.8rem/1 var(--mono); }
+.path a { color: var(--ink); }
+@media (max-width: 760px) { .path { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 420px) { .path { grid-template-columns: 1fr; } }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 12px; min-width: 0; align-content: start; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; min-width: 0; align-content: start; }
+@media (max-width: 520px) { .card, .panel { padding: 14px; } }
+.card h3 { font-size: 1.3rem; font-weight: 800; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; max-width: 100%; }
+.seg button { font: 600 0.82rem/1 var(--body); padding: 9px 12px; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; gap: 6px; align-items: center; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.ibtn { font: 600 0.8rem/1 var(--body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; min-width: 36px; }
+.ibtn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.ibtn:disabled { opacity: 0.45; cursor: default; }
+.btn { font: 600 0.88rem/1 var(--body); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); cursor: pointer; justify-self: start; text-decoration: none; display: inline-block; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
+.lbl { font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+.demo { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.demo.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+@media (max-width: 900px) { .demo, .demo.even { grid-template-columns: 1fr; } }
+.viewer { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; display: grid; min-width: 0; overflow: hidden; align-content: start; }
+.vbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.vctl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; padding: 10px 12px; border-top: 1px solid var(--line); }
+.vctl .grp { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.stage { position: relative; width: 100%; background: var(--surface); }
+.stage canvas { display: block; width: 100%; touch-action: none; }
+.stage canvas.click { cursor: crosshair; }
+.stage canvas.grab { cursor: grab; }
+.stage canvas:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.stage .tag { position: absolute; left: 12px; top: 10px; font: 600 0.72rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); pointer-events: none; max-width: 70%; }
+.stage .tag.r { left: auto; right: 12px; text-align: right; }
+.caption { padding: 10px 12px 12px; font-size: 0.92rem; border-top: 1px solid var(--line); }
+.plotbox { position: relative; width: 100%; }
+.plotbox canvas { display: block; width: 100%; border-radius: 8px; background: var(--surface); }
+canvas { user-select: none; -webkit-user-select: none; }
+.readout { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
+.readout div { background: var(--bg); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.readout span { display: block; font: 600 0.64rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.readout b { font: 600 0.98rem/1.3 var(--mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.readout div.big { grid-column: 1 / -1; }
+.readout div.big b { font-size: 1.35rem; }
+.readout div.ok b { color: var(--ok); } .readout div.bad b { color: var(--bad); }
+.status { font: 600 0.9rem/1.35 var(--body); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); }
+.status.ok { color: var(--ok); border-color: var(--ok); }
+.status.bad { color: var(--bad); border-color: var(--bad); }
+.status.warn { color: var(--c-fdtd); border-color: var(--c-fdtd); }
+.slider { display: grid; gap: 4px; min-width: 0; }
+.slider label { font: 600 0.7rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.slider label .mono { text-transform: none; letter-spacing: 0; color: var(--ink); }
+.slider input[type=range] { width: 100%; accent-color: var(--ink); margin: 0; }
+.sl2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 14px; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 500 0.78rem/1.3 var(--mono); color: var(--muted); }
+.legend2 i { display: inline-block; width: 16px; height: 0; border-top: 2.5px solid currentColor; vertical-align: middle; margin-right: 5px; }
+.legend2 i.dot { border-top-style: dotted; } .legend2 i.dash { border-top-style: dashed; }
+.legend2 i.sq { width: 10px; height: 10px; border: 0; border-radius: 2px; background: currentColor; vertical-align: -1px; }
+.legend2 i.ring { width: 10px; height: 10px; border: 2px solid currentColor; border-radius: 50%; vertical-align: -1px; }
+.formula { font: 500 0.86rem/1.5 var(--mono); background: var(--bg); border-radius: 8px; padding: 8px 10px; overflow-x: auto; white-space: nowrap; }
+.formula sub, .formula sup { font-size: 0.72em; }
+.lines { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.94rem; max-width: 76ch; }
+.demo-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 1.25rem; margin-top: 10px; }
+.demo-h .tagx { font: 600 0.66rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.cbar { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto; gap: 8px; align-items: center; font: 600 0.72rem/1 var(--mono); color: var(--muted); }
+.cbar i { display: block; height: 10px; border-radius: 3px; background: linear-gradient(90deg, #440154, #3b528b, #21918c, #5ec962, #fde725); }
+pre.code { white-space: pre-wrap; overflow-wrap: anywhere; margin: 0; font: 500 0.78rem/1.5 var(--mono); background: var(--bg); border-radius: 8px; padding: 10px 12px; overflow-x: auto; color: var(--ink); max-width: 100%; }
+pre.code .c { color: var(--muted); }
+
+/* method cards */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+.mcard { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid currentColor; border-radius: 10px; padding: 12px 14px; display: grid; gap: 6px; align-content: start; }
+.mcard b { font: 800 1rem/1.2 var(--display); color: var(--ink); }
+.mcard .rg { font: 600 0.72rem/1.4 var(--mono); color: var(--muted); }
+.mcard p { font-size: 0.88rem; color: var(--ink); }
+.mcard code, .pick code, .lines code, .note code, .gtab code { font: 500 0.82em/1 var(--mono); background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+.obs { border-left: 4px solid var(--c-fdtd); }
+.figrow { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .figrow { grid-template-columns: 1fr; } }
+.figrow svg { width: 100%; max-width: 300px; height: auto; display: block; margin: 0 auto; }
+
+/* picker */
+.picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 18px; align-items: start; }
+@media (max-width: 900px) { .picker { grid-template-columns: 1fr; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font: 500 0.8rem/1.1 var(--body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.chips button:hover { border-color: var(--ink); }
+.chips button[aria-checked="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.pick { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid var(--c-fem); border-radius: 12px; padding: 16px 20px; display: grid; gap: 10px; min-width: 0; }
+.pick .big { font: 800 1.45rem/1.15 var(--display); }
+.pick .sz { font: 600 0.78rem/1.3 var(--mono); color: var(--muted); }
+.pick ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.pick li { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 2px 10px; font-size: 0.9rem; padding: 6px 0; border-top: 1px solid var(--line); }
+.pick li b { font-weight: 700; font-family: var(--mono); font-size: 0.82rem; overflow-wrap: anywhere; }
+.pick li span { color: var(--muted); }
+@media (max-width: 520px) { .pick li { grid-template-columns: 1fr; } .pick { padding: 14px; } }
+.gtab { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+.gtab th, .gtab td { text-align: left; padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+.gtab th { font: 600 0.66rem/1.3 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.tabwrap { overflow-x: auto; max-width: 100%; }
+
+.refs { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 0.9rem; max-width: 90ch; overflow-wrap: anywhere; }
+.refs li span { color: var(--muted); }
+footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<nav class="topnav" aria-label="Sections">
+  <ul id="topnav">
+    <li class="grp" aria-hidden="true">Learn</li>
+    <li><a href="#top">Why it matters</a></li>
+    <li><a href="#delaunay">Delaunay</a></li>
+    <li><a href="#front">Advancing front</a></li>
+    <li><a href="#quality">Quality</a></li>
+    <li><a href="#size">Size fields</a></li>
+    <li><a href="#tets">3-D slivers</a></li>
+    <li><a href="#adapt">Adaptivity</a></li>
+    <li class="grp" aria-hidden="true">Choose</li>
+    <li><a href="#choose">Your job</a></li>
+    <li><a href="#refs">References</a></li>
+    <li class="grp" aria-hidden="true">Also</li>
+    <li><a href="index.html">FDTD, FEM or MoM? &rarr;</a></li>
+    <li><a href="asymptotic.html">Rays, PO or Hata? &rarr;</a></li>
+  </ul>
+</nav>
+
+<div class="wrap">
+
+  <!-- 1. WHY THE MESH MATTERS -->
+  <section class="hero-head" id="top" aria-labelledby="top-h">
+    <p class="eyebrow">Computational electromagnetics &middot; finite element meshes</p>
+    <h1 id="top-h">Meshing for FEM</h1>
+    <p class="lede">The FEM answer is only as good as the mesh. Drag the mesh size. A real FEM solve of a microstrip line runs in your browser on each mesh. Compare the error with a converged reference.</p>
+    <div class="demo">
+      <div class="viewer" id="ms">
+        <div class="vbar">
+          <div class="seg" id="ms-grade" role="group" aria-label="Mesh sizing"><button type="button" data-v="u" aria-pressed="true">Uniform</button><button type="button" data-v="g" aria-pressed="false">Graded at strip edges</button></div>
+          <div class="seg" id="ms-view" role="group" aria-label="View"><button type="button" data-v="mesh" aria-pressed="true">Mesh</button><button type="button" data-v="pot" aria-pressed="false">Potential</button></div>
+        </div>
+        <div class="stage"><canvas id="ms-cv" role="img" aria-label="Cross-section of a shielded microstrip line with its triangle mesh or its potential"></canvas><span class="tag" id="ms-tag"></span></div>
+        <div class="vctl"><div class="slider" style="flex:1 1 240px"><label for="ms-h">Mesh size h / H: <span id="ms-hv" class="mono"></span></label><input type="range" id="ms-h" min="0" max="1" step="0.01" value="0.4"></div></div>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="readout">
+          <div class="big"><span>Z<sub>0</sub> from this mesh</span><b id="ms-z"></b></div>
+          <div><span>Error vs reference</span><b id="ms-e"></b></div>
+          <div><span>&epsilon;<sub>eff</sub></span><b id="ms-ee"></b></div>
+          <div><span>Unknowns (DOF)</span><b id="ms-n"></b></div>
+          <div><span>Mesh + 2 solves</span><b id="ms-t"></b></div>
+        </div>
+        <p class="eyebrow">|Z<sub>0</sub> error| against DOF</p>
+        <div class="plotbox"><canvas id="ms-pl" role="img" aria-label="Error of Z0 against the number of unknowns for uniform and graded meshes, log-log"></canvas></div>
+        <p class="legend2"><span class="m-fdtd"><i></i>uniform</span><span class="m-fem"><i></i>graded</span><span style="color:var(--muted)"><i class="dash"></i>slope N<sup>&minus;1/2</sup></span></p>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Reference: Z<sub>0</sub> = <span id="ms-ref"></span>, &epsilon;<sub>eff</sub> = <span id="ms-refe"></span>.</b> Same shielded line, graded meshes up to 346,000 unknowns, extrapolated (the last step changes Z<sub>0</sub> by 0.003%).</li>
+      <li><b>Error falls slowly on a uniform mesh.</b> The field is singular at the strip edges (like r<sup>&minus;1/2</sup>). Small elements there help most. Here grading reaches 2.5% error with 356 unknowns; the uniform mesh needs 4,667 for 2.9%.</li>
+      <li><b>P1 FEM capacitance is always too high</b> (the discrete field energy is an upper bound). So Z<sub>0</sub> converges from below.</li>
+    </ul>
+    <p class="note">Quasi-static TEM: two Laplace solves (with and without the substrate), C and C<sub>0</sub> from the field energy, Z<sub>0</sub> = 1/(c<sub>0</sub>&radic;(C C<sub>0</sub>)). Strip w = 2H, zero thickness, &epsilon;<sub>r</sub> = 4.4, shield 12H &times; 8H. Linear (P1) triangles, conjugate gradients. The mesher is the Delaunay refinement of section 4 with a 20.7&deg; angle bound.</p>
+    <ol class="path" aria-label="Learning path">
+      <li><span><a href="#delaunay">Insert points</a> one by one: Bowyer&ndash;Watson and Lawson flips.</span></li>
+      <li><span><a href="#front">March a front</a>, then <a href="#quality">refine for quality</a> (Ruppert).</span></li>
+      <li><span><a href="#size">Grade the mesh</a> with size fields. See <a href="#tets">why slivers</a> are a 3-D problem.</span></li>
+      <li><span><a href="#adapt">Let the solver refine</a>, then <a href="#choose">select settings</a> for your job.</span></li>
+    </ol>
+  </section>
+
+  <!-- 2. DELAUNAY -->
+  <section id="delaunay" aria-labelledby="del-h">
+    <div class="read"><h2 id="del-h">Delaunay triangulation, one point at a time</h2>
+      <p>Click to add a point. No vertex may lie inside the circumcircle of a triangle: that is the Delaunay rule (Delaunay, 1934).</p></div>
+    <div class="demo">
+      <div class="viewer" id="dl">
+        <div class="vbar">
+          <div class="seg" id="dl-alg" role="group" aria-label="Insertion algorithm"><button type="button" data-v="bw" aria-pressed="true">Bowyer&ndash;Watson</button><button type="button" data-v="lw" aria-pressed="false">Lawson flips</button></div>
+          <div class="row"><button type="button" class="ibtn" id="dl-cc" aria-pressed="false">Circumcircles</button><button type="button" class="ibtn" id="dl-vor" aria-pressed="false">Voronoi</button></div>
+        </div>
+        <div class="stage"><canvas id="dl-cv" class="click" tabindex="0" role="application" aria-label="Delaunay triangulation. Click to insert a point. Keyboard: arrow keys move the cross, Enter inserts a point."></canvas><span class="tag" id="dl-tag"></span></div>
+        <div class="vctl">
+          <span class="grp"><button type="button" class="ibtn" id="dl-r1">Add random point</button><button type="button" class="ibtn" id="dl-r20">Add 20</button><button type="button" class="ibtn" id="dl-clr">Clear</button></span>
+          <span class="grp"><button type="button" class="ibtn" id="dl-anim" aria-pressed="true">Animate</button></span>
+        </div>
+        <div class="caption" id="dl-cap" aria-live="polite"></div>
+      </div>
+      <div class="card">
+        <div class="readout">
+          <div><span>Points</span><b id="dl-np"></b></div>
+          <div><span>Triangles</span><b id="dl-nt"></b></div>
+          <div><span>Last insertion</span><b id="dl-last"></b></div>
+          <div><span>Smallest angle</span><b id="dl-amin"></b></div>
+          <div class="big"><span>Empty-circle check (all triangles)</span><b id="dl-chk"></b></div>
+        </div>
+        <ul class="lines">
+          <li><b>Bowyer (1981), Watson (1981):</b> find the triangles whose circumcircle holds the new point. Remove them. The hole is a star-shaped cavity. Connect its boundary to the point.</li>
+          <li><b>Lawson (1977):</b> split the triangle that holds the point into three. Then flip each edge that fails the circle test, until none fails.</li>
+          <li>Both give the same mesh. Of all triangulations of these points, the Delaunay one has the largest smallest angle.</li>
+          <li><b>Voronoi:</b> join the circumcentres of neighbour triangles. It is the dual graph. Each cell holds the points nearest to one vertex.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. ADVANCING FRONT -->
+  <section id="front" aria-labelledby="af-h">
+    <div class="read"><h2 id="af-h">Advancing front: build from the boundary in</h2>
+      <p>The front starts as the boundary edges. Take the shortest front edge. Put an ideal point above it, or use a near front vertex. Add the triangle. Update the front. Repeat until the front is empty (Lo, 1985; Peraire et al., 1987).</p></div>
+    <div class="demo">
+      <div class="viewer" id="af">
+        <div class="vbar">
+          <div class="row"><button type="button" class="ibtn" id="af-play" aria-pressed="false">Play</button><button type="button" class="ibtn" id="af-step">Step</button><button type="button" class="ibtn" id="af-done">Finish</button><button type="button" class="ibtn" id="af-reset">Reset</button></div>
+          <div class="seg" id="af-show" role="group" aria-label="Mesh shown"><button type="button" data-v="af" aria-pressed="true">Front mesh</button><button type="button" data-v="dr" aria-pressed="false">Delaunay mesh</button></div>
+        </div>
+        <div class="stage"><canvas id="af-cv" role="img" aria-label="Plate with a hole meshed by an advancing front. The front edges are drawn thick."></canvas><span class="tag" id="af-tag"></span></div>
+        <div class="vctl">
+          <div class="slider" style="flex:1 1 160px"><label for="af-h">Element size h: <span id="af-hv" class="mono"></span></label><input type="range" id="af-h" min="0.22" max="0.8" step="0.01" value="0.45"></div>
+          <div class="slider" style="flex:1 1 160px"><label for="af-sp">Speed: <span id="af-spv" class="mono"></span></label><input type="range" id="af-sp" min="0" max="1" step="0.01" value="0.35"></div>
+        </div>
+        <p class="legend2" style="padding:0 12px 12px"><span class="m-fdtd"><i></i>front</span><span class="m-fem"><i class="ring"></i>ideal point</span><span class="m-asym"><i class="sq"></i>new triangle</span></p>
+      </div>
+      <div class="card">
+        <p class="eyebrow">Radius ratio &gamma; = 2r<sub>in</sub>/R (1 = equilateral)</p>
+        <div class="plotbox"><canvas id="af-hist" role="img" aria-label="Histograms of the radius ratio for the advancing-front mesh and for a Delaunay refinement mesh of the same size"></canvas></div>
+        <p class="legend2"><span class="m-fdtd"><i class="sq"></i>advancing front</span><span class="m-fem"><i class="sq"></i>Delaunay refinement (20.7&deg;)</span></p>
+        <div class="readout">
+          <div><span>Front: triangles</span><b id="af-n1"></b></div>
+          <div><span>Front: mean / min &gamma;</span><b id="af-q1"></b></div>
+          <div><span>Delaunay: triangles</span><b id="af-n2"></b></div>
+          <div><span>Delaunay: mean / min &gamma;</span><b id="af-q2"></b></div>
+        </div>
+        <p class="note">The front makes near-equilateral triangles in rows that follow the boundary. Its worst triangles are where two fronts meet. Delaunay refinement has a bounded worst angle but a wider spread. At this size the front wins on mean &gamma;; at h &ge; 0.6 it does not. Gmsh &ldquo;Frontal-Delaunay&rdquo; (the 2-D default) mixes both: it places points like a front and connects them with Delaunay (Rebay, 1993).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. QUALITY -->
+  <section id="quality" aria-labelledby="q-h">
+    <div class="read"><h2 id="q-h">Quality: Delaunay refinement with an angle bound</h2>
+      <p>Delaunay triangulation alone keeps skinny triangles. Ruppert's algorithm (1995) removes them. Raise the minimum angle and watch the mesh change.</p></div>
+    <div class="demo">
+      <div class="viewer" id="rp">
+        <div class="vbar">
+          <div class="row"><button type="button" class="ibtn" id="rp-watch">Watch refinement</button><button type="button" class="ibtn" id="rp-skip">Skip to end</button></div>
+          <div class="seg" id="rp-col" role="group" aria-label="Colour"><button type="button" data-v="ang" aria-pressed="true">Min angle</button><button type="button" data-v="none" aria-pressed="false">Plain</button></div>
+        </div>
+        <div class="stage"><canvas id="rp-cv" role="img" aria-label="A waveguide section with a notch and a post, meshed by Delaunay refinement. Triangles are coloured by their smallest angle."></canvas><span class="tag" id="rp-tag"></span></div>
+        <div class="vctl"><div class="slider" style="flex:1 1 240px"><label for="rp-a">Minimum angle bound &alpha;: <span id="rp-av" class="mono"></span></label><input type="range" id="rp-a" min="0" max="36" step="0.5" value="20.5"></div>
+          <span class="cbar" style="flex:1 1 180px"><span>0&deg;</span><i></i><span>60&deg;</span></span></div>
+        <p class="legend2" style="padding:0 12px 12px"><span class="m-fdtd"><i class="ring"></i>circumcircle of a bad triangle</span><span class="m-mom3d"><i class="ring"></i>diametral circle of an encroached segment</span></p>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="readout">
+          <div><span>Triangles</span><b id="rp-nt"></b></div>
+          <div><span>Smallest angle in mesh</span><b id="rp-amin"></b></div>
+          <div><span>Circumcentres added</span><b id="rp-ncc"></b></div>
+          <div><span>Segment splits</span><b id="rp-nseg"></b></div>
+        </div>
+        <p class="status" id="rp-st" role="status"></p>
+        <p class="eyebrow">Smallest angle of each triangle</p>
+        <div class="plotbox"><canvas id="rp-hist" role="img" aria-label="Histogram of the smallest angle of each triangle, with the bound marked"></canvas></div>
+        <p class="eyebrow">Why 20.7&deg;</p>
+        <div class="plotbox"><canvas id="rp-why" role="img" aria-label="Smallest angle against the circumradius-to-shortest-edge ratio, with the Ruppert bound at the square root of two"></canvas></div>
+        <p class="formula" style="white-space:normal">&rho; = R / &ell;<sub>min</sub> = 1 / (2 sin &theta;<sub>min</sub>) &nbsp;&middot;&nbsp; &rho; &gt; &radic;2 &hArr; &theta;<sub>min</sub> &lt; arcsin(1/(2&radic;2)) = 20.7&deg;</p>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Bad triangle</b> (smallest angle &lt; &alpha;): insert its circumcentre. It is far from all vertices (the circle is empty), so new edges are not short.</li>
+      <li><b>Encroached segment</b> (a vertex inside its diametral circle): split it at the midpoint. If a circumcentre would encroach a segment, split the segment instead.</li>
+      <li><b>The guarantee:</b> split only triangles with &rho; above a bound B &ge; &radic;2. Then each new edge is longer than the edge that caused it, so the algorithm stops. That gives &alpha; up to 20.7&deg;. Ruppert (1995) proved it for inputs with no angle under 90&deg;; Shewchuk (2002) relaxed this to 60&deg;. Chew's 1989 method gives 30&deg; for uniform meshes.</li>
+      <li><b>In practice</b> Triangle succeeds up to about 33&deg; and usually does not stop above 34&deg; (Shewchuk). Drag the bound past 34&deg;: this demo stops at a cap of 6,000 points.</li>
+    </ul>
+  </section>
+
+  <!-- 5. SIZE FIELDS -->
+  <section id="size" aria-labelledby="sz-h">
+    <div class="read"><h2 id="sz-h">Size fields: put elements where the field changes</h2>
+      <p>A size field gives the target edge length h(x, y). Gmsh takes the smallest of all size sources. Here: a Distance + Threshold field from a metal edge, and curvature sizing on a circle.</p></div>
+    <div class="demo">
+      <div class="viewer" id="sz">
+        <div class="vbar">
+          <div class="seg" id="sz-view" role="group" aria-label="View"><button type="button" data-v="mesh" aria-pressed="true">Mesh</button><button type="button" data-v="field" aria-pressed="false">Size field</button></div>
+          <div class="row"><button type="button" class="ibtn" id="sz-sig" aria-pressed="false">Sigmoid</button></div>
+        </div>
+        <div class="stage"><canvas id="sz-cv" role="img" aria-label="Rectangle with a metal trace and a circular hole, meshed with a distance-threshold size field and curvature sizing"></canvas><span class="tag" id="sz-tag"></span></div>
+        <div class="vctl" style="display:grid">
+          <div class="sl2">
+            <div class="slider"><label for="sz-smin">SizeMin: <span id="sz-sminv" class="mono"></span></label><input type="range" id="sz-smin" min="0.03" max="0.5" step="0.01" value="0.06"></div>
+            <div class="slider"><label for="sz-smax">SizeMax: <span id="sz-smaxv" class="mono"></span></label><input type="range" id="sz-smax" min="0.3" max="1.5" step="0.05" value="0.9"></div>
+            <div class="slider"><label for="sz-dmin">DistMin: <span id="sz-dminv" class="mono"></span></label><input type="range" id="sz-dmin" min="0" max="2" step="0.05" value="0.15"></div>
+            <div class="slider"><label for="sz-dmax">DistMax: <span id="sz-dmaxv" class="mono"></span></label><input type="range" id="sz-dmax" min="0.5" max="6" step="0.1" value="2.5"></div>
+            <div class="slider"><label for="sz-curv">Curvature: elements per 2&pi;: <span id="sz-curvv" class="mono"></span></label><input type="range" id="sz-curv" min="0" max="64" step="1" value="32"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="readout">
+          <div><span>Triangles</span><b id="sz-nt"></b></div>
+          <div><span>Nodes</span><b id="sz-nv"></b></div>
+          <div><span>Edge length, min / max</span><b id="sz-el"></b></div>
+          <div><span>Mesh time</span><b id="sz-t"></b></div>
+        </div>
+        <p class="eyebrow">Threshold field: h against distance d to the metal edge</p>
+        <div class="plotbox"><canvas id="sz-pl" role="img" aria-label="Threshold size against distance: SizeMin up to DistMin, a linear or sigmoid ramp, SizeMax beyond DistMax"></canvas></div>
+        <p class="eyebrow">The same settings in the Gmsh Python API</p>
+        <pre class="code" id="sz-code" tabindex="0" aria-label="Gmsh Python code for these settings"></pre>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Threshold:</b> h = SizeMin for d &le; DistMin, SizeMax for d &ge; DistMax, a linear ramp between (or a sigmoid with <code>Sigmoid = 1</code>). Gmsh computes d with the Distance field on sample points of the curve (<code>Sampling</code>).</li>
+      <li><b>Curvature:</b> <code>Mesh.MeshSizeFromCurvature = N</code> asks for N elements per 2&pi; of arc, so h = 2&pi;R/N on the circle. The 2-D mesh then grades away from the curve.</li>
+      <li><b>For EM:</b> refine at metal edges and corners (singular fields), in thin gaps, and inside high-&epsilon;<sub>r</sub> regions where &lambda; is short.</li>
+    </ul>
+  </section>
+
+  <!-- 6. TETS AND SLIVERS -->
+  <section id="tets" aria-labelledby="tet-h">
+    <div class="read"><h2 id="tet-h">3-D: tetrahedra and slivers</h2>
+      <p>A sliver has four good edges but almost no volume: the four vertices are nearly in one plane. Delaunay refinement in 3-D bounds the radius&ndash;edge ratio, and slivers pass that test. Drag a vertex, or flatten the tetrahedron.</p></div>
+    <div class="demo">
+      <div class="viewer" id="tt">
+        <div class="vbar">
+          <div class="seg" id="tt-pre" role="group" aria-label="Shape"><button type="button" data-v="reg" aria-pressed="true">Regular</button><button type="button" data-v="sliver" aria-pressed="false">Sliver</button><button type="button" data-v="cap" aria-pressed="false">Cap</button><button type="button" data-v="needle" aria-pressed="false">Needle</button><button type="button" data-v="wedge" aria-pressed="false">Wedge</button></div>
+          <div class="row"><button type="button" class="ibtn" id="tt-sph" aria-pressed="false">Circumsphere</button></div>
+        </div>
+        <div class="stage"><canvas id="tt-cv" class="grab" tabindex="0" role="application" aria-label="Tetrahedron in 3-D. Drag a vertex to move it. Drag elsewhere to rotate. Keyboard: 1 to 4 selects a vertex, arrow keys move it, PageUp and PageDown move it in depth, R and F rotate."></canvas><span class="tag" id="tt-tag"></span></div>
+        <div class="vctl"><div class="slider" style="flex:1 1 240px"><label for="tt-fl">Height scale (1 = as shown, 0 = flat): <span id="tt-flv" class="mono"></span></label><input type="range" id="tt-fl" min="0" max="1" step="0.005" value="1"></div></div>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="readout">
+          <div><span>Volume / regular</span><b id="tt-v"></b></div>
+          <div><span>Dihedral min / max</span><b id="tt-d"></b></div>
+          <div><span>Radius&ndash;edge R/&ell;<sub>min</sub></span><b id="tt-rer"></b></div>
+          <div><span>&gamma; = 3r<sub>in</sub>/R (Gmsh)</span><b id="tt-g"></b></div>
+          <div><span>SICN (Gmsh)</span><b id="tt-s"></b></div>
+          <div><span>&kappa; of element K</span><b id="tt-k"></b></div>
+        </div>
+        <p class="status" id="tt-st" role="status"></p>
+        <p class="eyebrow">Flatten a regular tet: metrics against height scale</p>
+        <div class="plotbox"><canvas id="tt-pl" role="img" aria-label="Radius-edge ratio, gamma and the condition number of the element stiffness matrix against the height scale of a flattened regular tetrahedron"></canvas></div>
+        <p class="legend2"><span class="m-fem"><i></i>&gamma;</span><span class="m-asym"><i></i>SICN</span><span class="m-fdtd"><i></i>R/&ell;<sub>min</sub></span><span class="m-mom3d"><i class="dash"></i>&kappa;(K) (log, right)</span></p>
+      </div>
+    </div>
+    <ul class="lines">
+      <li><b>Why slivers hurt FEM:</b> a dihedral angle near 0&deg; or 180&deg; makes the element stiffness matrix ill-conditioned. For the flattened tet, &kappa; grows like 1/V&sup2; (its largest eigenvalue like 1/V). The gradient interpolation also gets worse: this is the maximum angle condition (Babu&scaron;ka &amp; Aziz 1976; K&rcaron;&iacute;&zcaron;ek 1992). Iterative solvers then need more iterations.</li>
+      <li><b>No sliver problem in 2-D:</b> a triangle with good edges cannot be flat. In 3-D, the radius&ndash;edge ratio of a flat sliver is 1/&radic;2 = 0.71, better than TetGen's default bound of 2.0.</li>
+    </ul>
+    <div class="cards">
+      <div class="mcard m-fem"><b>TetGen (Si, 2015)</b><span class="rg">Delaunay refinement + optimisation</span><p><code>-q</code> bounds the radius&ndash;edge ratio (default 2.0) and, as an option, the minimum dihedral angle. <code>-O</code> then flips edges and faces and smooths vertices; its default target is a maximum dihedral angle of 165&deg;.</p></div>
+      <div class="mcard m-asym"><b>Netgen (Sch&ouml;berl, 1997)</b><span class="rg">advancing front + optimisation</span><p>Rule-based front placement, then edge/face swaps and smoothing. Gmsh runs it with <code>Mesh.OptimizeNetgen = 1</code>; Gmsh &ldquo;Frontal&rdquo; 3-D (4) is Netgen.</p></div>
+      <div class="mcard m-mom3d"><b>HXT (Marot et al. 2019, 2020)</b><span class="rg">parallel Delaunay + optimisation</span><p>A parallel Delaunay kernel, then edge removal, Laplacian smoothing and the &ldquo;growing SPR cavity&rdquo; operator. Gmsh <code>Mesh.Algorithm3D = 10</code>.</p></div>
+      <div class="mcard m-fdtd"><b>Gmsh optimiser</b><span class="rg">default on</span><p><code>Mesh.Optimize = 1</code> improves tetrahedra with quality below <code>Mesh.OptimizeThreshold</code> (default 0.3). Check with <code>Plugin(AnalyseMeshQuality)</code> or the SICN histogram.</p></div>
+      <div class="mcard m-q2d"><b>Sliver exudation (Cheng et al. 2000)</b><span class="rg">weighted Delaunay</span><p>Give each vertex a small weight. A weighted Delaunay mesh then has no slivers below a (very small) proven dihedral bound. A theory result; practical codes use flips and smoothing.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. ADAPTIVE REFINEMENT -->
+  <section id="adapt" aria-labelledby="ad-h">
+    <div class="read"><h2 id="ad-h">Adaptive refinement: let the solution choose the mesh</h2>
+      <p>Solve, estimate the error of each element, mark the worst, refine, repeat. The test case is the L-shaped domain. Its re-entrant corner makes the gradient infinite, like a metal corner in EM.</p></div>
+    <div class="demo">
+      <div class="viewer" id="ad">
+        <div class="vbar">
+          <div class="row"><button type="button" class="btn primary" id="ad-next">Next pass</button><button type="button" class="ibtn" id="ad-run">Run 8 passes</button><button type="button" class="ibtn" id="ad-reset">Reset</button></div>
+          <div class="seg" id="ad-view" role="group" aria-label="Colour"><button type="button" data-v="eta" aria-pressed="true">Estimator &eta;<sub>T</sub></button><button type="button" data-v="err" aria-pressed="false">True error</button><button type="button" data-v="u" aria-pressed="false">u<sub>h</sub></button><button type="button" data-v="mesh" aria-pressed="false">Mesh</button></div>
+        </div>
+        <div class="stage"><canvas id="ad-cv" role="img" aria-label="L-shaped domain mesh coloured by the error estimator of each element"></canvas><span class="tag" id="ad-tag"></span></div>
+        <div class="vctl">
+          <span class="grp"><span class="lbl">Estimator</span><span class="seg" id="ad-est" role="group" aria-label="Error estimator"><button type="button" data-v="res" aria-pressed="false">Residual</button><button type="button" data-v="zz" aria-pressed="true">ZZ recovery</button></span></span>
+          <div class="slider" style="flex:1 1 200px"><label for="ad-th">D&ouml;rfler &theta;: <span id="ad-thv" class="mono"></span></label><input type="range" id="ad-th" min="0.1" max="1" step="0.05" value="0.5"></div>
+          <span class="cbar" style="flex:1 1 160px"><span id="ad-cb0">low</span><i></i><span id="ad-cb1">high</span></span>
+        </div>
+      </div>
+      <div class="card" aria-live="polite">
+        <div class="readout">
+          <div><span>Pass</span><b id="ad-p"></b></div>
+          <div><span>DOF (free nodes)</span><b id="ad-n"></b></div>
+          <div><span>True energy error</span><b id="ad-e"></b></div>
+          <div><span>Estimate &eta; / effectivity</span><b id="ad-eta"></b></div>
+          <div><span>&Delta;E between passes</span><b id="ad-de"></b></div>
+          <div><span>Fitted slope (last 4)</span><b id="ad-sl"></b></div>
+        </div>
+        <p class="eyebrow">Energy error against DOF</p>
+        <div class="plotbox"><canvas id="ad-pl" role="img" aria-label="Energy-norm error against degrees of freedom, log-log, for uniform refinement and for adaptive refinement, with reference slopes minus one third and minus one half"></canvas></div>
+        <p class="legend2"><span class="m-fdtd"><i></i>uniform (h/2 each pass)</span><span class="m-fem"><i></i>adaptive</span><span style="color:var(--muted)"><i class="dash"></i>N<sup>&minus;1/3</sup>, N<sup>&minus;1/2</sup></span></p>
+      </div>
+    </div>
+    <p class="formula">u = r<sup>2/3</sup> sin(2&theta;/3) &nbsp;&middot;&nbsp; |u|<sub>H&sup1;</sub>&sup2; = 1.8362 &nbsp;&middot;&nbsp; P1: uniform error &prop; h<sup>2/3</sup> &prop; N<sup>&minus;1/3</sup>; adaptive &prop; N<sup>&minus;1/2</sup> (optimal)</p>
+    <ul class="lines">
+      <li><b>Estimate:</b> the residual estimator sums the jumps of the normal flux across the edges of T: &eta;<sub>T</sub>&sup2; = &frac12;&Sigma; h<sub>E</sub>&sup2;[&part;<sub>n</sub>u<sub>h</sub>]&sup2; (Babu&scaron;ka &amp; Rheinboldt 1978). ZZ averages the gradient at the nodes and measures the gap to the element gradient (Zienkiewicz &amp; Zhu 1987). The effectivity &eta;/error shows how honest the estimate is: near 1.0 for ZZ here, about 3.4 for the residual on the adaptive meshes (its bound has an unknown constant).</li>
+      <li><b>Mark (D&ouml;rfler 1996):</b> mark the fewest elements that hold the fraction &theta; of the total &eta;&sup2;. Small &theta;: few elements per pass, a lean mesh, more passes. &theta; = 1 is uniform.</li>
+      <li><b>Refine:</b> newest-vertex bisection (Sewell 1972; Mitchell 1991). The closure step bisects neighbours too, so there are no hanging nodes. Every element is similar to one of a few shapes of the first mesh, so the angles stay bounded. The optimal rate is proven (Binev, Dahmen &amp; DeVore 2004; Stevenson 2007).</li>
+    </ul>
+
+    <h3 class="demo-h m-fem"><span class="tagx">EM solvers</span><span style="color:var(--ink)">The same loop in HFSS and Palace</span></h3>
+    <div class="cards">
+      <div class="mcard m-fdtd"><b>HFSS adaptive passes</b><span class="rg">stop on &Delta;S</span><p>Solve at one adapt frequency. Estimate the error per tetrahedron. Refine a fraction of them (Ansys training: 30% per pass by default). Stop when &Delta;S, the largest change of any S-parameter between two passes, is below the target (default 0.02) for the set number of converged passes. &Delta;S watches the output, not the field error.</p></div>
+      <div class="mcard m-fem"><b>Palace AMR</b><span class="rg"><code>config["Model"]["Refinement"]</code></span><p>A ZZ-type estimator on the recovered B and D fields (after Nicaise 2005). D&ouml;rfler marking with <code>UpdateFraction</code> (default 0.7). Stop at <code>Tol</code> (default 0.01) or <code>MaxIts</code> (default 0: no AMR). <code>Nonconformal</code> is <code>true</code> by default, with <code>MaxNCLevels</code> = 1; conformal refinement is for simplex meshes only.</p></div>
+    </div>
+    <div class="figrow">
+      <div class="panel"><p class="eyebrow">Conformal: red&ndash;green refinement</p>
+        <svg viewBox="0 0 240 150" role="img" aria-label="Conformal refinement: the marked triangle is bisected and its neighbour is bisected too, so every edge ends at vertices"><g id="fig-conf"></g></svg>
+        <p class="note">Red: split the marked element in four. Green: bisect each neighbour to the new midpoint. Every node is a true vertex. (The demo above uses newest-vertex bisection; the result is also conforming.)</p></div>
+      <div class="panel"><p class="eyebrow">Nonconformal: hanging nodes</p>
+        <svg viewBox="0 0 240 150" role="img" aria-label="Nonconformal refinement: the marked triangle is split into four and the new edge midpoints on its neighbours are hanging nodes"><g id="fig-nc"></g></svg>
+        <p class="note">Only the marked element splits. The midpoints on the neighbours' edges hang (rings). The solver must constrain those DOFs to the coarse edge. It works for any element type, but the constraints add coupling.</p></div>
+    </div>
+    <div class="panel obs"><p class="eyebrow">An observed case, not a general rule</p>
+      <p>In one of Ben's Palace models, nonconformal AMR on a large mesh made the wave-port mode solve pick a spurious mode. If a port mode looks wrong after AMR, check the port field plots. On a tetrahedral mesh, also try <code>"Nonconformal": false</code>.</p></div>
+  </section>
+
+  <!-- 8. CHOOSE -->
+  <section id="choose" aria-labelledby="ch-h">
+    <div class="read"><h2 id="ch-h">Which mesher and settings for which job?</h2>
+      <p>Select a job. Settings are Gmsh option names. They are good first tries, not rules.</p></div>
+    <div class="picker">
+      <div class="panel">
+        <span class="lbl">Job</span>
+        <div class="chips" id="ch-tasks" role="radiogroup" aria-label="Job"></div>
+      </div>
+      <div class="pick" id="ch-out" aria-live="polite"></div>
+    </div>
+    <div class="panel">
+      <p class="eyebrow">Gmsh unstructured algorithms (Gmsh reference manual)</p>
+      <div class="tabwrap"><table class="gtab">
+        <thead><tr><th>Option</th><th>Value</th><th>What the manual says</th></tr></thead>
+        <tbody>
+          <tr><td><code>Mesh.Algorithm</code></td><td>1 MeshAdapt</td><td>Local edge swaps, splits and collapses. Most robust for very complex curved surfaces.</td></tr>
+          <tr><td></td><td>5 Delaunay</td><td>Inserts circumcentres of the element with the largest adimensional circumradius. Fastest for very large plane surfaces; handles complex size fields well.</td></tr>
+          <tr><td></td><td>6 Frontal-Delaunay</td><td>Default. Try it when element quality matters.</td></tr>
+          <tr><td></td><td>7 BAMG, 8 Frontal-Delaunay for Quads, 11 Quasi-structured Quad</td><td>Anisotropic triangles; right-angle triangles for recombination into quads; quad meshes.</td></tr>
+          <tr><td><code>Mesh.Algorithm3D</code></td><td>1 Delaunay</td><td>Default. Most robust; boundary recovery by TetGen/BR; the only one for hybrid meshes with pyramids.</td></tr>
+          <tr><td></td><td>4 Frontal</td><td>Netgen (Sch&ouml;berl).</td></tr>
+          <tr><td></td><td>10 HXT</td><td>Parallel reimplementation of Delaunay (OpenMP).</td></tr>
+          <tr><td></td><td>7 MMG3D</td><td>Anisotropic tetrahedral meshes.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="note">Embedded entities and general size fields work with 3-D Delaunay and HXT only (manual, section 1.2.1).</p>
+    </div>
+  </section>
+
+  <!-- REFERENCES -->
+  <section id="refs" aria-labelledby="refs-h">
+    <div class="read"><h2 id="refs-h">References</h2></div>
+    <ol class="refs">
+      <li>B. Delaunay, &ldquo;Sur la sph&egrave;re vide,&rdquo; <i>Bull. Acad. Sci. URSS, Classe Sci. Math. Nat.</i> 6, 793&ndash;800, 1934. <span>No DOI.</span></li>
+      <li>A. Bowyer, &ldquo;Computing Dirichlet tessellations,&rdquo; <i>The Computer Journal</i> 24(2), 162&ndash;166, 1981. <a href="https://doi.org/10.1093/comjnl/24.2.162">doi:10.1093/comjnl/24.2.162</a></li>
+      <li>D. F. Watson, &ldquo;Computing the n-dimensional Delaunay tessellation with application to Voronoi polytopes,&rdquo; <i>The Computer Journal</i> 24(2), 167&ndash;172, 1981. <a href="https://doi.org/10.1093/comjnl/24.2.167">doi:10.1093/comjnl/24.2.167</a></li>
+      <li>C. L. Lawson, &ldquo;Transforming triangulations,&rdquo; <i>Discrete Mathematics</i> 3, 365&ndash;372, 1972. <a href="https://doi.org/10.1016/0012-365X(72)90093-3">doi:10.1016/0012-365X(72)90093-3</a>; and &ldquo;Software for C<sup>1</sup> surface interpolation,&rdquo; in <i>Mathematical Software III</i>, Academic Press, 161&ndash;194, 1977. <span>Max-min angle property.</span></li>
+      <li>S. H. Lo, &ldquo;A new mesh generation scheme for arbitrary planar domains,&rdquo; <i>IJNME</i> 21(8), 1403&ndash;1426, 1985. <a href="https://doi.org/10.1002/nme.1620210805">doi:10.1002/nme.1620210805</a></li>
+      <li>J. Peraire, M. Vahdati, K. Morgan, O. C. Zienkiewicz, &ldquo;Adaptive remeshing for compressible flow computations,&rdquo; <i>J. Comput. Phys.</i> 72(2), 449&ndash;466, 1987. <a href="https://doi.org/10.1016/0021-9991(87)90093-3">doi:10.1016/0021-9991(87)90093-3</a></li>
+      <li>M. A. Yerry, M. S. Shephard, &ldquo;A modified quadtree approach to finite element mesh generation,&rdquo; <i>IEEE CG&amp;A</i> 3(1), 39&ndash;46, 1983 <a href="https://doi.org/10.1109/MCG.1983.262997">doi:10.1109/MCG.1983.262997</a>; &ldquo;Automatic three-dimensional mesh generation by the modified-octree technique,&rdquo; <i>IJNME</i> 20(11), 1965&ndash;1990, 1984 <a href="https://doi.org/10.1002/nme.1620201103">doi:10.1002/nme.1620201103</a>. <span>Octree meshing (not demonstrated here).</span></li>
+      <li>L. P. Chew, &ldquo;Guaranteed-quality triangular meshes,&rdquo; Tech. Rep. TR-89-983, Cornell University, 1989. <span>No DOI.</span></li>
+      <li>J. Ruppert, &ldquo;A Delaunay refinement algorithm for quality 2-dimensional mesh generation,&rdquo; <i>J. Algorithms</i> 18(3), 548&ndash;585, 1995. <a href="https://doi.org/10.1006/jagm.1995.1021">doi:10.1006/jagm.1995.1021</a></li>
+      <li>J. R. Shewchuk, &ldquo;Triangle: engineering a 2D quality mesh generator and Delaunay triangulator,&rdquo; <i>Applied Computational Geometry</i>, LNCS 1148, 203&ndash;222, 1996. <a href="https://doi.org/10.1007/BFb0014497">doi:10.1007/BFb0014497</a>. Switch notes: <a href="https://www.cs.cmu.edu/~quake/triangle.q.html">cs.cmu.edu/~quake/triangle.q.html</a> <span>(20.7&deg; guarantee, 33&deg; in practice).</span></li>
+      <li>J. R. Shewchuk, &ldquo;Delaunay refinement algorithms for triangular mesh generation,&rdquo; <i>Comput. Geom.</i> 22(1&ndash;3), 21&ndash;74, 2002. <a href="https://doi.org/10.1016/S0925-7721(01)00047-5">doi:10.1016/S0925-7721(01)00047-5</a></li>
+      <li>J. R. Shewchuk, &ldquo;Tetrahedral mesh generation by Delaunay refinement,&rdquo; <i>Proc. 14th Symp. Computational Geometry</i>, 86&ndash;95, 1998. <a href="https://doi.org/10.1145/276884.276894">doi:10.1145/276884.276894</a> <span>(radius&ndash;edge bound 2; slivers remain).</span></li>
+      <li>S.-W. Cheng, T. K. Dey, H. Edelsbrunner, M. A. Facello, S.-H. Teng, &ldquo;Sliver exudation,&rdquo; <i>J. ACM</i> 47(5), 883&ndash;904, 2000. <a href="https://doi.org/10.1145/355483.355487">doi:10.1145/355483.355487</a></li>
+      <li>H. Si, &ldquo;TetGen, a Delaunay-based quality tetrahedral mesh generator,&rdquo; <i>ACM TOMS</i> 41(2), 11:1&ndash;36, 2015. <a href="https://doi.org/10.1145/2629697">doi:10.1145/2629697</a>. Manual: <a href="https://wias-berlin.de/software/tetgen/1.5/doc/manual/manual005.html">TetGen 1.5 command-line switches</a></li>
+      <li>J. Sch&ouml;berl, &ldquo;NETGEN: an advancing front 2D/3D-mesh generator based on abstract rules,&rdquo; <i>Comput. Visual. Sci.</i> 1, 41&ndash;52, 1997. <a href="https://doi.org/10.1007/s007910050004">doi:10.1007/s007910050004</a></li>
+      <li>C. Geuzaine, J.-F. Remacle, &ldquo;Gmsh: a 3-D finite element mesh generator with built-in pre- and post-processing facilities,&rdquo; <i>IJNME</i> 79(11), 1309&ndash;1331, 2009. <a href="https://doi.org/10.1002/nme.2579">doi:10.1002/nme.2579</a>. Reference manual: <a href="https://gmsh.info/doc/texinfo/gmsh.html">gmsh.info/doc/texinfo</a> <span>(options and fields, checked 17 Oct 2026).</span></li>
+      <li>S. Rebay, &ldquo;Efficient unstructured mesh generation by means of Delaunay triangulation and Bowyer&ndash;Watson algorithm,&rdquo; <i>J. Comput. Phys.</i> 106(1), 125&ndash;138, 1993. <a href="https://doi.org/10.1006/jcph.1993.1097">doi:10.1006/jcph.1993.1097</a></li>
+      <li>C. Marot, J. Pellerin, J.-F. Remacle, &ldquo;One machine, one minute, three billion tetrahedra,&rdquo; <i>IJNME</i> 117(9), 967&ndash;990, 2019. <a href="https://doi.org/10.1002/nme.5987">doi:10.1002/nme.5987</a>; C. Marot, J.-F. Remacle, &ldquo;Quality tetrahedral mesh generation with HXT,&rdquo; <a href="https://arxiv.org/abs/2008.08508">arXiv:2008.08508</a>, 2020.</li>
+      <li>A. Johnen, C. Geuzaine, T. Toulorge, J.-F. Remacle, &ldquo;Efficient computation of the minimum of shape quality measures on curvilinear finite elements,&rdquo; <i>Computer-Aided Design</i> 103, 24&ndash;33, 2018. <a href="https://doi.org/10.1016/j.cad.2018.03.001">doi:10.1016/j.cad.2018.03.001</a> <span>(SICN, SIGE). Formulas here follow the Gmsh source (qualityMeasures.cpp, qualityMeasuresJacobian.cpp).</span></li>
+      <li>I. Babu&scaron;ka, A. K. Aziz, &ldquo;On the angle condition in the finite element method,&rdquo; <i>SIAM J. Numer. Anal.</i> 13(2), 214&ndash;226, 1976. <a href="https://doi.org/10.1137/0713021">doi:10.1137/0713021</a>; M. K&rcaron;&iacute;&zcaron;ek, &ldquo;On the maximum angle condition for linear tetrahedral elements,&rdquo; <i>SIAM J. Numer. Anal.</i> 29(2), 513&ndash;520, 1992. <a href="https://doi.org/10.1137/0729031">doi:10.1137/0729031</a></li>
+      <li>I. Babu&scaron;ka, W. C. Rheinboldt, &ldquo;Error estimates for adaptive finite element computations,&rdquo; <i>SIAM J. Numer. Anal.</i> 15(4), 736&ndash;754, 1978. <a href="https://doi.org/10.1137/0715049">doi:10.1137/0715049</a></li>
+      <li>O. C. Zienkiewicz, J. Z. Zhu, &ldquo;A simple error estimator and adaptive procedure for practical engineering analysis,&rdquo; <i>IJNME</i> 24(2), 337&ndash;357, 1987. <a href="https://doi.org/10.1002/nme.1620240206">doi:10.1002/nme.1620240206</a>; &ldquo;The superconvergent patch recovery and a posteriori error estimates, Part 1,&rdquo; <i>IJNME</i> 33(7), 1331&ndash;1364, 1992. <a href="https://doi.org/10.1002/nme.1620330702">doi:10.1002/nme.1620330702</a></li>
+      <li>W. D&ouml;rfler, &ldquo;A convergent adaptive algorithm for Poisson's equation,&rdquo; <i>SIAM J. Numer. Anal.</i> 33(3), 1106&ndash;1124, 1996. <a href="https://doi.org/10.1137/0733054">doi:10.1137/0733054</a></li>
+      <li>W. F. Mitchell, &ldquo;Adaptive refinement for arbitrary finite-element spaces with hierarchical bases,&rdquo; <i>J. Comput. Appl. Math.</i> 36(1), 65&ndash;78, 1991. <a href="https://doi.org/10.1016/0377-0427(91)90226-A">doi:10.1016/0377-0427(91)90226-A</a>. E. G. Sewell, PhD thesis, Purdue University, 1972 <span>(newest-vertex bisection; not checked first-hand).</span></li>
+      <li>M.-C. Rivara, &ldquo;Algorithms for refining triangular grids suitable for adaptive and multigrid techniques,&rdquo; <i>IJNME</i> 20(4), 745&ndash;756, 1984. <a href="https://doi.org/10.1002/nme.1620200412">doi:10.1002/nme.1620200412</a> <span>(longest-edge bisection).</span></li>
+      <li>P. Binev, W. Dahmen, R. DeVore, &ldquo;Adaptive finite element methods with convergence rates,&rdquo; <i>Numer. Math.</i> 97, 219&ndash;268, 2004. <a href="https://doi.org/10.1007/s00211-003-0492-7">doi:10.1007/s00211-003-0492-7</a>; R. Stevenson, &ldquo;Optimality of a standard adaptive finite element method,&rdquo; <i>Found. Comput. Math.</i> 7, 245&ndash;269, 2007. <a href="https://doi.org/10.1007/s10208-005-0183-0">doi:10.1007/s10208-005-0183-0</a></li>
+      <li>W. F. Mitchell, &ldquo;A collection of 2D elliptic problems for testing adaptive grid refinement algorithms,&rdquo; <i>Appl. Math. Comput.</i> 220, 350&ndash;364, 2013. <a href="https://doi.org/10.1016/j.amc.2013.05.068">doi:10.1016/j.amc.2013.05.068</a> <span>(the L-shaped benchmark).</span></li>
+      <li>S. Nicaise, &ldquo;On Zienkiewicz&ndash;Zhu error estimators for Maxwell's equations,&rdquo; <i>C. R. Math.</i> 340, 697&ndash;702, 2005. <a href="https://doi.org/10.1016/j.crma.2005.03.016">doi:10.1016/j.crma.2005.03.016</a></li>
+      <li>Palace documentation: <a href="https://awslabs.github.io/palace/stable/">awslabs.github.io/palace</a> (reference: error estimation and AMR; <code>config["Model"]["Refinement"]</code> defaults from the configuration schema, checked 17 Oct 2026).</li>
+      <li>Ansys HFSS Getting Started, lecture 3 &ldquo;FEM and mesh solution&rdquo; (2020 R2), Ansys Innovation Space. <span>&Delta;S default 0.02 and 30% refinement per pass; vendor training slides, details vary by release.</span></li>
+      <li>F. Hecht, <i>BAMG: bidimensional anisotropic mesh generator</i>, INRIA, 1998; C. Dobrzynski, <i>MMG3D user guide</i>, INRIA, 2012. <span>As cited by the Gmsh manual.</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    <p class="note">Made by Ben Hardy · <a href="https://benjhardy.github.io/">benjhardy.github.io</a>. Companion to <a href="index.html">FDTD, FEM or MoM?</a> and <a href="asymptotic.html">Rays, PO or Hata?</a></p>
+    <p class="note">All demos run in your browser: Delaunay insertion, advancing front, Delaunay refinement, P1 FEM with conjugate gradients, error estimators and newest-vertex bisection are written for this page. The microstrip reference and the L-shape exact solution are stated beside each demo. Tool options come from the Gmsh, TetGen and Palace documentation, checked on 17 October 2026.</p>
+  </footer>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ---------- meshing core: Delaunay (Bowyer-Watson, Lawson), Ruppert refinement, advancing front, P1 FEM, NVB, estimators ---------- */
+const MESH = (() => {
+  "use strict";
+  const PI = Math.PI;
+  const orient = (ax, ay, bx, by, cx, cy) => (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+  function circum(ax, ay, bx, by, cx, cy) {
+    const bx_ = bx - ax, by_ = by - ay, cx_ = cx - ax, cy_ = cy - ay;
+    const d = 2 * (bx_ * cy_ - by_ * cx_);
+    const b2 = bx_ * bx_ + by_ * by_, c2 = cx_ * cx_ + cy_ * cy_;
+    const ux = (cy_ * b2 - by_ * c2) / d, uy = (bx_ * c2 - cx_ * b2) / d;
+    return [ax + ux, ay + uy, ux * ux + uy * uy];
+  }
+  // triangle quality: angles (deg), gamma = 2 r_in / R (Gmsh "gamma" for triangles), radius-edge ratio R / l_min
+  function triQ(ax, ay, bx, by, cx, cy) {
+    const a = Math.hypot(bx - cx, by - cy), b = Math.hypot(ax - cx, ay - cy), c = Math.hypot(ax - bx, ay - by);
+    const A = Math.abs(orient(ax, ay, bx, by, cx, cy)) / 2;
+    const R = (a * b * c) / (4 * A), rin = (2 * A) / (a + b + c);
+    const cosA = (b * b + c * c - a * a) / (2 * b * c), cosB = (a * a + c * c - b * b) / (2 * a * c), cosC = (a * a + b * b - c * c) / (2 * a * b);
+    const ang = [cosA, cosB, cosC].map((v) => (Math.acos(Math.max(-1, Math.min(1, v))) * 180) / PI);
+    return { min: Math.min(...ang), max: Math.max(...ang), gamma: A > 0 ? (2 * rin) / R : 0, rer: R / Math.min(a, b, c), area: A, R };
+  }
+
+  /* ---- incremental Delaunay triangulation (Bowyer-Watson cavity, with optional Lawson-flip insertion) ---- */
+  class DT {
+    constructor(sx, sy) { // sx, sy: 3 initial vertices (CCW) of a super triangle, or 4 corners (CCW) of a box
+      this.X = []; this.Y = []; this.V = []; this.N = []; this.alive = []; this.CX = []; this.CY = []; this.R2 = []; this.vt = [];
+      this.nsuper = sx.length; this.stamp = []; this.st = 1; this.last = 0;
+      for (let i = 0; i < sx.length; i++) { this.X.push(sx[i]); this.Y.push(sy[i]); this.vt.push(0); }
+      if (sx.length === 3) { this._tri(0, 1, 2, -1, -1, -1); }
+      else { this._tri(0, 1, 2, -1, 1, -1); this._tri(0, 2, 3, -1, -1, 0); }
+    }
+    _tri(a, b, c, n0, n1, n2, slot) {
+      let t = slot;
+      if (t === undefined) { t = this.alive.length; this.alive.push(1); this.CX.push(0); this.CY.push(0); this.R2.push(0); this.stamp.push(0); this.V.push(0, 0, 0); this.N.push(0, 0, 0); }
+      else this.alive[t] = 1;
+      const V = this.V, N = this.N; V[3 * t] = a; V[3 * t + 1] = b; V[3 * t + 2] = c; N[3 * t] = n0; N[3 * t + 1] = n1; N[3 * t + 2] = n2;
+      const q = circum(this.X[a], this.Y[a], this.X[b], this.Y[b], this.X[c], this.Y[c]);
+      this.CX[t] = q[0]; this.CY[t] = q[1]; this.R2[t] = q[2];
+      this.vt[a] = t; this.vt[b] = t; this.vt[c] = t;
+      return t;
+    }
+    inCirc(t, x, y) { const dx = x - this.CX[t], dy = y - this.CY[t]; return dx * dx + dy * dy < this.R2[t] * (1 - 1e-12); }
+    locate(x, y) {
+      const X = this.X, Y = this.Y, V = this.V, N = this.N;
+      let t = this.alive[this.last] ? this.last : this.alive.indexOf(1), steps = 0, prev = -1;
+      while (steps++ < 100000) {
+        let moved = false;
+        const r = (steps * 7) % 3; // rotate the start edge: stochastic walk avoids cycles
+        for (let k = 0; k < 3; k++) {
+          const i = (k + r) % 3, a = V[3 * t + (i + 1) % 3], b = V[3 * t + (i + 2) % 3];
+          if (orient(X[a], Y[a], X[b], Y[b], x, y) < 0) { const n = N[3 * t + i]; if (n < 0 || n === prev) continue; prev = t; t = n; moved = true; break; }
+        }
+        if (!moved) return t;
+      }
+      for (let i = 0; i < this.alive.length; i++) if (this.alive[i]) { const a = V[3 * i], b = V[3 * i + 1], c = V[3 * i + 2];
+        if (orient(X[a], Y[a], X[b], Y[b], x, y) >= 0 && orient(X[b], Y[b], X[c], Y[c], x, y) >= 0 && orient(X[c], Y[c], X[a], Y[a], x, y) >= 0) return i; }
+      return -1;
+    }
+    // Bowyer-Watson: cavity of triangles whose circumcircle holds p, then a star of new triangles. Returns {v, cavity, boundary, created}.
+    insert(x, y, info) {
+      const X = this.X, Y = this.Y, V = this.V, N = this.N;
+      const t0 = this.locate(x, y); if (t0 < 0) return null;
+      for (let k = 0; k < 3; k++) { const a = V[3 * t0 + k]; if (Math.abs(X[a] - x) + Math.abs(Y[a] - y) < 1e-11 * (1 + Math.abs(x) + Math.abs(y))) return null; }
+      const st = ++this.st, stamp = this.stamp;
+      const cav = [t0]; stamp[t0] = st;
+      for (let i = 0; i < cav.length; i++) { const t = cav[i];
+        for (let k = 0; k < 3; k++) { const n = N[3 * t + k]; if (n >= 0 && stamp[n] !== st && this.inCirc(n, x, y)) { stamp[n] = st; cav.push(n); } } }
+      // repair: every boundary edge must see p on its left (star-shaped cavity)
+      let bnd;
+      for (let pass = 0; pass < 50; pass++) {
+        bnd = []; let bad = -1;
+        for (const t of cav) for (let k = 0; k < 3; k++) { const n = N[3 * t + k]; if (n >= 0 && stamp[n] === st) continue;
+          const a = V[3 * t + (k + 1) % 3], b = V[3 * t + (k + 2) % 3];
+          if (orient(X[a], Y[a], X[b], Y[b], x, y) <= 0) { if (n >= 0) { bad = n; break; } else return null; }
+          bnd.push([a, b, n, t]); }
+        if (bad < 0) break; stamp[bad] = st; cav.push(bad);
+      }
+      const v = X.length; X.push(x); Y.push(y); this.vt.push(0); if (info) info(v);
+      const cavCopy = cav.map((t) => [V[3 * t], V[3 * t + 1], V[3 * t + 2]]);
+      for (const t of cav) this.alive[t] = 0;
+      const byStart = new Map(), byEnd = new Map(), created = [];
+      let si = 0;
+      for (const [a, b, n] of bnd) {
+        const slot = si < cav.length ? cav[si++] : undefined;
+        const t = this._tri(v, a, b, n, -1, -1, slot); created.push(t);
+        if (n >= 0) for (let k = 0; k < 3; k++) if (stamp[N[3 * n + k]] === st || N[3 * n + k] === t) { const a2 = V[3 * n + (k + 1) % 3], b2 = V[3 * n + (k + 2) % 3]; if (a2 === b && b2 === a) N[3 * n + k] = t; }
+        byStart.set(a, t); byEnd.set(b, t);
+      }
+      // remaining cavity slots stay dead (cavity size + 2 = boundary size, so this only happens on repair)
+      for (const t of created) { const a = V[3 * t + 1], b = V[3 * t + 2]; N[3 * t + 1] = byStart.get(b); N[3 * t + 2] = byEnd.get(a); }
+      this.vt[v] = created[0]; this.last = created[0];
+      return { v, cavity: cavCopy, boundary: bnd.map((e) => [e[0], e[1]]), created };
+    }
+    // Lawson: split the containing triangle in 3 (or the edge's 2 triangles in 4), then flip illegal edges. Records each flip.
+    insertLawson(x, y) {
+      const X = this.X, Y = this.Y, V = this.V, N = this.N;
+      const t0 = this.locate(x, y); if (t0 < 0) return null;
+      for (let k = 0; k < 3; k++) { const a = V[3 * t0 + k]; if (Math.abs(X[a] - x) + Math.abs(Y[a] - y) < 1e-11) return null; }
+      // if p is (almost) on an edge, fall back to Bowyer-Watson (keeps the demo simple and valid)
+      for (let k = 0; k < 3; k++) { const a = V[3 * t0 + (k + 1) % 3], b = V[3 * t0 + (k + 2) % 3]; const L2 = (X[b] - X[a]) ** 2 + (Y[b] - Y[a]) ** 2; if (Math.abs(orient(X[a], Y[a], X[b], Y[b], x, y)) < 1e-9 * L2) { const r = this.insert(x, y); if (r) r.flips = []; return r; } }
+      const a = V[3 * t0], b = V[3 * t0 + 1], c = V[3 * t0 + 2], na = N[3 * t0], nb = N[3 * t0 + 1], nc = N[3 * t0 + 2];
+      const v = X.length; X.push(x); Y.push(y); this.vt.push(0);
+      const split = [[a, b, c]];
+      const t1 = this._tri(v, b, c, na, -1, -1, t0), t2 = this._tri(v, c, a, nb, -1, -1), t3 = this._tri(v, a, b, nc, -1, -1);
+      N[3 * t1 + 1] = t2; N[3 * t1 + 2] = t3; N[3 * t2 + 1] = t3; N[3 * t2 + 2] = t1; N[3 * t3 + 1] = t1; N[3 * t3 + 2] = t2;
+      const relink = (n, oldT, newT, p, q) => { if (n < 0) return; for (let k = 0; k < 3; k++) { const a2 = V[3 * n + (k + 1) % 3], b2 = V[3 * n + (k + 2) % 3]; if (a2 === q && b2 === p) N[3 * n + k] = newT; } };
+      relink(na, t0, t1, b, c); relink(nb, t0, t2, c, a); relink(nc, t0, t3, a, b);
+      const flips = [], stack = [t1, t2, t3];
+      let guard = 0;
+      while (stack.length && guard++ < 10000) {
+        const t = stack.pop(); if (!this.alive[t]) continue;
+        // the edge opposite v in t
+        let k = -1; for (let i = 0; i < 3; i++) if (V[3 * t + i] === v) k = i; if (k < 0) continue;
+        const n = N[3 * t + k]; if (n < 0) continue;
+        const p = V[3 * t + (k + 1) % 3], q = V[3 * t + (k + 2) % 3];
+        let j = -1; for (let i = 0; i < 3; i++) { const o = V[3 * n + i]; if (o !== p && o !== q) j = i; }
+        const o = V[3 * n + j];
+        if (this.nsuper && o < this.nsuper && this.nsuper === 3) { /* super triangle vertex: no flip needed */ }
+        if (!this.inCirc(t, X[o], Y[o])) continue;
+        // flip edge pq -> vo
+        flips.push({ p, q, v, o, circ: [this.CX[t], this.CY[t], Math.sqrt(this.R2[t])] });
+        const tA = N[3 * t + (k + 1) % 3], tB = N[3 * t + (k + 2) % 3]; // across (q,v) and (v,p)
+        const nP = N[3 * n + (j + 1) % 3], nQ = N[3 * n + (j + 2) % 3];   // opposite V[(j+1)] and V[(j+2)] in n
+        const vj1 = V[3 * n + (j + 1) % 3]; // = q (n is (o, q, p) order) or p
+        let nOppQ, nOppP; if (vj1 === q) { nOppQ = nP; nOppP = nQ; } else { nOppQ = nQ; nOppP = nP; } // nOppQ: edge (o,p) ; nOppP: edge (q,o)
+        // new triangles: (v, p, o) and (v, o, q)
+        const u1 = this._tri(v, p, o, nOppQ, -1, tB, t), u2 = this._tri(v, o, q, nOppP, tA, -1, n);
+        N[3 * u1 + 1] = u2; N[3 * u2 + 2] = u1;
+        relink(nOppQ, n, u1, p, o); relink(nOppP, n, u2, o, q); relink(tA, t, u2, q, v); relink(tB, t, u1, v, p);
+        stack.push(u1, u2);
+      }
+      this.vt[v] = t1; this.last = t1;
+      return { v, split, flips };
+    }
+    findEdge(a, b) { // triangles on both sides of edge a-b: [left (a->b CCW), right] or null
+      const V = this.V, N = this.N; let t = this.vt[a];
+      if (!this.alive[t] || (V[3 * t] !== a && V[3 * t + 1] !== a && V[3 * t + 2] !== a)) { t = -1; for (let i = 0; i < this.alive.length; i++) if (this.alive[i] && (V[3 * i] === a || V[3 * i + 1] === a || V[3 * i + 2] === a)) { t = i; break; } if (t < 0) return null; this.vt[a] = t; }
+      const start = t; let res = null;
+      for (let dir = 0; dir < 2 && !res; dir++) {
+        t = start;
+        for (let s = 0; s < 2000 && t >= 0; s++) {
+          let i = V[3 * t] === a ? 0 : V[3 * t + 1] === a ? 1 : 2;
+          const nx = V[3 * t + (i + 1) % 3], pv = V[3 * t + (i + 2) % 3];
+          if (nx === b || pv === b) {
+            const k = nx === b ? (i + 2) % 3 : (i + 1) % 3; // index of vertex opposite edge a-b
+            return nx === b ? [t, N[3 * t + k]] : [N[3 * t + k], t];
+          }
+          t = dir === 0 ? N[3 * t + (i + 1) % 3] : N[3 * t + (i + 2) % 3];
+          if (t === start) break;
+        }
+      }
+      return res;
+    }
+    tris(keep) { const out = []; for (let t = 0; t < this.alive.length; t++) if (this.alive[t] && (!keep || keep(t))) out.push(t); return out; }
+  }
+
+  /* ---- 1-D meshing of a straight segment for a size field: equal steps of the integral of ds / h ---- */
+  function discretize(ax, ay, bx, by, size) {
+    const L = Math.hypot(bx - ax, by - ay), M = 64; const acc = [0];
+    for (let i = 1; i <= M; i++) { const s0 = (i - 1) / M, s1 = i / M, sm = (s0 + s1) / 2; acc.push(acc[i - 1] + (L / M) / size(ax + (bx - ax) * sm, ay + (by - ay) * sm)); }
+    const n = Math.max(1, Math.round(acc[M])); const out = [];
+    for (let j = 1; j < n; j++) { const target = (acc[M] * j) / n; let i = 1; while (acc[i] < target) i++; const s = (i - 1 + (target - acc[i - 1]) / (acc[i] - acc[i - 1])) / M; out.push([ax + (bx - ax) * s, ay + (by - ay) * s]); }
+    return out;
+  }
+
+  /* ---- Delaunay refinement (Ruppert 1995, with Shewchuk's 2002 ordering). A generator: each yield is one event. ----
+     geo: { loops: [[[x,y],...], ...] closed polylines (outer + holes), lines: [[[x,y],[x,y]], tag], inside(x,y), size(x,y)?, tagOf? }
+     opt: { minAngle (deg), maxPts, sizeK } */
+  function* ruppert(geo, opt) {
+    const minA = opt.minAngle || 0, maxPts = opt.maxPts || 20000, sizeK = opt.sizeK || 1.0, size = geo.size || null;
+    // bounding super triangle
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const L of geo.loops) for (const [x, y] of (L.pts || L)) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, D = Math.max(x1 - x0, y1 - y0) * 20;
+    const dt = new DT([cx - D, cx + D, cx], [cy - D, cy - D, cy + D]);
+    const vtag = [0, 0, 0];
+    if (opt.expose) opt.expose(dt);
+    const seen = new Map();
+    const addPt = (x, y, tag) => { const key = x + "," + y; if (seen.has(key)) return seen.get(key); const r = dt.insert(x, y, () => vtag.push(tag || 0)); const v = r ? r.v : -1; seen.set(key, v); return v; };
+    // input segments with 1-D meshing
+    const segs = []; // [a, b, tag]
+    const hfun = size || (() => Infinity);
+    const addPolyline = (pts, closed, tag) => {
+      const ids = pts.map(([x, y]) => addPt(x, y, tag));
+      const n = closed ? pts.length : pts.length - 1;
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % pts.length; const a = pts[i], b = pts[j];
+        const mid = size ? discretize(a[0], a[1], b[0], b[1], hfun) : [];
+        let prev = ids[i];
+        for (const [x, y] of mid) { const v = addPt(x, y, tag); segs.push([prev, v, tag]); prev = v; }
+        segs.push([prev, ids[j], tag]);
+      }
+    };
+    for (const L of geo.loops) addPolyline(L.pts || L, true, L.tag || 1);
+    for (const L of geo.lines || []) addPolyline(L.pts, false, L.tag || 2);
+    const X = dt.X, Y = dt.Y;
+    const encroachedBy = (s, x, y) => { const a = s[0], b = s[1]; const mx = (X[a] + X[b]) / 2, my = (Y[a] + Y[b]) / 2; const r2 = ((X[b] - X[a]) ** 2 + (Y[b] - Y[a]) ** 2) / 4; return (x - mx) ** 2 + (y - my) ** 2 < r2 * (1 - 1e-9); };
+    const segEncroached = (s) => {
+      const e = dt.findEdge(s[0], s[1]); if (!e) return true;
+      for (const t of e) { if (t < 0) continue; for (let k = 0; k < 3; k++) { const o = dt.V[3 * t + k]; if (o !== s[0] && o !== s[1] && encroachedBy(s, X[o], Y[o])) return true; } }
+      return false;
+    };
+    const splitSeg = (i) => {
+      const s = segs[i], a = s[0], b = s[1];
+      const mx = (X[a] + X[b]) / 2, my = (Y[a] + Y[b]) / 2;
+      const r = dt.insert(mx, my, () => vtag.push(s[2])); if (!r) return null;
+      segs[i] = [a, r.v, s[2]]; segs.push([r.v, b, s[2]]);
+      return r;
+    };
+    const queue = []; const pushNew = (r) => { if (r) for (const t of r.created) queue.push(t); };
+    // after any insertion, segments encroached by the new vertex are split first
+    function* fixSegs(list, force) {
+      const stack = list.slice(); const must = new Set(force ? list : []);
+      while (stack.length) {
+        if (X.length > maxPts) return;
+        const i = stack.pop();
+        if (!must.has(i) && !segEncroached(segs[i])) continue;
+        must.delete(i);
+        const s = segs[i]; const ax = X[s[0]], ay = Y[s[0]], bx = X[s[1]], by = Y[s[1]];
+        const r = splitSeg(i); if (!r) continue; pushNew(r);
+        yield { k: "seg", ax, ay, bx, by, x: X[r.v], y: Y[r.v] };
+        stack.push(i, segs.length - 1);
+        for (let j = 0; j < segs.length; j++) if (j !== i && encroachedBy(segs[j], X[r.v], Y[r.v])) stack.push(j);
+      }
+    }
+    yield* fixSegs(segs.map((_, i) => i));
+    for (let t = 0; t < dt.alive.length; t++) if (dt.alive[t]) queue.push(t);
+    const sinMin = Math.sin((minA * PI) / 180);
+    const ns = dt.nsuper;
+    const isBad = (t) => {
+      const V = dt.V; const a = V[3 * t], b = V[3 * t + 1], c = V[3 * t + 2];
+      if (a < ns || b < ns || c < ns) return 0;
+      const gx = (X[a] + X[b] + X[c]) / 3, gy = (Y[a] + Y[b] + Y[c]) / 3;
+      if (!geo.inside(gx, gy)) return 0;
+      const R = Math.sqrt(dt.R2[t]);
+      if (size && R * Math.sqrt(3) > sizeK * size(gx, gy)) return 2;
+      if (minA > 0) { const l = Math.min(Math.hypot(X[b] - X[c], Y[b] - Y[c]), Math.hypot(X[a] - X[c], Y[a] - Y[c]), Math.hypot(X[a] - X[b], Y[a] - Y[b])); if (l / (2 * R) < sinMin * (1 - 1e-9)) return 1; }
+      return 0;
+    };
+    let qi = 0;
+    while (qi < queue.length) {
+      if (X.length > maxPts) { yield { k: "cap" }; break; }
+      const t = queue[qi++]; if (!dt.alive[t]) continue;
+      const why = isBad(t); if (!why) continue;
+      const V = dt.V, a = V[3 * t], b = V[3 * t + 1], c = V[3 * t + 2];
+      const ccx = dt.CX[t], ccy = dt.CY[t], R = Math.sqrt(dt.R2[t]);
+      const tri = [X[a], Y[a], X[b], Y[b], X[c], Y[c]];
+      const enc = []; for (let j = 0; j < segs.length; j++) if (encroachedBy(segs[j], ccx, ccy)) enc.push(j);
+      if (enc.length) {
+        yield { k: "rej", tri, cx: ccx, cy: ccy, r: R, segs: enc.map((j) => [X[segs[j][0]], Y[segs[j][0]], X[segs[j][1]], Y[segs[j][1]]]) };
+        yield* fixSegs(enc, true);
+        queue.push(t); // try again later if it survives
+        continue;
+      }
+      if (!geo.inside(ccx, ccy) && !(geo.insideLoose && geo.insideLoose(ccx, ccy))) continue; // should not happen once segments are protected
+      const r = dt.insert(ccx, ccy, () => vtag.push(0)); if (!r) continue;
+      pushNew(r);
+      yield { k: "cc", tri, cx: ccx, cy: ccy, r: R, why, cav: r.cavity.length };
+    }
+    yield { k: "done" };
+    return finish(dt, geo, vtag, segs);
+  }
+  function finish(dt, geo, vtag, segs) {
+    const X = dt.X, Y = dt.Y, V = dt.V, ns = dt.nsuper;
+    const keep = dt.tris((t) => { const a = V[3 * t], b = V[3 * t + 1], c = V[3 * t + 2]; if (a < ns || b < ns || c < ns) return false; return geo.inside((X[a] + X[b] + X[c]) / 3, (Y[a] + Y[b] + Y[c]) / 3); });
+    const map = new Int32Array(X.length).fill(-1); const px = [], py = [], tg = []; const T = new Int32Array(keep.length * 3);
+    keep.forEach((t, i) => { for (let k = 0; k < 3; k++) { const v = V[3 * t + k]; if (map[v] < 0) { map[v] = px.length; px.push(X[v]); py.push(Y[v]); tg.push(vtag[v] || 0); } T[3 * i + k] = map[v]; } });
+    const S = segs ? segs.map((s) => [map[s[0]], map[s[1]], s[2]]).filter((s) => s[0] >= 0 && s[1] >= 0) : [];
+    return { x: Float64Array.from(px), y: Float64Array.from(py), t: T, tag: Int32Array.from(tg), segs: S };
+  }
+  function run(gen) { let r; do { r = gen.next(); } while (!r.done); return r.value; }
+
+  /* ---- quality statistics of a triangle mesh ---- */
+  function stats(m) {
+    const nt = m.t.length / 3, mins = new Float64Array(nt), gam = new Float64Array(nt); let amin = 180, amax = 0, gsum = 0, gmin = 1;
+    for (let i = 0; i < nt; i++) { const a = m.t[3 * i], b = m.t[3 * i + 1], c = m.t[3 * i + 2]; const q = triQ(m.x[a], m.y[a], m.x[b], m.y[b], m.x[c], m.y[c]);
+      mins[i] = q.min; gam[i] = q.gamma; amin = Math.min(amin, q.min); amax = Math.max(amax, q.max); gsum += q.gamma; gmin = Math.min(gmin, q.gamma); }
+    return { nt, nv: m.x.length, mins, gam, amin, amax, gmean: gsum / nt, gmin };
+  }
+
+  /* ---- 2-D advancing front (Lo 1985; Peraire et al. 1987). Generator: one yield per element. ----
+     loops: closed polylines, outer CCW and holes CW (domain on the left). size(x,y): target edge length. */
+  function* front(loops, size, opt = {}) {
+    const X = [], Y = [], F = []; // front edges [a, b]
+    for (const L of loops) {
+      const base = X.length, pts = [];
+      for (let i = 0; i < L.length; i++) { const a = L[i], b = L[(i + 1) % L.length]; pts.push(a); for (const p of discretize(a[0], a[1], b[0], b[1], size)) pts.push(p); }
+      for (const [x, y] of pts) { X.push(x); Y.push(y); }
+      for (let i = 0; i < pts.length; i++) F.push([base + i, base + (i + 1) % pts.length]);
+    }
+    const T = [];
+    const segX = (p, q, r, s) => { // proper intersection of segments p-q and r-s (shared endpoints excluded)
+      if (p === r || p === s || q === r || q === s) return false;
+      const d1 = orient(X[p], Y[p], X[q], Y[q], X[r], Y[r]), d2 = orient(X[p], Y[p], X[q], Y[q], X[s], Y[s]);
+      const d3 = orient(X[r], Y[r], X[s], Y[s], X[p], Y[p]), d4 = orient(X[r], Y[r], X[s], Y[s], X[q], Y[q]);
+      return d1 * d2 < 0 && d3 * d4 < 0;
+    };
+    const edgeKey = (a, b) => a + "," + b;
+    let fset = new Map(F.map((e, i) => [edgeKey(e[0], e[1]), e]));
+    const valid = (a, b, c) => {
+      if (orient(X[a], Y[a], X[b], Y[b], X[c], Y[c]) <= 1e-12) return false;
+      for (const e of fset.values()) { if (segX(a, c, e[0], e[1]) || segX(b, c, e[0], e[1])) return false; }
+      // no front vertex strictly inside the new triangle
+      for (const e of fset.values()) { const v = e[0]; if (v === a || v === b || v === c) continue;
+        if (orient(X[a], Y[a], X[b], Y[b], X[v], Y[v]) > 0 && orient(X[b], Y[b], X[c], Y[c], X[v], Y[v]) > 0 && orient(X[c], Y[c], X[a], Y[a], X[v], Y[v]) > 0) return false; }
+      return true;
+    };
+    const tooClose = (x, y, h) => { for (const e of fset.values()) { const v = e[0]; if ((X[v] - x) ** 2 + (Y[v] - y) ** 2 < (0.5 * h) ** 2) return true;
+      const a = e[0], b = e[1], dx = X[b] - X[a], dy = Y[b] - Y[a], L2 = dx * dx + dy * dy; const s = Math.max(0, Math.min(1, ((x - X[a]) * dx + (y - Y[a]) * dy) / L2)); if ((X[a] + s * dx - x) ** 2 + (Y[a] + s * dy - y) ** 2 < (0.35 * h) ** 2) return true; } return false; };
+    let guard = 0, skipped = new Set();
+    while (fset.size && guard++ < (opt.maxEl || 40000)) {
+      // shortest front edge first
+      let best = null, bl = Infinity;
+      for (const e of fset.values()) { const k = edgeKey(e[0], e[1]); if (skipped.has(k)) continue; const l = (X[e[1]] - X[e[0]]) ** 2 + (Y[e[1]] - Y[e[0]]) ** 2; if (l < bl) { bl = l; best = e; } }
+      if (!best) { if (skipped.size) { skipped = new Set(); best = fset.values().next().value; } else break; }
+      const [a, b] = best; const mx = (X[a] + X[b]) / 2, my = (Y[a] + Y[b]) / 2, L = Math.sqrt(bl);
+      const h = Math.min(Math.max(size(mx, my), 0.55 * L), 1.6 * L); // limit the jump from the edge length
+      const nx = -(Y[b] - Y[a]) / L, ny = (X[b] - X[a]) / L; // inward normal (domain on the left)
+      const ht = Math.sqrt(Math.max(h * h - (L * L) / 4, 0.1 * L * L));
+      const px = mx + nx * ht, py = my + ny * ht;
+      // candidates: front vertices near the ideal point, sorted by distance
+      const cand = [];
+      for (const e of fset.values()) { const v = e[0]; if (v === a || v === b) continue; const d = Math.hypot(X[v] - px, Y[v] - py); if (d < 0.9 * h && orient(X[a], Y[a], X[b], Y[b], X[v], Y[v]) > 0) cand.push([d, v]); }
+      cand.sort((u, w) => u[0] - w[0]);
+      let c = -1, isNew = false;
+      for (const [, v] of cand) if (valid(a, b, v)) { c = v; break; }
+      if (c < 0 && !tooClose(px, py, h)) { X.push(px); Y.push(py); const v = X.length - 1; if (valid(a, b, v)) { c = v; isNew = true; } else { X.pop(); Y.pop(); } }
+      if (c < 0) { // wider search: any visible front vertex, best shape
+        let bq = -1; for (const e of fset.values()) { const v = e[0]; if (v === a || v === b) continue; if (orient(X[a], Y[a], X[b], Y[b], X[v], Y[v]) <= 0) continue; if (Math.hypot(X[v] - mx, Y[v] - my) > 3 * h) continue;
+          if (!valid(a, b, v)) continue; const q = triQ(X[a], Y[a], X[b], Y[b], X[v], Y[v]).gamma; if (q > bq) { bq = q; c = v; } }
+      }
+      if (c < 0) { skipped.add(edgeKey(a, b)); continue; }
+      skipped = new Set();
+      T.push(a, b, c);
+      fset.delete(edgeKey(a, b));
+      for (const [p, q] of [[a, c], [c, b]]) { const rev = edgeKey(q, p); if (fset.has(rev)) fset.delete(rev); else fset.set(edgeKey(p, q), [p, q]); }
+      yield { a, b, c, isNew, px, py, h, X, Y, T, front: fset };
+    }
+    return { x: Float64Array.from(X), y: Float64Array.from(Y), t: Int32Array.from(T), open: fset.size };
+  }
+  function laplaceSmooth(m, fixed, iters = 3) { // simple Laplacian smoothing of interior nodes (used only as an option)
+    const n = m.x.length, adj = Array.from({ length: n }, () => new Set());
+    for (let i = 0; i < m.t.length; i += 3) for (let k = 0; k < 3; k++) { const a = m.t[i + k], b = m.t[i + (k + 1) % 3]; adj[a].add(b); adj[b].add(a); }
+    for (let it = 0; it < iters; it++) for (let v = 0; v < n; v++) { if (fixed[v]) continue; let sx = 0, sy = 0; for (const w of adj[v]) { sx += m.x[w]; sy += m.y[w]; } m.x[v] = sx / adj[v].size; m.y[v] = sy / adj[v].size; }
+    return m;
+  }
+
+  /* ---- P1 FEM: -div(eps grad u) = 0, Dirichlet nodes fixed. CSR + Jacobi PCG ---- */
+  function assemble(x, y, t, eps) {
+    const n = x.length, nt = t.length / 3;
+    const keys = new Float64Array(nt * 3); let m = 0;
+    for (let e = 0; e < nt; e++) for (let k = 0; k < 3; k++) { const a = t[3 * e + k], b = t[3 * e + (k + 1) % 3]; keys[m++] = Math.min(a, b) * n + Math.max(a, b); }
+    keys.sort(); const ek = []; for (let i = 0; i < m; i++) if (i === 0 || keys[i] !== keys[i - 1]) ek.push(keys[i]);
+    const deg = new Int32Array(n).fill(1); for (const k of ek) { const a = Math.floor(k / n), b = k - a * n; deg[a]++; deg[b]++; }
+    const rp = new Int32Array(n + 1); for (let i = 0; i < n; i++) rp[i + 1] = rp[i] + deg[i];
+    const ci = new Int32Array(rp[n]), fill = Int32Array.from(rp.subarray(0, n));
+    for (let i = 0; i < n; i++) ci[fill[i]++] = i;
+    for (const k of ek) { const a = Math.floor(k / n), b = k - a * n; ci[fill[a]++] = b; ci[fill[b]++] = a; }
+    for (let i = 0; i < n; i++) { const s = ci.subarray(rp[i], rp[i + 1]); s.sort(); }
+    const val = new Float64Array(rp[n]);
+    const find = (i, j) => { let lo = rp[i], hi = rp[i + 1] - 1; while (lo <= hi) { const md = (lo + hi) >> 1; if (ci[md] < j) lo = md + 1; else if (ci[md] > j) hi = md - 1; else return md; } return -1; };
+    const G = new Float64Array(nt * 6), A = new Float64Array(nt);
+    for (let e = 0; e < nt; e++) {
+      const i = t[3 * e], j = t[3 * e + 1], k = t[3 * e + 2];
+      const ar = orient(x[i], y[i], x[j], y[j], x[k], y[k]) / 2; A[e] = ar;
+      const b = [y[j] - y[k], y[k] - y[i], y[i] - y[j]], c = [x[k] - x[j], x[i] - x[k], x[j] - x[i]];
+      for (let p = 0; p < 3; p++) { G[6 * e + 2 * p] = b[p] / (2 * ar); G[6 * e + 2 * p + 1] = c[p] / (2 * ar); }
+      const w = (eps ? eps[e] : 1) / (4 * ar), id = [i, j, k];
+      for (let p = 0; p < 3; p++) for (let q = 0; q < 3; q++) val[find(id[p], id[q])] += w * (b[p] * b[q] + c[p] * c[q]);
+    }
+    return { n, rp, ci, val, G, A };
+  }
+  function solve(S, fixed, uFix, tol = 1e-10, maxit = 20000) { // fixed: Uint8Array, uFix: Float64Array values for fixed nodes
+    const { n, rp, ci, val } = S; const u = new Float64Array(n); for (let i = 0; i < n; i++) if (fixed[i]) u[i] = uFix[i];
+    const r = new Float64Array(n), z = new Float64Array(n), p = new Float64Array(n), q = new Float64Array(n), dg = new Float64Array(n);
+    for (let i = 0; i < n; i++) { if (fixed[i]) continue; let s = 0; for (let k = rp[i]; k < rp[i + 1]; k++) { const j = ci[k]; s += val[k] * u[j]; if (j === i) dg[i] = val[k]; } r[i] = -s; }
+    let rz = 0, r0 = 0; for (let i = 0; i < n; i++) if (!fixed[i]) { z[i] = r[i] / dg[i]; p[i] = z[i]; rz += r[i] * z[i]; r0 += r[i] * r[i]; }
+    r0 = Math.sqrt(r0) || 1; let it = 0;
+    for (; it < maxit; it++) {
+      let pq = 0; for (let i = 0; i < n; i++) { if (fixed[i]) { q[i] = 0; continue; } let s = 0; for (let k = rp[i]; k < rp[i + 1]; k++) { const j = ci[k]; if (!fixed[j]) s += val[k] * p[j]; } q[i] = s; pq += p[i] * s; }
+      const al = rz / pq; let rr = 0;
+      for (let i = 0; i < n; i++) if (!fixed[i]) { u[i] += al * p[i]; r[i] -= al * q[i]; rr += r[i] * r[i]; }
+      if (Math.sqrt(rr) < tol * r0) { it++; break; }
+      let rz2 = 0; for (let i = 0; i < n; i++) if (!fixed[i]) { z[i] = r[i] / dg[i]; rz2 += r[i] * z[i]; }
+      const be = rz2 / rz; rz = rz2; for (let i = 0; i < n; i++) if (!fixed[i]) p[i] = z[i] + be * p[i];
+    }
+    return { u, it };
+  }
+  function energy(S, t, u, eps) { let W = 0; const nt = t.length / 3; for (let e = 0; e < nt; e++) { let gx = 0, gy = 0; for (let p = 0; p < 3; p++) { gx += S.G[6 * e + 2 * p] * u[t[3 * e + p]]; gy += S.G[6 * e + 2 * p + 1] * u[t[3 * e + p]]; } W += (eps ? eps[e] : 1) * (gx * gx + gy * gy) * S.A[e]; } return W; }
+
+  /* ---- L-shaped domain: exact solution r^(2/3) sin(2 theta / 3), theta in [0, 3 pi / 2] ---- */
+  const LS = (() => {
+    const al = 2 / 3;
+    const th = (x, y) => { let a = Math.atan2(y, x); if (a < 0) a += 2 * PI; return a; };
+    const u = (x, y) => { const r = Math.hypot(x, y); return r === 0 ? 0 : r ** al * Math.sin(al * th(x, y)); };
+    const grad = (x, y) => { const r = Math.hypot(x, y); if (r === 0) return [0, 0]; const t = th(x, y), s = al * r ** (al - 1); return [s * Math.sin((al - 1) * t), s * Math.cos((al - 1) * t)]; };
+    // Gauss-Legendre 8 points on [0,1]
+    const gx = [0.0198550717512319, 0.1016667612931866, 0.2372337950418355, 0.4082826787521751, 0.5917173212478249, 0.7627662049581645, 0.8983332387068134, 0.9801449282487681];
+    const gw = [0.0506142681451881, 0.1111905172266872, 0.1568533229389436, 0.1813418916891810, 0.1813418916891810, 0.1568533229389436, 0.1111905172266872, 0.0506142681451881];
+    // energy-norm error squared on each element: int |grad u - g|^2 = int|grad u|^2 - 2 g . int grad u + |g|^2 A
+    function errors(x, y, t, uh, S) {
+      const nt = t.length / 3, e2 = new Float64Array(nt); let tot = 0, ex = 0;
+      for (let e = 0; e < nt; e++) {
+        let Ix = 0, Iy = 0, I2 = 0;
+        for (let k = 0; k < 3; k++) { const a = t[3 * e + k], b = t[3 * e + (k + 1) % 3]; const r = edgeIntOriented(x[a], y[a], x[b], y[b]); Ix += r[0]; Iy += r[1]; I2 += r[2]; }
+        let g0 = 0, g1 = 0; for (let p = 0; p < 3; p++) { g0 += S.G[6 * e + 2 * p] * uh[t[3 * e + p]]; g1 += S.G[6 * e + 2 * p + 1] * uh[t[3 * e + p]]; }
+        const v = I2 - 2 * (g0 * Ix + g1 * Iy) + (g0 * g0 + g1 * g1) * S.A[e];
+        e2[e] = Math.max(0, v); tot += e2[e]; ex += I2;
+      }
+      return { e2, err: Math.sqrt(tot), ex };
+    }
+    function edgeIntOriented(ax, ay, bx, by) { // a->b along a CCW triangle; normal (dy,-dx)
+      const atA = ax === 0 && ay === 0, atB = bx === 0 && by === 0;
+      const dx = bx - ax, dy = by - ay, nx = dy, ny = -dx; let I1x = 0, I1y = 0, I2 = 0;
+      for (let k = 0; k < 8; k++) {
+        let s = gx[k], w = gw[k];
+        if (atA) { s = gx[k] ** 3; w = gw[k] * 3 * gx[k] ** 2; } else if (atB) { s = 1 - (1 - gx[k]) ** 3; w = gw[k] * 3 * (1 - gx[k]) ** 2; }
+        const xx = ax + s * dx, yy = ay + s * dy, uu = u(xx, yy), g = grad(xx, yy);
+        I1x += w * uu * nx; I1y += w * uu * ny; I2 += w * uu * (g[0] * nx + g[1] * ny);
+      }
+      return [I1x, I1y, I2];
+    }
+    function initMesh() { // 3 squares, 6 triangles; peak (newest vertex) first, refinement edge = hypotenuse
+      const x = [-1, 0, -1, 0, 1, -1, 0, 1], y = [-1, -1, 0, 0, 0, 1, 1, 1];
+      // nodes: 0(-1,-1) 1(0,-1) 2(-1,0) 3(0,0) 4(1,0) 5(-1,1) 6(0,1) 7(1,1)
+      const t = [[1, 3, 0], [2, 0, 3], [3, 6, 2], [5, 2, 6], [4, 7, 3], [6, 3, 7]];
+      return { x, y, t: t.map((v) => v.slice()) };
+    }
+    return { u, grad, errors, initMesh, al };
+  })();
+
+  /* ---- newest-vertex bisection with edge-marking closure (conforming). m: {x[], y[], t[[p,a,b]...]} ---- */
+  function nvb(m, markedEdges) { // markedEdges: Set of "min,max" keys; closure adds refinement edges
+    const key = (a, b) => (a < b ? a + "," + b : b + "," + a);
+    let changed = true;
+    while (changed) { changed = false;
+      for (const [p, a, b] of m.t) { const kr = key(a, b); if (markedEdges.has(kr)) continue; if (markedEdges.has(key(p, a)) || markedEdges.has(key(b, p))) { markedEdges.add(kr); changed = true; } } }
+    const mid = new Map();
+    const midpoint = (a, b) => { const k = key(a, b); let v = mid.get(k); if (v === undefined) { v = m.x.length; m.x.push((m.x[a] + m.x[b]) / 2); m.y.push((m.y[a] + m.y[b]) / 2); mid.set(k, v); } return v; };
+    const out = [];
+    const bis = (tri) => { const [p, a, b] = tri; if (!markedEdges.has(key(a, b))) { out.push(tri); return; } const v = midpoint(a, b); bis2([v, p, a]); bis2([v, b, p]); };
+    const bis2 = (tri) => { const [p, a, b] = tri; if (!markedEdges.has(key(a, b))) { out.push(tri); return; } const v = midpoint(a, b); out.push([v, p, a], [v, b, p]); };
+    for (const tri of m.t) bis(tri);
+    m.t = out; return m;
+  }
+  function edgesOf(m, ids) { const s = new Set(); const key = (a, b) => (a < b ? a + "," + b : b + "," + a); for (const i of ids) { const [p, a, b] = m.t[i]; s.add(key(a, b)); s.add(key(p, a)); s.add(key(b, p)); } return s; }
+  // solve on the L mesh: Dirichlet data = exact solution on the boundary
+  function solveL(m) {
+    const n = m.x.length, x = Float64Array.from(m.x), y = Float64Array.from(m.y);
+    const t = new Int32Array(m.t.length * 3); m.t.forEach((tr, i) => { t[3 * i] = tr[0]; t[3 * i + 1] = tr[1]; t[3 * i + 2] = tr[2]; });
+    // make CCW
+    for (let e = 0; e < m.t.length; e++) { const a = t[3 * e], b = t[3 * e + 1], c = t[3 * e + 2]; if (orient(x[a], y[a], x[b], y[b], x[c], y[c]) < 0) { t[3 * e + 1] = c; t[3 * e + 2] = b; } }
+    const fixed = new Uint8Array(n), uf = new Float64Array(n);
+    for (let i = 0; i < n; i++) { const xx = x[i], yy = y[i]; const onB = Math.abs(Math.abs(xx) - 1) < 1e-12 || Math.abs(Math.abs(yy) - 1) < 1e-12 || (Math.abs(yy) < 1e-12 && xx >= -1e-12) || (Math.abs(xx) < 1e-12 && yy <= 1e-12); if (onB) { fixed[i] = 1; uf[i] = LS.u(xx, yy); } }
+    const S = assemble(x, y, t, null); const { u, it } = solve(S, fixed, uf, 1e-11);
+    return { x, y, t, u, S, fixed, it };
+  }
+  // a posteriori estimators for P1 Laplace (f = 0): residual (edge jumps) and ZZ (nodal averaging recovery)
+  function estimate(sol, kind) {
+    const { x, y, t, u, S } = sol, nt = t.length / 3, n = x.length; const eta2 = new Float64Array(nt);
+    const g = new Float64Array(2 * nt);
+    for (let e = 0; e < nt; e++) { let a = 0, b = 0; for (let p = 0; p < 3; p++) { a += S.G[6 * e + 2 * p] * u[t[3 * e + p]]; b += S.G[6 * e + 2 * p + 1] * u[t[3 * e + p]]; } g[2 * e] = a; g[2 * e + 1] = b; }
+    if (kind === "zz") {
+      const Gx = new Float64Array(n), Gy = new Float64Array(n), W = new Float64Array(n);
+      for (let e = 0; e < nt; e++) for (let p = 0; p < 3; p++) { const v = t[3 * e + p]; Gx[v] += S.A[e] * g[2 * e]; Gy[v] += S.A[e] * g[2 * e + 1]; W[v] += S.A[e]; }
+      for (let v = 0; v < n; v++) { Gx[v] /= W[v]; Gy[v] /= W[v]; }
+      for (let e = 0; e < nt; e++) { let sx = 0, sy = 0, s2 = 0; for (let p = 0; p < 3; p++) { const v = t[3 * e + p]; const dx = Gx[v] - g[2 * e], dy = Gy[v] - g[2 * e + 1]; sx += dx; sy += dy; s2 += dx * dx + dy * dy; } eta2[e] = (S.A[e] / 12) * (s2 + sx * sx + sy * sy); }
+    } else {
+      const em = new Map();
+      for (let e = 0; e < nt; e++) for (let k = 0; k < 3; k++) { const a = t[3 * e + k], b = t[3 * e + (k + 1) % 3]; const kk = a < b ? a * n + b : b * n + a; const o = em.get(kk); if (o === undefined) em.set(kk, e); else {
+        const L = Math.hypot(x[b] - x[a], y[b] - y[a]), nx = (y[b] - y[a]) / L, ny = -(x[b] - x[a]) / L;
+        const j = (g[2 * e] - g[2 * o]) * nx + (g[2 * e + 1] - g[2 * o + 1]) * ny; const c = 0.5 * L * L * j * j; eta2[e] += c; eta2[o] += c; /* eta_T^2 = 1/2 sum over its edges of h_E^2 [dn u_h]^2 */ em.set(kk, -1); } }
+    }
+    let s = 0; for (let e = 0; e < nt; e++) s += eta2[e];
+    return { eta2, eta: Math.sqrt(s) };
+  }
+  function dorfler(eta2, theta) { const idx = Array.from(eta2.keys()).sort((a, b) => eta2[b] - eta2[a]); let tot = 0; for (const v of eta2) tot += v; const out = []; let acc = 0; for (const i of idx) { out.push(i); acc += eta2[i]; if (acc >= theta * tot) break; } return out; }
+
+  /* ---- tetrahedron quality ---- */
+  function tetQ(P) { // P: 4 points [x,y,z]
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], nrm = (a) => Math.sqrt(dot(a, a));
+    const [A, B, C, D] = P; const ab = sub(B, A), ac = sub(C, A), ad = sub(D, A);
+    const det = dot(ab, cross(ac, ad)), V = det / 6;
+    const E = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]], L = E.map(([i, j]) => nrm(sub(P[i], P[j])));
+    const faces = [[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]], area = faces.map(([i, j, k]) => nrm(cross(sub(P[j], P[i]), sub(P[k], P[i]))) / 2);
+    const S = area.reduce((s, v) => s + v, 0), rin = (3 * Math.abs(V)) / S;
+    // circumradius (Gmsh formula: products of opposite edges)
+    const la = L[0] * L[5], lb = L[1] * L[4], lc = L[2] * L[3];
+    const ins = (la + lb + lc) * (la + lb - lc) * (la - lb + lc) * (-la + lb + lc);
+    const R = Math.abs(V) > 1e-300 && ins > 0 ? Math.sqrt(ins) / (24 * Math.abs(V)) : Infinity;
+    // dihedral angles at each edge (i,j): between faces that contain the edge
+    const dih = E.map(([i, j]) => { const o = [0, 1, 2, 3].filter((k) => k !== i && k !== j); const e = sub(P[j], P[i]); const u = sub(P[o[0]], P[i]), w = sub(P[o[1]], P[i]);
+      const pu = sub(u, e.map((c) => (c * dot(u, e)) / dot(e, e))), pw = sub(w, e.map((c) => (c * dot(w, e)) / dot(e, e)));
+      return (Math.acos(Math.max(-1, Math.min(1, dot(pu, pw) / (nrm(pu) * nrm(pw) || 1)))) * 180) / PI; });
+    // SICN as Gmsh computes it for a straight-sided tet: 3 det(S)^(2/3) / |S|_F^2, S = Jacobian of the map from the unit equilateral tet
+    const Wi = [[1, -1 / Math.sqrt(3), -1 / Math.sqrt(6)], [0, 2 / Math.sqrt(3), -1 / Math.sqrt(6)], [0, 0, Math.sqrt(1.5)]];
+    const Ec = [ab, ac, ad]; const Sm = [0, 1, 2].map((i) => [0, 1, 2].map((j) => Ec[0][i] * Wi[0][j] + Ec[1][i] * Wi[1][j] + Ec[2][i] * Wi[2][j])); // S = E W^-1, E columns = edges
+    const detS = Sm[0][0] * (Sm[1][1] * Sm[2][2] - Sm[1][2] * Sm[2][1]) - Sm[0][1] * (Sm[1][0] * Sm[2][2] - Sm[1][2] * Sm[2][0]) + Sm[0][2] * (Sm[1][0] * Sm[2][1] - Sm[1][1] * Sm[2][0]);
+    let fro = 0; for (const r of Sm) for (const v of r) fro += v * v;
+    const sicn = (Math.sign(detS) * 3 * Math.cbrt(detS * detS)) / fro;
+    // P1 element stiffness K = V grad(phi) grad(phi)^T ; condition number of its nonzero spectrum
+    let kappa = Infinity, kmax = 0;
+    if (Math.abs(V) > 1e-14 * Math.max(...L) ** 3) {
+      const g = faces.map(([i, j, k], f) => { const n = cross(sub(P[j], P[i]), sub(P[k], P[i])); const s = dot(n, sub(P[f], P[i])); return n.map((c) => c / s); });
+      const K = [0, 1, 2, 3].map((i) => [0, 1, 2, 3].map((j) => Math.abs(V) * dot(g[i], g[j])));
+      const ev = jacobiEig(K).sort((a, b) => a - b); kappa = ev[3] / ev[1]; kmax = ev[3];
+    }
+    return { V, L, lmin: Math.min(...L), lmax: Math.max(...L), R, rin, gamma: R === Infinity ? 0 : (3 * rin) / R, rer: R / Math.min(...L), dmin: Math.min(...dih), dmax: Math.max(...dih), dih, sicn, kappa, kmax, area };
+  }
+  function jacobiEig(A) { const n = A.length; const a = A.map((r) => r.slice());
+    for (let sweep = 0; sweep < 60; sweep++) { let off = 0; for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += a[i][j] ** 2; if (off < 1e-24) break;
+      for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) { if (Math.abs(a[p][q]) < 1e-300) continue; const th = (a[q][q] - a[p][p]) / (2 * a[p][q]); const t = Math.sign(th || 1) / (Math.abs(th) + Math.sqrt(th * th + 1)); const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+        for (let k = 0; k < n; k++) { const akp = a[k][p], akq = a[k][q]; a[k][p] = c * akp - s * akq; a[k][q] = s * akp + c * akq; }
+        for (let k = 0; k < n; k++) { const apk = a[p][k], aqk = a[q][k]; a[p][k] = c * apk - s * aqk; a[q][k] = s * apk + c * aqk; } } }
+    return a.map((r, i) => r[i]); }
+
+  return { orient, circum, triQ, DT, discretize, ruppert, run, finish, stats, front, laplaceSmooth, assemble, solve, energy, LS, nvb, edgesOf, solveL, estimate, dorfler, tetQ };
+})();
+/* ---------- page: shared drawing helpers ---------- */
+const PAGE = (() => {
+  "use strict";
+  const PI = Math.PI;
+  const $ = (s, r = document) => r.querySelector(s);
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const clock = { now: () => performance.now() };
+  let COL = {};
+  function readCols() {
+    COL = { ink: css("--ink"), muted: css("--muted"), line: css("--line"), grid: css("--grid"), surface: css("--surface"), bg: css("--bg"),
+      asym: css("--c-asym"), fem: css("--c-fem"), fdtd: css("--c-fdtd"), mom: css("--c-mom3d"), mom25: css("--c-mom25"), q2d: css("--c-q2d"),
+      field: css("--field"), hfield: css("--hfield"), ok: css("--ok"), bad: css("--bad"), diel: css("--diel"), metal: css("--metal"), mono: css("--mono"), body: css("--body") };
+  }
+  readCols();
+  const redraws = [];
+  const themeChange = () => { readCols(); redraws.forEach((f) => f()); };
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", themeChange);
+  new MutationObserver(themeChange).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  function size(cv, aspect) {
+    const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.max(200, cv.parentElement.clientWidth), h = Math.round(aspect(w));
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); cv.style.height = h + "px"; }
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+    return { ctx, w, h };
+  }
+  function auto(cv, draw) { let last = 0; const ro = new ResizeObserver(() => { const w = cv.parentElement.clientWidth; if (w !== last) { last = w; draw(); } }); ro.observe(cv.parentElement); redraws.push(draw); }
+  const font = (px, w = 500) => `${w} ${px}px ${COL.mono || "monospace"}`;
+  const lg = Math.log10;
+  const sup = (e) => String(e).split("").map((c) => "⁰¹²³⁴⁵⁶⁷⁸⁹"["0123456789".indexOf(c)] || (c === "-" ? "⁻" : c)).join("");
+  const fmtInt = (n) => Math.round(n).toLocaleString("en-US");
+  const pow10 = (v) => { const e = Math.round(lg(v)); return e === 0 ? "1" : e === 1 ? "10" : "10" + sup(e); };
+  function axes(ctx, b, o) {
+    const tx = (v) => (o.xlog ? (lg(v) - lg(o.x0)) / (lg(o.x1) - lg(o.x0)) : (v - o.x0) / (o.x1 - o.x0));
+    const ty = (v) => (o.ylog ? (lg(v) - lg(o.y0)) / (lg(o.y1) - lg(o.y0)) : (v - o.y0) / (o.y1 - o.y0));
+    const X = (v) => b.x + tx(v) * b.w, Y = (v) => b.y + b.h - ty(v) * b.h;
+    ctx.save(); ctx.lineWidth = 1; ctx.strokeStyle = COL.grid; ctx.fillStyle = COL.muted; ctx.font = font(10.5);
+    ctx.textAlign = "center"; ctx.textBaseline = "top";
+    for (const v of o.xt || []) { const x = Math.round(X(v)) + 0.5; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.fillText(o.xf ? o.xf(v) : v, x, b.y + b.h + 5); }
+    ctx.textAlign = "right"; ctx.textBaseline = "middle";
+    for (const v of o.yt || []) { const y = Math.round(Y(v)) + 0.5; ctx.beginPath(); ctx.moveTo(b.x, y); ctx.lineTo(b.x + b.w, y); ctx.stroke(); ctx.fillText(o.yf ? o.yf(v) : v, b.x - 5, y); }
+    ctx.strokeStyle = COL.line; ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.w, b.h);
+    ctx.fillStyle = COL.muted; ctx.font = font(10.5, 600);
+    if (o.xl) { ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText(o.xl, b.x + b.w, b.y + b.h + 32); }
+    if (o.yl) { ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(o.yl, b.x + 6, b.y + 5); }
+    ctx.restore();
+    return { X, Y };
+  }
+  function curve(ctx, b, pts, color, w = 2, dash = null, alpha = 1) {
+    ctx.save(); ctx.beginPath(); ctx.rect(b.x, b.y, b.w, b.h); ctx.clip();
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.globalAlpha = alpha; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); let pen = false;
+    for (const [x, y] of pts) { if (!isFinite(x) || !isFinite(y)) { pen = false; continue; } if (pen) ctx.lineTo(x, y); else ctx.moveTo(x, y); pen = true; }
+    ctx.stroke(); ctx.restore();
+  }
+  function dot(ctx, x, y, color, r = 4.5, ring = false) { ctx.save(); ctx.fillStyle = ring ? COL.surface : color; ctx.strokeStyle = ring ? color : COL.surface; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, 2 * PI); ctx.fill(); ctx.stroke(); ctx.restore(); }
+  const box = (w, h, l = 46, r = 12, t = 10, bt = 36) => ({ x: l, y: t, w: w - l - r, h: h - t - bt });
+  function seg(el, cb) { el.addEventListener("click", (e) => { const b = e.target.closest("button[data-v]"); if (!b) return; el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false")); cb(b.dataset.v); }); }
+  function setSeg(el, v) { el.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", x.dataset.v === String(v) ? "true" : "false")); }
+  function toggle(btn, cb) { btn.addEventListener("click", () => { const on = btn.getAttribute("aria-pressed") !== "true"; btn.setAttribute("aria-pressed", on ? "true" : "false"); cb(on); }); }
+  const viridis = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
+  function cmap(t) { t = Math.max(0, Math.min(1, t)) * 4; const i = Math.min(3, Math.floor(t)), f = t - i, a = viridis[i], c = viridis[i + 1]; return `rgb(${a[0] + (c[0] - a[0]) * f | 0},${a[1] + (c[1] - a[1]) * f | 0},${a[2] + (c[2] - a[2]) * f | 0})`; }
+  // world -> screen fit with y up
+  function fit(w, h, bb, pad = 12, top = pad) {
+    const s = Math.min((w - 2 * pad) / (bb[2] - bb[0]), (h - pad - top) / (bb[3] - bb[1]));
+    const ox = (w - s * (bb[2] - bb[0])) / 2 - s * bb[0], oy = top + (h - pad - top + s * (bb[3] - bb[1])) / 2 + s * bb[1];
+    return { s, X: (x) => ox + s * x, Y: (y) => oy - s * y, ix: (px) => (px - ox) / s, iy: (py) => (oy - py) / s };
+  }
+  function drawTris(ctx, v, m, opt = {}) { // m: {x, y, t}
+    const { x, y, t } = m, nt = t.length / 3;
+    if (opt.fill) for (let e = 0; e < nt; e++) { const c = opt.fill(e); if (!c) continue; const a = t[3 * e], b = t[3 * e + 1], d = t[3 * e + 2];
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(v.X(x[a]), v.Y(y[a])); ctx.lineTo(v.X(x[b]), v.Y(y[b])); ctx.lineTo(v.X(x[d]), v.Y(y[d])); ctx.closePath(); ctx.fill(); if (opt.seam) { ctx.strokeStyle = c; ctx.lineWidth = 0.6; ctx.stroke(); } }
+    if (opt.stroke !== false) { ctx.save(); ctx.strokeStyle = opt.stroke || COL.muted; ctx.globalAlpha = opt.alpha ?? 0.7; ctx.lineWidth = opt.lw || 0.7; ctx.beginPath();
+      for (let e = 0; e < nt; e++) { const a = t[3 * e], b = t[3 * e + 1], d = t[3 * e + 2]; ctx.moveTo(v.X(x[a]), v.Y(y[a])); ctx.lineTo(v.X(x[b]), v.Y(y[b])); ctx.lineTo(v.X(x[d]), v.Y(y[d])); ctx.closePath(); }
+      ctx.stroke(); ctx.restore(); }
+  }
+  function hist(ctx, b, sets, o) { // sets: [{vals, color}], o: {x0,x1,bins,mark,xf,xt}
+    const nb = o.bins, w = (o.x1 - o.x0) / nb; let ymax = 0; const H = sets.map((s) => { const h = new Float64Array(nb); for (const v of s.vals) { const i = Math.min(nb - 1, Math.max(0, Math.floor((v - o.x0) / w))); h[i]++; } const n = s.vals.length || 1; for (let i = 0; i < nb; i++) { h[i] /= n; ymax = Math.max(ymax, h[i]); } return h; });
+    ymax = Math.max(ymax * 1.1, 0.05);
+    const A = axes(ctx, b, { x0: o.x0, x1: o.x1, y0: 0, y1: ymax, xt: o.xt, xf: o.xf, yt: [], xl: o.xl, yl: o.yl });
+    sets.forEach((s, k) => { ctx.save(); ctx.fillStyle = s.color; ctx.globalAlpha = sets.length > 1 ? 0.55 : 0.8;
+      for (let i = 0; i < nb; i++) { if (!H[k][i]) continue; const x0 = A.X(o.x0 + i * w), x1 = A.X(o.x0 + (i + 1) * w), y = A.Y(H[k][i]); ctx.fillRect(x0 + 0.5, y, Math.max(1, x1 - x0 - 1), b.y + b.h - y); } ctx.restore(); });
+    if (o.mark != null) { ctx.save(); ctx.strokeStyle = COL.bad; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; const x = A.X(o.mark); ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle = COL.bad; ctx.font = font(10.5, 600); ctx.textAlign = x > b.x + b.w * 0.7 ? "right" : "left"; ctx.textBaseline = "top"; ctx.fillText(o.markLabel || "", x + (ctx.textAlign === "left" ? 4 : -4), b.y + 4); ctx.restore(); }
+    return A;
+  }
+  function label(ctx, t, x, y, col, al = "center", bl = "bottom", px = 10.5) { ctx.save(); ctx.font = font(px, 600); ctx.textAlign = al; ctx.textBaseline = bl; ctx.lineJoin = "round"; ctx.strokeStyle = COL.surface; ctx.lineWidth = 3.5; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); ctx.restore(); }
+  const pip = (P, x, y) => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const xi = P[i][0], yi = P[i][1], xj = P[j][0], yj = P[j][1]; if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c; } return c; };
+  const circle = (cx, cy, r, n, cw) => { const out = []; for (let i = 0; i < n; i++) { const a = ((cw ? -1 : 1) * 2 * PI * i) / n; out.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); } return out; };
+  const debounce = (f, ms) => { let t = 0; return (...a) => { clearTimeout(t); t = setTimeout(() => f(...a), ms); }; };
+  const later = (f) => setTimeout(f, 0);
+  const H = { label, $, css, COL: () => COL, size, auto, font, lg, sup, fmtInt, pow10, axes, curve, dot, box, seg, setSeg, toggle, cmap, fit, drawTris, hist, pip, circle, debounce, later, clock, redraws, themeChange };
+
+  /* ---------- 1. microstrip: why the mesh matters ---------- */
+  const MS = (() => {
+    const W = 12, HT = 8, ER = 4.4, ZREF = 48.062, EREF = 3.2879, E0 = 8.8541878128e-12, C0 = 299792458;
+    const cv = $("#ms-cv"), pl = $("#ms-pl");
+    const st = { grade: "u", view: "mesh", t: 0.4, res: null, sweep: { u: [], g: [] } };
+    const hOf = (t) => Math.exp(Math.log(1) + t * Math.log(0.15));
+    const sizeFn = (h, grade) => grade === "u" ? () => h : (x, y) => { const d = Math.min(Math.hypot(x - 5, y - 1), Math.hypot(x - 7, y - 1)); const r = Math.min(1, d / 2.5); return Math.max(0.018, h / 8) * (1 - r) + h * r; };
+    function geo(size) { return { loops: [{ pts: [[0, 0], [W, 0], [W, 1], [W, HT], [0, HT], [0, 1]], tag: 1 }], lines: [{ pts: [[5, 1], [7, 1]], tag: 2 }, { pts: [[0, 1], [5, 1]], tag: 3 }, { pts: [[7, 1], [W, 1]], tag: 3 }], inside: (x, y) => x > 0 && x < W && y > 0 && y < HT, size }; }
+    function compute(h, grade) {
+      const t0 = performance.now();
+      const m = MESH.run(MESH.ruppert(geo(sizeFn(h, grade)), { minAngle: 20.7, sizeK: 1.35, maxPts: 60000 }));
+      const nt = m.t.length / 3, n = m.x.length, epsS = new Float64Array(nt), eps1 = new Float64Array(nt).fill(1);
+      for (let e = 0; e < nt; e++) { const yc = (m.y[m.t[3 * e]] + m.y[m.t[3 * e + 1]] + m.y[m.t[3 * e + 2]]) / 3; epsS[e] = yc < 1 ? ER : 1; }
+      const fixed = new Uint8Array(n), uf = new Float64Array(n); let nfix = 0;
+      for (let i = 0; i < n; i++) { if (m.tag[i] === 1) { fixed[i] = 1; nfix++; } else if (m.tag[i] === 2) { fixed[i] = 1; uf[i] = 1; nfix++; } }
+      const S1 = MESH.assemble(m.x, m.y, m.t, epsS), r1 = MESH.solve(S1, fixed, uf, 1e-10);
+      const S0 = MESH.assemble(m.x, m.y, m.t, eps1), r0 = MESH.solve(S0, fixed, uf, 1e-10);
+      const C = E0 * MESH.energy(S1, m.t, r1.u, epsS), Cv = E0 * MESH.energy(S0, m.t, r0.u, eps1);
+      const Z = 1 / (C0 * Math.sqrt(C * Cv));
+      return { m, u: r1.u, C, Cv, Z, ee: C / Cv, dof: n - nfix, err: (Z - ZREF) / ZREF, ms: performance.now() - t0, h, grade };
+    }
+    function update() { st.res = compute(hOf(st.t), st.grade); draw(); plot(); text(); }
+    function text() { const r = st.res; if (!r) return;
+      $("#ms-hv").textContent = r.h.toFixed(2) + (st.grade === "g" ? " (SizeMax; SizeMin = h/8 at the edges)" : "");
+      $("#ms-z").textContent = r.Z.toFixed(3) + " Ω"; $("#ms-e").textContent = (r.err >= 0 ? "+" : "−") + Math.abs(100 * r.err).toFixed(Math.abs(r.err) < 0.001 ? 3 : 2) + " %";
+      $("#ms-ee").textContent = r.ee.toFixed(4); $("#ms-n").textContent = fmtInt(r.dof); $("#ms-t").textContent = Math.round(r.ms) + " ms";
+      $("#ms-tag").textContent = fmtInt(r.m.t.length / 3) + " triangles · " + (st.grade === "u" ? "uniform" : "graded (Threshold field)"); }
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => Math.round(w / 1.5)); const r = st.res; if (!r) return;
+      const v = fit(w, h, [0, 0, W, HT], 10, 28), m = r.m;
+      ctx.fillStyle = COL.diel; ctx.fillRect(v.X(0), v.Y(1), v.X(W) - v.X(0), v.Y(0) - v.Y(1));
+      if (st.view === "pot") {
+        drawTris(ctx, v, m, { fill: (e) => cmap((r.u[m.t[3 * e]] + r.u[m.t[3 * e + 1]] + r.u[m.t[3 * e + 2]]) / 3), seam: true, stroke: false });
+        // equipotentials every 0.1
+        ctx.save(); ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 1; ctx.beginPath();
+        for (let e = 0; e < m.t.length / 3; e++) { const id = [m.t[3 * e], m.t[3 * e + 1], m.t[3 * e + 2]], u = id.map((i) => r.u[i]);
+          for (let lv = 0.1; lv < 0.95; lv += 0.1) { const pts = []; for (let k = 0; k < 3; k++) { const a = k, b = (k + 1) % 3; if ((u[a] - lv) * (u[b] - lv) < 0) { const s = (lv - u[a]) / (u[b] - u[a]); pts.push([m.x[id[a]] + s * (m.x[id[b]] - m.x[id[a]]), m.y[id[a]] + s * (m.y[id[b]] - m.y[id[a]])]); } }
+            if (pts.length === 2) { ctx.moveTo(v.X(pts[0][0]), v.Y(pts[0][1])); ctx.lineTo(v.X(pts[1][0]), v.Y(pts[1][1])); } } }
+        ctx.stroke(); ctx.restore();
+      } else drawTris(ctx, v, m, { stroke: COL.muted, alpha: 0.75, lw: 0.6 });
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.strokeRect(v.X(0), v.Y(HT), v.X(W) - v.X(0), v.Y(0) - v.Y(HT));
+      ctx.strokeStyle = COL.metal; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(v.X(5), v.Y(1)); ctx.lineTo(v.X(7), v.Y(1)); ctx.stroke();
+      label(ctx, "εr = 4.4", v.X(W) - 6, v.Y(0.5), COL.ink, "right", "middle"); label(ctx, "strip, V = 1", v.X(6), v.Y(1) - 6, COL.metal); label(ctx, "shield, V = 0", v.X(W / 2), v.Y(HT) + 4, COL.ink, "center", "top");
+    }
+    function plot() {
+      const { ctx, w, h } = size(pl, (w) => Math.round(Math.min(260, w * 0.62))); const b = box(w, h, 46, 12, 10, 36);
+      const A = axes(ctx, b, { x0: 50, x1: 2e4, y0: 0.1, y1: 30, xlog: true, ylog: true, xt: [100, 1e3, 1e4], xf: pow10, yt: [0.1, 1, 10], yf: (v) => (v < 1 ? v.toFixed(1) : v.toFixed(0)) + "%", xl: "DOF", yl: "" });
+      // reference slopes
+      const ref = (x0, y0, p, col) => curve(ctx, b, [[A.X(x0), A.Y(y0)], [A.X(x0 * 30), A.Y(y0 * 30 ** p)]], col, 1.2, [5, 4]);
+      ref(100, 25, -0.5, COL.muted); ref(100, 6, -0.5, COL.muted);
+      for (const [k, col] of [["u", COL.fdtd], ["g", COL.fem]]) { const S = st.sweep[k].slice().sort((a, b) => a[0] - b[0]); curve(ctx, b, S.map(([n, e]) => [A.X(n), A.Y(100 * Math.abs(e))]), col, 2); for (const [n, e] of S) dot(ctx, A.X(n), A.Y(100 * Math.abs(e)), col, 3); }
+      if (st.res) dot(ctx, A.X(st.res.dof), A.Y(Math.max(0.1, 100 * Math.abs(st.res.err))), st.grade === "u" ? COL.fdtd : COL.fem, 6.5, true);
+    }
+    // background sweeps (one mesh per tick)
+    const jobs = []; for (const k of ["u", "g"]) for (const hh of [1, 0.7, 0.5, 0.35, 0.25, 0.18]) jobs.push([k, hh]);
+    function runJobs() { if (!jobs.length) return; const [k, hh] = jobs.shift(); const r = compute(hh, k); st.sweep[k].push([r.dof, r.err]); plot(); setTimeout(runJobs, 30); }
+    const deb = debounce(update, 90);
+    $("#ms-h").addEventListener("input", (e) => { st.t = +e.target.value; $("#ms-hv").textContent = hOf(st.t).toFixed(2); deb(); });
+    seg($("#ms-grade"), (v) => { st.grade = v; update(); });
+    seg($("#ms-view"), (v) => { st.view = v; draw(); });
+    $("#ms-ref").textContent = ZREF.toFixed(3) + " Ω"; $("#ms-refe").textContent = EREF.toFixed(4);
+    auto(cv, draw); auto(pl, plot);
+    update(); setTimeout(runJobs, 400);
+    return { st, update, set: (t) => { st.t = t; $("#ms-h").value = t; update(); }, setGrade: (g) => { st.grade = g; setSeg($("#ms-grade"), g); update(); }, setView: (v) => { st.view = v; setSeg($("#ms-view"), v); draw(); }, hOf, compute, ZREF };
+  })();
+
+  /* ---------- 2. Delaunay step by step ---------- */
+  const DL = (() => {
+    const cv = $("#dl-cv"), AX = 1.45; // domain [0, AX] x [0, 1]
+    const st = { alg: "bw", cc: false, vor: false, anim: true, cur: [AX / 2, 0.5], focus: false, A: null, last: "—" };
+    let dt, seed = 7;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    function reset(n = 10) { dt = new MESH.DT([0, AX, AX, 0], [0, 0, 1, 1]); st.A = null; st.last = "—"; for (let i = 0; i < n; i++) dt.insert(0.06 + rnd() * (AX - 0.12), 0.06 + rnd() * 0.88); text(); draw(); }
+    const triList = () => dt.tris().map((t) => [dt.V[3 * t], dt.V[3 * t + 1], dt.V[3 * t + 2]]);
+    function insert(x, y, animate) {
+      if (x <= 0.005 || x >= AX - 0.005 || y <= 0.005 || y >= 0.995) return;
+      const before = triList();
+      if (st.alg === "bw") {
+        const pre = before.filter((T) => { const q = MESH.circum(dt.X[T[0]], dt.Y[T[0]], dt.X[T[1]], dt.Y[T[1]], dt.X[T[2]], dt.Y[T[2]]); return (x - q[0]) ** 2 + (y - q[1]) ** 2 < q[2] * (1 - 1e-12); });
+        const r = dt.insert(x, y); if (!r) return;
+        st.last = r.cavity.length + " bad → " + r.created.length + " new";
+        if (animate) st.A = { kind: "bw", t0: clock.now(), before, cav: r.cavity, bnd: r.boundary, p: [x, y], v: r.v, dur: 2100 };
+        else st.A = null;
+      } else {
+        const r = dt.insertLawson(x, y); if (!r) return;
+        st.last = r.split ? "split in 3 + " + r.flips.length + " flips" : "on an edge: Bowyer–Watson used";
+        if (animate && r.split) { // replay states
+          const v = r.v, states = []; let cur = before.filter((T) => !sameT(T, r.split[0]));
+          const [a, b, c] = r.split[0]; cur = cur.concat([[v, b, c], [v, c, a], [v, a, b]]); states.push({ tris: cur.slice(), hl: [[v, a], [v, b], [v, c]], circ: null });
+          for (const f of r.flips) { states.push({ tris: cur.slice(), bad: [f.p, f.q], o: f.o, circ: f.circ });
+            cur = cur.filter((T) => !(hasAll(T, [f.p, f.q, v]) || hasAll(T, [f.p, f.q, f.o]))).concat([[v, f.p, f.o], [v, f.o, f.q]]);
+            states.push({ tris: cur.slice(), hl: [[v, f.o]], circ: null }); }
+          st.A = { kind: "lw", t0: clock.now(), before, states, p: [x, y], dur: 700 + states.length * 520 };
+        } else st.A = null;
+      }
+      text(); if (st.A) loop(); else draw();
+    }
+    const sameT = (T, U) => hasAll(T, U);
+    const hasAll = (T, U) => U.every((u) => T.includes(u));
+    function loop() { draw(); if (st.A && clock.now() - st.A.t0 < st.A.dur) requestAnimationFrame(loop); else { st.A = null; draw(); text(); } }
+    function check() { // empty-circle test and smallest angle
+      const T = dt.tris(); let bad = 0, amin = 180;
+      for (const t of T) { const a = dt.V[3 * t], b = dt.V[3 * t + 1], c = dt.V[3 * t + 2];
+        amin = Math.min(amin, MESH.triQ(dt.X[a], dt.Y[a], dt.X[b], dt.Y[b], dt.X[c], dt.Y[c]).min);
+        for (let i = 0; i < dt.X.length; i++) { if (i === a || i === b || i === c) continue; const dx = dt.X[i] - dt.CX[t], dy = dt.Y[i] - dt.CY[t]; if (dx * dx + dy * dy < dt.R2[t] * (1 - 1e-9)) { bad++; break; } } }
+      return { bad, amin, nt: T.length };
+    }
+    function text() { const c = check(); $("#dl-np").textContent = dt.X.length; $("#dl-nt").textContent = c.nt; $("#dl-last").textContent = st.last; $("#dl-amin").textContent = c.amin.toFixed(1) + "°";
+      $("#dl-chk").textContent = c.bad ? "✗ " + c.bad + " circles hold a vertex" : "✓ all " + c.nt + " circumcircles are empty"; $("#dl-chk").parentElement.className = "big " + (c.bad ? "bad" : "ok"); }
+    let V = null;
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => Math.round(Math.min(w / AX, 560)));
+      V = fit(w, h, [0, 0, AX, 1], 8, 26); const v = V, X = dt.X, Y = dt.Y;
+      const path = (T) => { ctx.beginPath(); ctx.moveTo(v.X(X[T[0]]), v.Y(Y[T[0]])); ctx.lineTo(v.X(X[T[1]]), v.Y(Y[T[1]])); ctx.lineTo(v.X(X[T[2]]), v.Y(Y[T[2]])); ctx.closePath(); };
+      const edges = (list, col, lw, alpha = 1) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.globalAlpha = alpha; for (const T of list) { path(T); ctx.stroke(); } ctx.restore(); };
+      const circ = (cx, cy, r, col, lw = 1.5, dash) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = lw; if (dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.arc(v.X(cx), v.Y(cy), r * v.s, 0, 2 * PI); ctx.stroke(); ctx.restore(); };
+      const ccOf = (T) => MESH.circum(X[T[0]], Y[T[0]], X[T[1]], Y[T[1]], X[T[2]], Y[T[2]]);
+      const A = st.A; let tris = triList(), cap = "";
+      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w, h); ctx.clip();
+      if (A && A.kind === "bw") {
+        const tt = clock.now() - A.t0;
+        if (tt < 1100) {
+          const others = A.before.filter((T) => !A.cav.some((C) => hasAll(T, C)));
+          edges(others, COL.muted, 1, 0.8);
+          if (tt < 600) { for (const T of A.cav) { ctx.fillStyle = COL.field; ctx.globalAlpha = 0.18; path(T); ctx.fill(); ctx.globalAlpha = 1; } edges(A.cav, COL.field, 1.4);
+            for (const T of A.cav) { const q = ccOf(T); circ(q[0], q[1], Math.sqrt(q[2]), COL.field, 1.4); }
+            cap = `1 · ${A.cav.length} circumcircles hold the new point: those triangles are bad.`;
+          } else { ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2.5; ctx.beginPath(); for (const [a, b] of A.bnd) { ctx.moveTo(v.X(X[a]), v.Y(Y[a])); ctx.lineTo(v.X(X[b]), v.Y(Y[b])); } ctx.stroke(); ctx.restore();
+            cap = `2 · Remove them. The cavity has ${A.bnd.length} boundary edges.`; }
+          tris = null;
+        } else {
+          const k = Math.min(1, (tt - 1100) / 1000); const fresh = A.bnd.map(([a, b]) => [A.v, a, b]);
+          edges(tris.filter((T) => !fresh.some((F) => hasAll(T, F))), COL.muted, 1, 0.8);
+          for (const T of fresh) { ctx.fillStyle = COL.asym; ctx.globalAlpha = 0.28 * (1 - k) + 0.05; path(T); ctx.fill(); ctx.globalAlpha = 1; }
+          edges(fresh, COL.asym, 1.6); tris = null;
+          cap = `3 · Connect the ${A.bnd.length} cavity edges to the point: ${A.bnd.length} new triangles.`;
+        }
+        dot(ctx, v.X(A.p[0]), v.Y(A.p[1]), COL.field, 5);
+      } else if (A && A.kind === "lw") {
+        const tt = clock.now() - A.t0; const i = Math.min(A.states.length - 1, Math.floor(Math.max(0, tt - 200) / 520)); const S = A.states[i];
+        edges(S.tris, COL.muted, 1, 0.8);
+        if (S.hl) { ctx.save(); ctx.strokeStyle = COL.asym; ctx.lineWidth = 2.4; ctx.beginPath(); for (const [a, b] of S.hl) { ctx.moveTo(v.X(X[a]), v.Y(Y[a])); ctx.lineTo(v.X(X[b]), v.Y(Y[b])); } ctx.stroke(); ctx.restore(); }
+        if (S.bad) { ctx.save(); ctx.strokeStyle = COL.field; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(v.X(X[S.bad[0]]), v.Y(Y[S.bad[0]])); ctx.lineTo(v.X(X[S.bad[1]]), v.Y(Y[S.bad[1]])); ctx.stroke(); ctx.restore(); circ(S.circ[0], S.circ[1], S.circ[2], COL.field, 1.4); dot(ctx, v.X(X[S.o]), v.Y(Y[S.o]), COL.field, 4.5, true); }
+        cap = i === 0 ? "1 · Split the triangle that holds the point into three." : S.bad ? "2 · This edge is illegal: the circle holds the opposite vertex. Flip it." : "3 · Flipped. Check the edges of the two new triangles.";
+        dot(ctx, v.X(A.p[0]), v.Y(A.p[1]), COL.field, 5); tris = null;
+      }
+      if (tris) {
+        if (st.cc) for (const T of tris) { const q = ccOf(T); circ(q[0], q[1], Math.sqrt(q[2]), COL.fem, 1, null); }
+        edges(tris, COL.ink, 1.2, 0.85);
+        if (st.vor) { ctx.save(); ctx.strokeStyle = COL.mom; ctx.lineWidth = 1.4; ctx.beginPath();
+          for (const t of dt.tris()) for (let k = 0; k < 3; k++) { const n = dt.N[3 * t + k]; if (n > t) { ctx.moveTo(v.X(dt.CX[t]), v.Y(dt.CY[t])); ctx.lineTo(v.X(dt.CX[n]), v.Y(dt.CY[n])); } } ctx.stroke(); ctx.restore(); }
+        cap = st.alg === "bw" ? "Click to add a point. Bowyer–Watson: bad triangles → cavity → new star." : "Click to add a point. Lawson: split, then flip illegal edges.";
+      }
+      ctx.restore();
+      for (let i = 0; i < X.length; i++) dot(ctx, v.X(X[i]), v.Y(Y[i]), COL.ink, 3);
+      if (st.focus) { const [cx, cy] = st.cur; ctx.save(); ctx.strokeStyle = COL.field; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(v.X(cx) - 9, v.Y(cy)); ctx.lineTo(v.X(cx) + 9, v.Y(cy)); ctx.moveTo(v.X(cx), v.Y(cy) - 9); ctx.lineTo(v.X(cx), v.Y(cy) + 9); ctx.stroke(); ctx.restore(); }
+      $("#dl-cap").textContent = cap;
+      $("#dl-tag").textContent = st.alg === "bw" ? "Bowyer–Watson" : "Lawson flips";
+    }
+    cv.addEventListener("pointerdown", (e) => { const r = cv.getBoundingClientRect(); if (!V) return; insert(V.ix(e.clientX - r.left), V.iy(e.clientY - r.top), st.anim); });
+    cv.addEventListener("focus", () => { st.focus = cv.matches(":focus-visible"); draw(); }); cv.addEventListener("blur", () => { st.focus = false; draw(); });
+    cv.addEventListener("keydown", (e) => { const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, 1], ArrowDown: [0, -1] }[e.key];
+      if (d) { e.preventDefault(); st.cur = [Math.max(0.02, Math.min(AX - 0.02, st.cur[0] + d[0] * 0.03)), Math.max(0.02, Math.min(0.98, st.cur[1] + d[1] * 0.03))]; draw(); }
+      else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); insert(st.cur[0], st.cur[1], st.anim); } });
+    seg($("#dl-alg"), (v) => { st.alg = v; st.A = null; draw(); });
+    toggle($("#dl-cc"), (on) => { st.cc = on; draw(); }); toggle($("#dl-vor"), (on) => { st.vor = on; draw(); }); toggle($("#dl-anim"), (on) => { st.anim = on; });
+    $("#dl-r1").addEventListener("click", () => insert(0.04 + rnd() * (AX - 0.08), 0.04 + rnd() * 0.92, st.anim));
+    $("#dl-r20").addEventListener("click", () => { for (let i = 0; i < 20; i++) insert(0.03 + rnd() * (AX - 0.06), 0.03 + rnd() * 0.94, false); st.A = null; draw(); text(); });
+    $("#dl-clr").addEventListener("click", () => reset(0));
+    auto(cv, draw); reset(10);
+    return { st, insert, reset, S: (x, y) => [V.X(x), V.Y(y)], draw, setAlg: (a) => { st.alg = a; setSeg($("#dl-alg"), a); draw(); }, setCC: (on) => { st.cc = on; $("#dl-cc").setAttribute("aria-pressed", on); draw(); } };
+  })();
+
+  /* ---------- 3. advancing front ---------- */
+  const AF = (() => {
+    const cv = $("#af-cv"), hc = $("#af-hist");
+    const outer = [[0, 0], [8, 0], [8, 5], [0, 5]], hole = circle(5, 2.5, 1.3, 40, true);
+    const st = { h: 0.45, sp: 0.35, play: false, show: "af", gen: null, last: null, done: false, res: null, dr: null, acc: 0, tl: 0 };
+    const inside = (x, y) => pip(outer, x, y) && !pip(hole, x, y);
+    function reset() {
+      st.gen = MESH.front([outer, hole], () => st.h); st.last = null; st.done = false; st.res = null; st.mesh = { x: [], y: [], t: [] };
+      st.dr = MESH.run(MESH.ruppert({ loops: [outer, hole], inside, size: () => st.h }, { minAngle: 20.7, sizeK: 1.35 })); st.drS = MESH.stats(st.dr);
+      step(140); draw(); stats();
+    }
+    function step(n) {
+      for (let i = 0; i < n && !st.done; i++) { const r = st.gen.next(); if (r.done) { st.done = true; st.res = r.value; st.last = null; st.play = false; $("#af-play").setAttribute("aria-pressed", "false"); $("#af-play").textContent = "Play"; break; } st.last = r.value; }
+      const L = st.last; if (L) st.mesh = { x: L.X, y: L.Y, t: L.T };
+    }
+    function stats() {
+      const m = st.res || st.mesh; const S = m.t.length ? MESH.stats({ x: m.x, y: m.y, t: m.t }) : null;
+      $("#af-n1").textContent = S ? fmtInt(S.nt) + (st.done ? "" : " so far") : "0"; $("#af-q1").textContent = S ? S.gmean.toFixed(3) + " / " + S.gmin.toFixed(2) : "—";
+      $("#af-n2").textContent = fmtInt(st.drS.nt); $("#af-q2").textContent = st.drS.gmean.toFixed(3) + " / " + st.drS.gmin.toFixed(2);
+      const { ctx, w, h } = size(hc, (w) => Math.round(Math.min(200, w * 0.5))); const b = box(w, h, 14, 12, 8, 34);
+      hist(ctx, b, [{ vals: S ? S.gam : [], color: COL.fdtd }, { vals: st.drS.gam, color: COL.fem }], { x0: 0.3, x1: 1, bins: 28, xt: [0.4, 0.6, 0.8, 1], xf: (v) => v.toFixed(1), xl: "γ" });
+    }
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => Math.round(w / 1.5)); const v = fit(w, h, [0, 0, 8, 5], 10, 26);
+      const poly = (P) => { ctx.beginPath(); P.forEach(([x, y], i) => (i ? ctx.lineTo(v.X(x), v.Y(y)) : ctx.moveTo(v.X(x), v.Y(y)))); ctx.closePath(); };
+      ctx.fillStyle = COL.bg; poly(outer); ctx.fill(); ctx.fillStyle = COL.surface; poly(hole); ctx.fill();
+      if (st.show === "dr") { drawTris(ctx, v, st.dr, { stroke: COL.fem, alpha: 0.9, lw: 0.8 }); $("#af-tag").textContent = "Delaunay refinement · " + fmtInt(st.drS.nt) + " triangles"; }
+      else {
+        const m = st.res || st.mesh;
+        drawTris(ctx, v, { x: m.x, y: m.y, t: m.t }, { stroke: COL.ink, alpha: 0.75, lw: 0.8 });
+        const L = st.last;
+        ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2; poly(outer); ctx.stroke(); poly(hole); ctx.stroke();
+        if (L && !st.done) {
+          ctx.save(); ctx.strokeStyle = COL.fdtd; ctx.lineWidth = 2.6; ctx.beginPath(); for (const [a, b] of L.front.values()) { ctx.moveTo(v.X(L.X[a]), v.Y(L.Y[a])); ctx.lineTo(v.X(L.X[b]), v.Y(L.Y[b])); } ctx.stroke(); ctx.restore();
+          const { a, b, c } = L; ctx.fillStyle = COL.asym; ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.moveTo(v.X(L.X[a]), v.Y(L.Y[a])); ctx.lineTo(v.X(L.X[b]), v.Y(L.Y[b])); ctx.lineTo(v.X(L.X[c]), v.Y(L.Y[c])); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1;
+          ctx.strokeStyle = COL.asym; ctx.lineWidth = 2; ctx.stroke();
+          dot(ctx, v.X(L.px), v.Y(L.py), COL.fem, 5, true); if (!L.isNew) dot(ctx, v.X(L.X[c]), v.Y(L.Y[c]), COL.asym, 4);
+        }
+        $("#af-tag").textContent = st.done ? "Front closed · " + fmtInt(m.t.length / 3) + " triangles" : "Front: " + (L ? L.front.size : 0) + " edges · " + fmtInt(m.t.length / 3) + " triangles";
+      }
+      if (st.show === "dr") { ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.6; poly(outer); ctx.stroke(); poly(hole); ctx.stroke(); }
+    }
+    function tick(ts) { if (!st.play) return; const dtm = st.tl ? Math.min(100, ts - st.tl) : 16; st.tl = ts; const rate = 2 + 400 * st.sp * st.sp; st.acc += (rate * dtm) / 1000; const n = Math.floor(st.acc); st.acc -= n; if (n) { step(n); draw(); stats(); } if (st.play) requestAnimationFrame(tick); }
+    $("#af-play").addEventListener("click", () => { if (st.done) reset(); st.play = !st.play; $("#af-play").setAttribute("aria-pressed", st.play); $("#af-play").textContent = st.play ? "Pause" : "Play"; st.tl = 0; if (st.play) requestAnimationFrame(tick); });
+    $("#af-step").addEventListener("click", () => { step(1); draw(); stats(); });
+    $("#af-done").addEventListener("click", () => { step(1e6); draw(); stats(); });
+    $("#af-reset").addEventListener("click", () => { st.play = false; $("#af-play").setAttribute("aria-pressed", "false"); $("#af-play").textContent = "Play"; reset(); });
+    const deb = debounce(() => { reset(); }, 120);
+    $("#af-h").addEventListener("input", (e) => { st.h = +e.target.value; $("#af-hv").textContent = st.h.toFixed(2); deb(); });
+    $("#af-sp").addEventListener("input", (e) => { st.sp = +e.target.value; $("#af-spv").textContent = Math.round(2 + 400 * st.sp * st.sp) + " triangles/s"; });
+    seg($("#af-show"), (v) => { st.show = v; draw(); });
+    $("#af-hv").textContent = st.h.toFixed(2); $("#af-spv").textContent = Math.round(2 + 400 * st.sp * st.sp) + " triangles/s";
+    auto(cv, draw); auto(hc, stats); reset();
+    return { st, step, reset, draw, stats };
+  })();
+
+  /* ---------- 4. Ruppert refinement ---------- */
+  const RP = (() => {
+    const cv = $("#rp-cv"), hc = $("#rp-hist"), wc = $("#rp-why"), CAP = 6000;
+    const outer = [[0, 0], [10, 0], [10, 5], [6, 5], [6, 3.2], [4, 3.2], [4, 5], [0, 5]], hole = circle(7.6, 1.8, 0.75, 20, true);
+    const geo = { loops: [outer, hole], inside: (x, y) => pip(outer, x, y) && !pip(hole, x, y) };
+    const st = { a: 20.5, col: "ang", mesh: null, S: null, ev: {}, cap: false, anim: null };
+    function full() { const g = MESH.ruppert(geo, { minAngle: st.a, maxPts: CAP }); let r, ev = { cc: 0, seg: 0, rej: 0 }, cap = false; do { r = g.next(); if (!r.done) { ev[r.value.k] = (ev[r.value.k] || 0) + 1; if (r.value.k === "cap") cap = true; } } while (!r.done); st.mesh = r.value; st.S = MESH.stats(st.mesh); st.ev = ev; st.cap = cap; }
+    function update() { st.anim = null; full(); draw(); side(); }
+    function side() {
+      const S = st.S, ev = st.anim ? st.anim.ev : st.ev;
+      $("#rp-av").textContent = st.a.toFixed(1) + "°";
+      $("#rp-nt").textContent = st.anim ? fmtInt(st.anim.nt) : fmtInt(S.nt); $("#rp-amin").textContent = st.anim ? "…" : S.amin.toFixed(1) + "°";
+      $("#rp-ncc").textContent = fmtInt(ev.cc || 0); $("#rp-nseg").textContent = fmtInt(ev.seg || 0);
+      const s = $("#rp-st");
+      if (st.anim) { s.textContent = "Refining…"; s.className = "status"; }
+      else if (st.cap) { s.textContent = `Did not finish: stopped at the ${fmtInt(CAP)}-point cap. Above about 34° Delaunay refinement usually does not stop.`; s.className = "status bad"; }
+      else if (st.a <= 20.7) { s.textContent = st.a === 0 ? "α = 0: only the segments are recovered (conforming Delaunay). Skinny triangles remain." : "α ≤ 20.7°: termination is guaranteed."; s.className = st.a === 0 ? "status warn" : "status ok"; }
+      else { s.textContent = "20.7° < α: no guarantee, but it stopped. Typical up to about 33°."; s.className = "status warn"; }
+      // histogram
+      { const { ctx, w, h } = size(hc, (w) => Math.round(Math.min(180, w * 0.45))); const b = box(w, h, 14, 12, 8, 34);
+        hist(ctx, b, [{ vals: S.mins, color: COL.fem }], { x0: 0, x1: 60, bins: 30, xt: [0, 10, 20, 30, 40, 50, 60], xf: (v) => v + "°", mark: st.a, markLabel: "α", xl: "smallest angle" }); }
+      why();
+    }
+    function why() {
+      const { ctx, w, h } = size(wc, (w) => Math.round(Math.min(200, w * 0.5))); const b = box(w, h, 40, 12, 10, 34);
+      const A = axes(ctx, b, { x0: 0.5, x1: 3, y0: 0, y1: 65, xt: [0.5, 1, 1.5, 2, 2.5, 3], yt: [0, 20, 40, 60], yf: (v) => v + "°", xl: "ρ = R/ℓmin" });
+      ctx.save(); ctx.fillStyle = COL.ok; ctx.globalAlpha = 0.12; ctx.fillRect(A.X(Math.SQRT2), b.y, b.x + b.w - A.X(Math.SQRT2), b.h); ctx.restore();
+      const pts = []; for (let r = 0.5; r <= 3.001; r += 0.01) pts.push([A.X(r), A.Y((Math.asin(Math.min(1, 1 / (2 * r))) * 180) / PI)]); curve(ctx, b, pts, COL.ink, 2);
+      const mk = (r, lab, col) => { const y = (Math.asin(1 / (2 * r)) * 180) / PI; dot(ctx, A.X(r), A.Y(y), col, 4); ctx.fillStyle = col; ctx.font = font(10.5, 600); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText(lab, A.X(r) + 6, A.Y(y) - 2); };
+      mk(1 / Math.sqrt(3), "60°: equilateral", COL.muted); mk(1, "30°: Chew", COL.muted); mk(Math.SQRT2, "20.7°: Ruppert", COL.ok);
+      if (st.a > 0.5) { const r = 1 / (2 * Math.sin((st.a * PI) / 180)); if (r <= 3) dot(ctx, A.X(r), A.Y(st.a), COL.bad, 5.5, true); }
+      ctx.fillStyle = COL.ok; ctx.font = font(10, 600); ctx.textAlign = "right"; ctx.textBaseline = "top"; ctx.fillText("guaranteed to stop", b.x + b.w - 4, b.y + 4);
+    }
+    function draw() {
+      const { ctx, w, h } = size(cv, (w) => Math.round(w / 1.85)); const v = fit(w, h, [0, 0, 10, 5], 10, 26);
+      const poly = (P) => { ctx.beginPath(); P.forEach(([x, y], i) => (i ? ctx.lineTo(v.X(x), v.Y(y)) : ctx.moveTo(v.X(x), v.Y(y)))); ctx.closePath(); };
+      let m, ev = null;
+      if (st.anim) { const dt = st.anim.dt, ns = dt.nsuper, X = dt.X, Y = dt.Y, V = dt.V; const T = [];
+        for (let t = 0; t < dt.alive.length; t++) if (dt.alive[t]) { const a = V[3 * t], b = V[3 * t + 1], c = V[3 * t + 2]; if (a < ns || b < ns || c < ns) continue; if (geo.inside((X[a] + X[b] + X[c]) / 3, (Y[a] + Y[b] + Y[c]) / 3)) T.push(a, b, c); }
+        m = { x: X, y: Y, t: T }; ev = st.anim.last; st.anim.nt = T.length / 3; } else m = st.mesh;
+      ctx.fillStyle = COL.bg; poly(outer); ctx.fill(); ctx.fillStyle = COL.surface; poly(hole); ctx.fill();
+      const nt = m.t.length / 3;
+      if (st.col === "ang") { const mins = new Float64Array(nt); for (let e = 0; e < nt; e++) { const a = m.t[3 * e], b = m.t[3 * e + 1], c = m.t[3 * e + 2]; mins[e] = MESH.triQ(m.x[a], m.y[a], m.x[b], m.y[b], m.x[c], m.y[c]).min; }
+        drawTris(ctx, v, m, { fill: (e) => cmap(mins[e] / 60), stroke: COL.surface, alpha: 0.9, lw: 0.8 }); }
+      else drawTris(ctx, v, m, { stroke: COL.ink, alpha: 0.8, lw: 0.8 });
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.8; poly(outer); ctx.stroke(); poly(hole); ctx.stroke();
+      if (ev) {
+        const ring = (cx, cy, r, col) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(v.X(cx), v.Y(cy), Math.max(2, r * v.s), 0, 2 * PI); ctx.stroke(); ctx.restore(); };
+        if (ev.k === "cc" || ev.k === "rej") { const q = ev.tri; ctx.save(); ctx.strokeStyle = COL.fdtd; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(v.X(q[0]), v.Y(q[1])); ctx.lineTo(v.X(q[2]), v.Y(q[3])); ctx.lineTo(v.X(q[4]), v.Y(q[5])); ctx.closePath(); ctx.stroke(); ctx.restore(); ring(ev.cx, ev.cy, ev.r, COL.fdtd); dot(ctx, v.X(ev.cx), v.Y(ev.cy), ev.k === "cc" ? COL.fdtd : COL.muted, 4, ev.k === "rej"); }
+        if (ev.k === "rej") for (const s of ev.segs) ring((s[0] + s[2]) / 2, (s[1] + s[3]) / 2, Math.hypot(s[2] - s[0], s[3] - s[1]) / 2, COL.mom);
+        if (ev.k === "seg") { ring((ev.ax + ev.bx) / 2, (ev.ay + ev.by) / 2, Math.hypot(ev.bx - ev.ax, ev.by - ev.ay) / 2, COL.mom); ctx.save(); ctx.strokeStyle = COL.mom; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(v.X(ev.ax), v.Y(ev.ay)); ctx.lineTo(v.X(ev.bx), v.Y(ev.by)); ctx.stroke(); ctx.restore(); dot(ctx, v.X(ev.x), v.Y(ev.y), COL.mom, 4.5); }
+      }
+      $("#rp-tag").textContent = st.anim ? (ev ? (ev.k === "cc" ? "insert circumcentre" : ev.k === "seg" ? "split encroached segment" : ev.k === "rej" ? "circumcentre encroaches: split the segment instead" : "") : "") : "α = " + st.a.toFixed(1) + "° · " + fmtInt(nt) + " triangles";
+    }
+    function watch() { // animate from the start
+      const o = { minAngle: st.a, maxPts: CAP, expose: (dt) => (o.dt = dt) };
+      const g = MESH.ruppert(geo, o); const first = g.next(); const A = { g, dt: o.dt, ev: { cc: 0, seg: 0, rej: 0 }, last: first.value, acc: 0, tl: 0, t0: clock.now() }; st.anim = A;
+      const rate = 26; // events per second
+      const tick = (ts) => { if (st.anim !== A) return; const d = A.tl ? Math.min(100, ts - A.tl) : 16; A.tl = ts; A.acc += (rate * d) / 1000; let n = Math.floor(A.acc); A.acc -= n;
+        while (n-- > 0) { const r = g.next(); if (r.done) { st.anim = null; st.mesh = r.value; st.S = MESH.stats(st.mesh); st.ev = A.ev; st.cap = !!A.cap; draw(); side(); return; } A.last = r.value; A.ev[r.value.k] = (A.ev[r.value.k] || 0) + 1; if (r.value.k === "cap") A.cap = true; }
+        draw(); side(); requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }
+    const deb = debounce(update, 60);
+    $("#rp-a").addEventListener("input", (e) => { st.a = +e.target.value; $("#rp-av").textContent = st.a.toFixed(1) + "°"; deb(); });
+    $("#rp-watch").addEventListener("click", watch); $("#rp-skip").addEventListener("click", update);
+    seg($("#rp-col"), (v) => { st.col = v; draw(); });
+    auto(cv, draw); auto(hc, () => side()); auto(wc, why);
+    update();
+    return { st, set: (a) => { st.a = a; $("#rp-a").value = a; update(); }, watch, draw };
+  })();
+
+  return { H, MS, DL, AF, RP };
+})();
+/* ---------- sections 5-8 ---------- */
+(() => {
+  "use strict";
+  const PI = Math.PI;
+  const { label, $, COL: getCOL, size, auto, font, lg, sup, fmtInt, pow10, axes, curve, dot, box, seg, setSeg, toggle, cmap, fit, drawTris, hist, pip, circle, debounce, clock, redraws } = PAGE.H;
+  const C = () => getCOL();
+
+  /* ---------- 5. size fields ---------- */
+  const SZ = (() => {
+    const cv = $("#sz-cv"), pl = $("#sz-pl"), W = 12, HT = 7, TR = [[2, 3.5], [6.5, 3.5]], CC = [9.5, 3.5], R = 1.2;
+    const st = { smin: 0.06, smax: 0.9, dmin: 0.15, dmax: 2.5, sig: false, curv: 32, view: "mesh", mesh: null, S: null, ms: 0 };
+    const dTrace = (x, y) => { const [a, b] = TR, dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy; const s = Math.max(0, Math.min(1, ((x - a[0]) * dx + (y - a[1]) * dy) / L2)); return Math.hypot(a[0] + s * dx - x, a[1] + s * dy - y); };
+    const thr = (d) => { const r = Math.max(0, Math.min(1, (d - st.dmin) / Math.max(1e-9, st.dmax - st.dmin))); if (st.sig) { const s = Math.exp(12 * r - 6) / (1 + Math.exp(12 * r - 6)); return st.smin * (1 - s) + st.smax * s; } return st.smin * (1 - r) + st.smax * r; };
+    const field = (x, y) => thr(dTrace(x, y));
+    const hCurv = () => (st.curv > 0 ? (2 * PI * R) / st.curv : Infinity);
+    function circlePts() { // 1-D mesh of the circle: equal steps of the integral of ds / h, h = min(field, curvature size)
+      const M = 720, hc = hCurv(), acc = [0];
+      for (let i = 1; i <= M; i++) { const a = (2 * PI * (i - 0.5)) / M, x = CC[0] + R * Math.cos(a), y = CC[1] + R * Math.sin(a); acc.push(acc[i - 1] + (2 * PI * R) / M / Math.min(field(x, y), hc)); }
+      const n = Math.max(6, Math.round(acc[M])), pts = [];
+      for (let j = 0; j < n; j++) { const tgt = (acc[M] * j) / n; let i = 1; while (i < M && acc[i] < tgt) i++; const f = (i - 1 + (tgt - acc[i - 1]) / (acc[i] - acc[i - 1] || 1)) / M; const a = -2 * PI * f; pts.push([CC[0] + R * Math.cos(a), CC[1] + R * Math.sin(a)]); }
+      return pts;
+    }
+    function update() {
+      const t0 = performance.now(); const hole = circlePts(), outer = [[0, 0], [W, 0], [W, HT], [0, HT]];
+      const geo = { loops: [outer, hole], lines: [{ pts: TR, tag: 2 }], inside: (x, y) => x > 0 && x < W && y > 0 && y < HT && !pip(hole, x, y), size: field };
+      st.mesh = MESH.run(MESH.ruppert(geo, { minAngle: 20.7, sizeK: 1.35, maxPts: 40000 })); st.hole = hole; st.ms = performance.now() - t0; st.S = MESH.stats(st.mesh);
+      draw(); side();
+    }
+    function side() {
+      const m = st.mesh; let lmin = Infinity, lmax = 0; for (let i = 0; i < m.t.length; i += 3) for (let k = 0; k < 3; k++) { const a = m.t[i + k], b = m.t[i + (k + 1) % 3]; const L = Math.hypot(m.x[a] - m.x[b], m.y[a] - m.y[b]); lmin = Math.min(lmin, L); lmax = Math.max(lmax, L); }
+      $("#sz-nt").textContent = fmtInt(st.S.nt); $("#sz-nv").textContent = fmtInt(st.S.nv); $("#sz-el").textContent = lmin.toFixed(3) + " / " + lmax.toFixed(2); $("#sz-t").textContent = Math.round(st.ms) + " ms";
+      $("#sz-sminv").textContent = st.smin.toFixed(2); $("#sz-smaxv").textContent = st.smax.toFixed(2); $("#sz-dminv").textContent = st.dmin.toFixed(2); $("#sz-dmaxv").textContent = st.dmax.toFixed(1);
+      $("#sz-curvv").textContent = st.curv ? st.curv + " (h = " + hCurv().toFixed(3) + ")" : "off";
+      code(); plot();
+    }
+    function plot() {
+      const COL = C(); const { ctx, w, h } = size(pl, (w) => Math.round(Math.min(190, w * 0.48))); const b = box(w, h, 40, 12, 10, 34);
+      const ymax = Math.max(1.6, st.smax * 1.15), xmax = 6.5;
+      const A = axes(ctx, b, { x0: 0, x1: xmax, y0: 0, y1: ymax, xt: [0, 1, 2, 3, 4, 5, 6], yt: [0, 0.5, 1, 1.5].filter((v) => v <= ymax), yf: (v) => v.toFixed(1), xl: "d", yl: "h" });
+      const pts = []; for (let d = 0; d <= xmax + 1e-9; d += 0.02) pts.push([A.X(d), A.Y(thr(d))]); curve(ctx, b, pts, COL.fem, 2.2);
+      for (const [d, lab] of [[st.dmin, "DistMin"], [st.dmax, "DistMax"]]) { ctx.save(); ctx.strokeStyle = COL.muted; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(A.X(d), b.y); ctx.lineTo(A.X(d), b.y + b.h); ctx.stroke(); ctx.restore(); ctx.fillStyle = COL.muted; ctx.font = font(10, 600); ctx.textAlign = "left"; ctx.textBaseline = "top"; ctx.fillText(lab, A.X(d) + 3, b.y + 18 + (lab === "DistMax" ? 12 : 0)); }
+      if (st.curv) { const hc = hCurv(); ctx.save(); ctx.strokeStyle = COL.fdtd; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(b.x, A.Y(hc)); ctx.lineTo(b.x + b.w, A.Y(hc)); ctx.stroke(); ctx.restore(); ctx.fillStyle = COL.fdtd; ctx.font = font(10, 600); ctx.textAlign = "right"; ctx.textBaseline = "bottom"; ctx.fillText("curvature size on the circle", b.x + b.w - 4, A.Y(hc) - 2); }
+    }
+    function code() {
+      const f = (v, d = 2) => (+v.toFixed(d)).toString();
+      $("#sz-code").innerHTML = [
+        `<span class="c"># trace: tag of the metal-edge curve</span>`,
+        `f = gmsh.model.mesh.field`,
+        `f.add("Distance", 1)`,
+        `f.setNumbers(1, "CurvesList", [trace])`,
+        `f.setNumber(1, "Sampling", 200)`,
+        `f.add("Threshold", 2)`,
+        `f.setNumber(2, "InField", 1)`,
+        `f.setNumber(2, "SizeMin", ${f(st.smin)})`,
+        `f.setNumber(2, "SizeMax", ${f(st.smax)})`,
+        `f.setNumber(2, "DistMin", ${f(st.dmin)})`,
+        `f.setNumber(2, "DistMax", ${f(st.dmax, 1)})`,
+        `f.setNumber(2, "Sigmoid", ${st.sig ? 1 : 0})`,
+        `f.setAsBackgroundMesh(2)`,
+        `gmsh.option.setNumber("Mesh.MeshSizeFromCurvature", ${st.curv})`,
+        `gmsh.option.setNumber("Mesh.MeshSizeFromPoints", 0)`,
+        `gmsh.option.setNumber("Mesh.Algorithm", 5)  <span class="c"># Delaunay</span>`,
+        `gmsh.model.mesh.generate(2)`].join("\n");
+    }
+    function draw() {
+      const COL = C(); const { ctx, w, h } = size(cv, (w) => Math.round(w / 1.7)); const v = fit(w, h, [0, 0, W, HT], 10, 26); const m = st.mesh;
+      if (st.view === "field") {
+        const step = 4, l0 = Math.log(st.smin), l1 = Math.log(Math.max(st.smax, st.smin * 1.01));
+        for (let py = Math.floor(v.Y(HT)); py < v.Y(0); py += step) for (let px = Math.floor(v.X(0)); px < v.X(W); px += step) { const x = v.ix(px + step / 2), y = v.iy(py + step / 2); if (Math.hypot(x - CC[0], y - CC[1]) < R) continue; ctx.fillStyle = cmap((Math.log(field(x, y)) - l0) / (l1 - l0)); ctx.fillRect(px, py, step, step); }
+        drawTris(ctx, v, m, { stroke: "rgba(255,255,255,0.55)", alpha: 1, lw: 0.5 });
+      } else drawTris(ctx, v, m, { stroke: COL.ink, alpha: 0.7, lw: 0.6 });
+      ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.8; ctx.strokeRect(v.X(0), v.Y(HT), v.X(W) - v.X(0), v.Y(0) - v.Y(HT));
+      ctx.beginPath(); st.hole.forEach(([x, y], i) => (i ? ctx.lineTo(v.X(x), v.Y(y)) : ctx.moveTo(v.X(x), v.Y(y)))); ctx.closePath(); ctx.strokeStyle = COL.fdtd; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = COL.metal; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(v.X(TR[0][0]), v.Y(TR[0][1])); ctx.lineTo(v.X(TR[1][0]), v.Y(TR[1][1])); ctx.stroke();
+      label(ctx, "metal edge (Distance)", v.X(4.25), v.Y(3.5) - 8, COL.metal); label(ctx, "curvature sizing", v.X(CC[0]), v.Y(CC[1] - R) + 6, COL.fdtd, "center", "top");
+      $("#sz-tag").textContent = st.view === "field" ? "background: h(x, y) from the Threshold field, log colour" : fmtInt(st.S.nt) + " triangles";
+    }
+    const deb = debounce(update, 70);
+    const bind = (id, key, f = (x) => x) => $(id).addEventListener("input", (e) => { st[key] = f(+e.target.value); if (key === "smax" && st.smax < st.smin) st.smax = st.smin; if (key === "dmax" && st.dmax <= st.dmin + 0.05) st.dmax = st.dmin + 0.05; side(); deb(); });
+    bind("#sz-smin", "smin"); bind("#sz-smax", "smax"); bind("#sz-dmin", "dmin"); bind("#sz-dmax", "dmax"); bind("#sz-curv", "curv");
+    toggle($("#sz-sig"), (on) => { st.sig = on; update(); });
+    seg($("#sz-view"), (v) => { st.view = v; draw(); });
+    auto(cv, draw); auto(pl, plot);
+    update();
+    return { st, update, set: (o) => { Object.assign(st, o); for (const k of ["smin", "smax", "dmin", "dmax", "curv"]) $("#sz-" + k).value = st[k]; update(); }, draw };
+  })();
+
+  /* ---------- 6. tetrahedra and slivers (three.js r128) ---------- */
+  const TT = (() => {
+    const cv = $("#tt-cv"), pl = $("#tt-pl");
+    const h0 = 1 / Math.SQRT2;
+    const REG = [[1, 0, h0], [-1, 0, h0], [0, 1, -h0], [0, -1, -h0]];
+    const PRE = { reg: { P: REG, s: 1 }, sliver: { P: REG, s: 0.06 },
+      cap: { P: [[1.15, -0.35, -0.3], [-0.3, 1.25, -0.3], [-0.85, -0.95, -0.3], [0.05, 0.0, -0.12]], s: 1 },
+      needle: { P: [[0.22, -0.13, -1.1], [0, 0.25, -1.1], [-0.22, -0.13, -1.1], [0.0, 0.0, 1.3]], s: 1 },
+      wedge: { P: [[1.1, -0.7, 0], [-1.1, -0.7, 0], [0, 0.9, 0.06], [0, 0.98, -0.06]], s: 1 } };
+    const st = { pre: "reg", base: REG.map((p) => p.slice()), s: 1, sel: -1, family: true, az: 0.75, el: 0.42, r: 5.3, sph: false, q: null };
+    const pos = () => { const zm = st.base.reduce((a, p) => a + p[2], 0) / 4; return st.base.map(([x, y, z]) => [x, y, zm + (z - zm) * st.s]); };
+    const fmtK = (k) => (!isFinite(k) ? "∞ (flat)" : k < 100 ? k.toFixed(1) : k < 1e5 ? fmtInt(k) : k.toExponential(1));
+    function readouts() {
+      const P = pos(); const q = MESH.tetQ(P); st.q = q;
+      const lr = Math.sqrt(q.L.reduce((a, l) => a + l * l, 0) / 6), vr = Math.abs(q.V) / (lr ** 3 / (6 * Math.SQRT2));
+      $("#tt-v").textContent = vr.toFixed(3); $("#tt-d").textContent = q.dmin.toFixed(1) + "° / " + q.dmax.toFixed(1) + "°";
+      $("#tt-rer").textContent = isFinite(q.rer) ? q.rer.toFixed(3) : "∞"; $("#tt-g").textContent = q.gamma.toFixed(3); $("#tt-s").textContent = q.sicn.toFixed(3); $("#tt-k").textContent = fmtK(q.kappa);
+      const s = $("#tt-st"); const passes = q.rer <= 2;
+      if (q.gamma > 0.5) { s.textContent = "Good shape. γ > 0.5 and no dihedral angle near 0° or 180°."; s.className = "status ok"; }
+      else if (passes) { s.textContent = `Sliver-like: R/ℓmin = ${q.rer.toFixed(2)} passes the radius–edge bound 2.0, yet γ = ${q.gamma.toFixed(3)}. Delaunay refinement keeps it; optimisation must remove it.`; s.className = "status bad"; }
+      else { s.textContent = `R/ℓmin = ${isFinite(q.rer) ? q.rer.toFixed(2) : "∞"} > 2.0: Delaunay refinement (TetGen -q) splits this element.`; s.className = "status warn"; }
+      $("#tt-flv").textContent = st.s.toFixed(3);
+      plot();
+    }
+    function plot() {
+      const COL = C(); const { ctx, w, h } = size(pl, (w) => Math.round(Math.min(200, w * 0.5))); const b = box(w, h, 34, 40, 10, 34);
+      const A = axes(ctx, b, { x0: 0, x1: 1, y0: 0, y1: 1.2, xt: [0, 0.25, 0.5, 0.75, 1], xf: (v) => v.toString(), yt: [0, 0.4, 0.8, 1.2], yf: (v) => v.toFixed(1), xl: "height scale" });
+      const K = (k) => b.y + b.h - (Math.min(4, lg(Math.max(1, k))) / 4) * b.h; // right axis: kappa 1..1e4
+      const g = [], sc = [], rr = [], kk = [];
+      for (let i = 1; i <= 200; i++) { const s = i / 200; const q = MESH.tetQ(REG.map(([x, y, z]) => [x, y, z * s])); g.push([A.X(s), A.Y(q.gamma)]); sc.push([A.X(s), A.Y(q.sicn)]); rr.push([A.X(s), A.Y(Math.min(1.2, q.rer))]); kk.push([A.X(s), K(q.kappa)]); }
+      curve(ctx, b, g, COL.fem, 2); curve(ctx, b, sc, COL.asym, 2); curve(ctx, b, rr, COL.fdtd, 2); curve(ctx, b, kk, COL.mom, 2, [5, 3]);
+      ctx.fillStyle = COL.mom; ctx.font = font(10, 500); ctx.textAlign = "left"; ctx.textBaseline = "middle"; for (const e of [0, 2, 4]) ctx.fillText(e === 0 ? "1" : "10" + sup(e), b.x + b.w + 4, K(10 ** e));
+      if (st.family) { const x = A.X(st.s); ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, b.y); ctx.lineTo(x, b.y + b.h); ctx.stroke(); ctx.restore(); }
+    }
+    if (!window.THREE) { const s = $("#tt-st"); s.textContent = "The 3-D view needs three.js (cdnjs). It did not load; the metrics below still work."; s.className = "status warn"; const ro = () => readouts(); auto(pl, ro); readouts(); return { st }; }
+    const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, preserveDrawingBuffer: true });
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(32, 1.4, 0.1, 100);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55)); const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(3, 4, 5); scene.add(dl);
+    const col3 = (c) => new THREE.Color(c);
+    const faceGeo = new THREE.BufferGeometry(); faceGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(36), 3));
+    const faceMat = new THREE.MeshLambertMaterial({ color: 0x2160a8, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthWrite: false });
+    const faces = new THREE.Mesh(faceGeo, faceMat); scene.add(faces);
+    const edgeGeo = new THREE.BufferGeometry(); edgeGeo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(36), 3));
+    const edgeMat = new THREE.LineBasicMaterial({ color: 0x142230 }); const edges = new THREE.LineSegments(edgeGeo, edgeMat); scene.add(edges);
+    const sphGeo = new THREE.SphereGeometry(0.075, 20, 14), pickGeo = new THREE.SphereGeometry(0.22, 8, 6);
+    const vMat = [0, 1, 2, 3].map(() => new THREE.MeshBasicMaterial({ color: 0x142230 })); const verts = vMat.map((m) => { const s = new THREE.Mesh(sphGeo, m); scene.add(s); return s; });
+    const pickMat = new THREE.MeshBasicMaterial({ visible: false }); const picks = [0, 1, 2, 3].map((i) => { const s = new THREE.Mesh(pickGeo, pickMat); s.userData.i = i; scene.add(s); return s; });
+    const csph = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), new THREE.MeshBasicMaterial({ color: 0xb85a0b, wireframe: true, transparent: true, opacity: 0.22 })); csph.visible = false; scene.add(csph);
+    // labels A-D as sprites
+    const labels = "ABCD".split("").map((L) => { const c = document.createElement("canvas"); c.width = c.height = 64; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), depthTest: false, transparent: true })); sp.scale.set(0.32, 0.32, 1); sp.userData = { c, L }; scene.add(sp); return sp; });
+    function paintLabels() { const COL = C(); for (const sp of labels) { const g = sp.userData.c.getContext("2d"); g.clearRect(0, 0, 64, 64); g.fillStyle = COL.ink; g.font = "700 40px " + (COL.mono || "monospace"); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(sp.userData.L, 32, 34); sp.material.map.needsUpdate = true; } }
+    function theme() { const COL = C(); scene.background = col3(COL.surface); edgeMat.color = col3(COL.ink); faceMat.color = col3(COL.fem); csph.material.color = col3(COL.fdtd); vMat.forEach((m, i) => (m.color = col3(i === st.sel ? COL.field : COL.ink))); paintLabels(); render(); }
+    const E6 = [[0, 1], [0, 2], [0, 3], [1, 2], [1, 3], [2, 3]], F4 = [[1, 2, 3], [0, 2, 3], [0, 1, 3], [0, 1, 2]];
+    function geom() {
+      const P = pos(), c = P.reduce((a, p) => [a[0] + p[0] / 4, a[1] + p[1] / 4, a[2] + p[2] / 4], [0, 0, 0]);
+      const fp = faceGeo.attributes.position.array; F4.forEach((f, k) => f.forEach((i, j) => { fp[9 * k + 3 * j] = P[i][0]; fp[9 * k + 3 * j + 1] = P[i][1]; fp[9 * k + 3 * j + 2] = P[i][2]; })); faceGeo.attributes.position.needsUpdate = true; faceGeo.computeVertexNormals(); faceGeo.computeBoundingSphere();
+      const ep = edgeGeo.attributes.position.array; E6.forEach(([i, j], k) => { ep.set(P[i], 6 * k); ep.set(P[j], 6 * k + 3); }); edgeGeo.attributes.position.needsUpdate = true; edgeGeo.computeBoundingSphere();
+      P.forEach((p, i) => { verts[i].position.set(...p); picks[i].position.set(...p); const d = [p[0] - c[0], p[1] - c[1], p[2] - c[2]], n = Math.hypot(...d) || 1; labels[i].position.set(p[0] + (0.25 * d[0]) / n, p[1] + (0.25 * d[1]) / n, p[2] + (0.25 * d[2]) / n + 0.05); });
+      // circumsphere: solve |x - p_i|^2 equal
+      const [A, B, Cc, D] = P; const rows = [B, Cc, D].map((q) => [2 * (q[0] - A[0]), 2 * (q[1] - A[1]), 2 * (q[2] - A[2]), q[0] ** 2 + q[1] ** 2 + q[2] ** 2 - A[0] ** 2 - A[1] ** 2 - A[2] ** 2]);
+      const det3 = (m) => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+      const M = rows.map((r) => r.slice(0, 3)), dd = det3(M);
+      if (Math.abs(dd) > 1e-9) { const sol = [0, 1, 2].map((k) => det3(M.map((r, i) => r.map((v, j) => (j === k ? rows[i][3] : v))))) .map((v) => v / dd); const rad = Math.hypot(sol[0] - A[0], sol[1] - A[1], sol[2] - A[2]); csph.position.set(...sol); csph.scale.setScalar(rad); csph.visible = st.sph && rad < 40; } else csph.visible = false;
+    }
+    let W = 0, Hh = 0;
+    function resize() { const w = cv.parentElement.clientWidth, h = Math.round(Math.min(440, w * 0.78)); if (w === W && h === Hh) return; W = w; Hh = h; renderer.setSize(w, h, false); cv.style.height = h + "px"; camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    function render() { resize(); camera.position.set(st.r * Math.cos(st.el) * Math.cos(st.az), st.r * Math.cos(st.el) * Math.sin(st.az), st.r * Math.sin(st.el)); camera.up.set(0, 0, 1); camera.lookAt(0, 0, 0); renderer.render(scene, camera); }
+    function update() { geom(); readouts(); render(); $("#tt-tag").textContent = st.sel >= 0 ? "vertex " + "ABCD"[st.sel] + " selected" : "drag a vertex · drag empty space to rotate"; }
+    function preset(k) { st.pre = k; setSeg($("#tt-pre"), k); st.base = PRE[k].P.map((p) => p.slice()); st.s = PRE[k].s; st.family = k === "reg" || k === "sliver"; $("#tt-fl").value = st.s; update(); }
+    // interaction
+    const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let drag = null;
+    const toNdc = (e) => { const r = cv.getBoundingClientRect(); ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); };
+    function bake() { if (st.s !== 1) { st.base = pos(); st.s = 1; $("#tt-fl").value = 1; } st.family = false; }
+    cv.addEventListener("pointerdown", (e) => { toNdc(e); ray.setFromCamera(ndc, camera); const hit = ray.intersectObjects(picks)[0]; cv.setPointerCapture(e.pointerId);
+      if (hit) { bake(); const i = hit.object.userData.i; st.sel = i; const n = new THREE.Vector3(); camera.getWorldDirection(n); drag = { kind: "v", i, plane: new THREE.Plane().setFromNormalAndCoplanarPoint(n, new THREE.Vector3(...st.base[i])) }; theme(); }
+      else drag = { kind: "rot", x: e.clientX, y: e.clientY, az: st.az, el: st.el }; e.preventDefault(); });
+    cv.addEventListener("pointermove", (e) => { if (!drag) return; if (drag.kind === "rot") { st.az = drag.az - (e.clientX - drag.x) * 0.01; st.el = Math.max(-1.45, Math.min(1.45, drag.el + (e.clientY - drag.y) * 0.01)); render(); return; }
+      toNdc(e); ray.setFromCamera(ndc, camera); const p = new THREE.Vector3(); if (ray.ray.intersectPlane(drag.plane, p)) { st.base[drag.i] = [Math.max(-2.5, Math.min(2.5, p.x)), Math.max(-2.5, Math.min(2.5, p.y)), Math.max(-2.5, Math.min(2.5, p.z))]; update(); } });
+    const end = () => { drag = null; }; cv.addEventListener("pointerup", end); cv.addEventListener("pointercancel", end);
+    cv.addEventListener("keydown", (e) => {
+      if (/^[1-4]$/.test(e.key)) { st.sel = +e.key - 1; theme(); update(); e.preventDefault(); return; }
+      if (e.key === "Escape") { st.sel = -1; theme(); update(); return; }
+      const d = { ArrowLeft: [-1, 0, 0], ArrowRight: [1, 0, 0], ArrowUp: [0, 1, 0], ArrowDown: [0, -1, 0], PageUp: [0, 0, 1], PageDown: [0, 0, -1] }[e.key];
+      if ((e.key === "r" || e.key === "f") && true) { st.az += e.key === "r" ? 0.12 : -0.12; render(); e.preventDefault(); return; }
+      if (!d) return; e.preventDefault();
+      if (st.sel < 0) { st.az += d[0] * 0.12; st.el = Math.max(-1.45, Math.min(1.45, st.el + d[1] * 0.12)); render(); return; }
+      bake(); const right = new THREE.Vector3(), up = new THREE.Vector3(), fwd = new THREE.Vector3(); camera.getWorldDirection(fwd); right.crossVectors(fwd, camera.up).normalize(); up.crossVectors(right, fwd).normalize();
+      const step = 0.06, p = st.base[st.sel]; for (let k = 0; k < 3; k++) p[k] += step * (d[0] * right.getComponent(k) + d[1] * up.getComponent(k) - d[2] * fwd.getComponent(k)); update(); });
+    seg($("#tt-pre"), (v) => preset(v));
+    toggle($("#tt-sph"), (on) => { st.sph = on; update(); });
+    $("#tt-fl").addEventListener("input", (e) => { st.s = +e.target.value; update(); });
+    new ResizeObserver(() => { render(); }).observe(cv.parentElement);
+    redraws.push(() => { theme(); plot(); }); auto(pl, plot);
+    theme(); preset("reg");
+    return { st, preset, set: (s) => { st.s = s; $("#tt-fl").value = s; update(); }, rot: (az, el) => { st.az = az; if (el != null) st.el = el; render(); }, update };
+  })();
+
+  /* ---------- 7. adaptive refinement on the L-shape ---------- */
+  const AD = (() => {
+    const cv = $("#ad-cv"), pl = $("#ad-pl"), CAPN = 25000, LS = MESH.LS;
+    const st = { kind: "zz", th: 0.5, view: "eta", m: null, pass: 0, hist: [], uni: [], sol: null, err: null, est: null, marked: [], busy: false };
+    function solveAll() {
+      const sol = MESH.solveL(st.m), err = LS.errors(sol.x, sol.y, sol.t, sol.u, sol.S), est = MESH.estimate(sol, st.kind), E = MESH.energy(sol.S, sol.t, sol.u);
+      let free = 0; for (const f of sol.fixed) if (!f) free++;
+      st.sol = sol; st.err = err; st.est = est; st.hist.push({ N: free, err: err.err, eta: est.eta, E }); mark();
+    }
+    function mark() { st.marked = st.th >= 0.999 ? st.m.t.map((_, i) => i) : MESH.dorfler(st.est.eta2, st.th); }
+    function reset() { st.m = LS.initMesh(); MESH.nvb(st.m, MESH.edgesOf(st.m, st.m.t.map((_, i) => i))); MESH.nvb(st.m, MESH.edgesOf(st.m, st.m.t.map((_, i) => i))); st.pass = 0; st.hist = []; solveAll(); draw(); side(); }
+    function next() { const last = st.hist[st.hist.length - 1]; if (last.N > CAPN) return false;
+      const ed = MESH.edgesOf(st.m, st.marked); MESH.nvb(st.m, ed); st.pass++; solveAll(); draw(); side(); return true; }
+    function side() {
+      const H = st.hist, L = H[H.length - 1], P = H[H.length - 2];
+      $("#ad-p").textContent = st.pass; $("#ad-n").textContent = fmtInt(L.N); $("#ad-e").textContent = L.err.toExponential(2);
+      $("#ad-eta").textContent = L.eta.toExponential(2) + " / " + (L.eta / L.err).toFixed(2);
+      $("#ad-de").textContent = P ? (Math.abs(L.E - P.E) / L.E * 100).toFixed(3) + " %" : "—";
+      if (H.length >= 4) { const S = H.slice(-4); const xs = S.map((s) => Math.log(s.N)), ys = S.map((s) => Math.log(s.err)); const mx = xs.reduce((a, b) => a + b) / 4, my = ys.reduce((a, b) => a + b) / 4; let num = 0, den = 0; for (let i = 0; i < 4; i++) { num += (xs[i] - mx) * (ys[i] - my); den += (xs[i] - mx) ** 2; } $("#ad-sl").textContent = (num / den).toFixed(2); } else $("#ad-sl").textContent = "—";
+      $("#ad-thv").textContent = st.th >= 0.999 ? "1.00 (uniform)" : st.th.toFixed(2);
+      const cap = L.N > CAPN; $("#ad-next").disabled = cap || st.busy; $("#ad-run").disabled = cap || st.busy;
+      plot();
+    }
+    function plot() {
+      const COL = C(); const { ctx, w, h } = size(pl, (w) => Math.round(Math.min(260, w * 0.64))); const b = box(w, h, 46, 12, 10, 36);
+      const A = axes(ctx, b, { x0: 1, x1: 1e5, y0: 1e-3, y1: 1, xlog: true, ylog: true, xt: [1, 10, 100, 1e3, 1e4, 1e5], xf: pow10, yt: [1e-3, 1e-2, 1e-1, 1], yf: pow10, xl: "DOF", yl: "‖∇(u − uₕ)‖" });
+      const ref = (c, p, n0, n1) => curve(ctx, b, [[A.X(n0), A.Y(c * n0 ** p)], [A.X(n1), A.Y(c * n1 ** p)]], COL.muted, 1.2, [5, 4]);
+      ref(0.62, -1 / 3, 20, 1e5); ref(0.32, -1 / 2, 20, 1e5);
+      ctx.fillStyle = COL.muted; ctx.font = font(10, 600); ctx.textAlign = "left"; ctx.textBaseline = "bottom"; ctx.fillText("−1/3", A.X(2e4) + 2, A.Y(0.62 * 2e4 ** (-1 / 3)) - 2); ctx.textBaseline = "top"; ctx.fillText("−1/2", A.X(2e4) + 2, A.Y(0.32 * 2e4 ** (-1 / 2)) + 2);
+      const U = st.uni.filter((u) => u.N > 0); curve(ctx, b, U.map((u) => [A.X(u.N), A.Y(u.err)]), COL.fdtd, 2); for (const u of U) dot(ctx, A.X(u.N), A.Y(u.err), COL.fdtd, 3);
+      const H = st.hist.filter((u) => u.N > 0); curve(ctx, b, H.map((u) => [A.X(u.N), A.Y(u.err)]), COL.fem, 2.2); for (const u of H) dot(ctx, A.X(u.N), A.Y(u.err), COL.fem, 3.2);
+      const L = H[H.length - 1]; if (L) dot(ctx, A.X(L.N), A.Y(L.err), COL.fem, 6.5, true);
+    }
+    function draw() {
+      const COL = C(); const { ctx, w, h } = size(cv, (w) => Math.round(Math.min(w, 520))); const v = fit(w, h, [-1, -1, 1, 1], 12, 28);
+      const s = st.sol, nt = s.t.length / 3, m = { x: s.x, y: s.y, t: s.t };
+      let vals = null, lo = 0, hi = 1;
+      if (st.view === "eta" || st.view === "err") { const src = st.view === "eta" ? st.est.eta2 : st.err.e2; vals = new Float64Array(nt); for (let e = 0; e < nt; e++) vals[e] = 0.5 * Math.log10(Math.max(src[e], 1e-30)); const sorted = Array.from(vals).sort((a, b) => a - b); lo = sorted[Math.floor(0.03 * nt)]; hi = sorted[nt - 1]; if (hi - lo < 1e-6) hi = lo + 1; }
+      else if (st.view === "u") { vals = new Float64Array(nt); for (let e = 0; e < nt; e++) vals[e] = (s.u[s.t[3 * e]] + s.u[s.t[3 * e + 1]] + s.u[s.t[3 * e + 2]]) / 3; lo = 0; hi = 1.6 ** (2 / 3) * 1.0; }
+      if (vals) drawTris(ctx, v, m, { fill: (e) => cmap((vals[e] - lo) / (hi - lo)), seam: true, stroke: nt < 6000 ? "rgba(255,255,255,0.6)" : false, alpha: 1, lw: 0.4 });
+      else drawTris(ctx, v, m, { stroke: COL.ink, alpha: 0.8, lw: 0.6 });
+      // marked elements for the next pass
+      if (st.view === "eta" && st.th < 0.999 && nt < 3000) { ctx.save(); ctx.strokeStyle = COL.field; ctx.lineWidth = 1.2; ctx.beginPath(); for (const e of st.marked) { const a = s.t[3 * e], b = s.t[3 * e + 1], c = s.t[3 * e + 2]; ctx.moveTo(v.X(s.x[a]), v.Y(s.y[a])); ctx.lineTo(v.X(s.x[b]), v.Y(s.y[b])); ctx.lineTo(v.X(s.x[c]), v.Y(s.y[c])); ctx.closePath(); } ctx.stroke(); ctx.restore(); }
+      const L = [[-1, -1], [0, -1], [0, 0], [1, 0], [1, 1], [-1, 1]]; ctx.beginPath(); L.forEach(([x, y], i) => (i ? ctx.lineTo(v.X(x), v.Y(y)) : ctx.moveTo(v.X(x), v.Y(y)))); ctx.closePath(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.8; ctx.stroke();
+      label(ctx, "re-entrant corner (270°)", v.X(0.06), v.Y(-0.05), COL.ink, "left", "top");
+      $("#ad-tag").textContent = "pass " + st.pass + " · " + fmtInt(nt) + " triangles" + (st.view === "eta" && st.th < 0.999 ? (nt < 3000 ? " · red: marked next (" : " · marked next (") + fmtInt(st.marked.length) + ")" : "");
+      const lab = (x) => (st.view === "u" ? x.toFixed(1) : "10" + sup(Math.round(x)));
+      $("#ad-cb0").textContent = vals ? lab(lo) : ""; $("#ad-cb1").textContent = vals ? lab(hi) : "";
+    }
+    // uniform reference curve, computed in the background
+    function uniform() { let m = LS.initMesh(); const lev = [0]; const step = () => { if (lev[0] > 6) return; const sol = MESH.solveL(m), err = LS.errors(sol.x, sol.y, sol.t, sol.u, sol.S); let free = 0; for (const f of sol.fixed) if (!f) free++; st.uni.push({ N: free, err: err.err }); plot(); lev[0]++; m = MESH.nvb(m, MESH.edgesOf(m, m.t.map((_, i) => i))); setTimeout(step, 40); }; setTimeout(step, 600); }
+    async function run(n) { st.busy = true; side(); for (let i = 0; i < n; i++) { if (!next()) break; await new Promise((r) => setTimeout(r, 220)); } st.busy = false; side(); }
+    $("#ad-next").addEventListener("click", () => next()); $("#ad-run").addEventListener("click", () => run(8)); $("#ad-reset").addEventListener("click", reset);
+    $("#ad-th").addEventListener("input", (e) => { st.th = +e.target.value; mark(); draw(); side(); });
+    seg($("#ad-est"), (k) => { st.kind = k; st.est = MESH.estimate(st.sol, k); const L = st.hist[st.hist.length - 1]; L.eta = st.est.eta; mark(); draw(); side(); });
+    seg($("#ad-view"), (v) => { st.view = v; draw(); });
+    auto(cv, draw); auto(pl, plot);
+    reset(); uniform();
+    return { st, next, reset, run, draw, setTheta: (t) => { st.th = t; $("#ad-th").value = t; mark(); draw(); side(); }, setView: (v) => { st.view = v; setSeg($("#ad-view"), v); draw(); } };
+  })();
+
+  /* ---------- conformal vs nonconformal figures ---------- */
+  (() => {
+    const P = { A: [20, 135], B: [120, 135], Cc: [220, 135], D: [70, 30], E: [170, 30] };
+    const mid = (p, q) => [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
+    const poly = (pts, fill, stroke = "var(--ink)", w = 1.5) => `<polygon points="${pts.map((p) => p.join(",")).join(" ")}" style="fill:${fill};stroke:${stroke};stroke-width:${w};stroke-linejoin:round"/>`;
+    const line = (p, q, col, w = 1.5, dash) => `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" style="stroke:${col};stroke-width:${w}${dash ? ";stroke-dasharray:" + dash : ""}"/>`;
+    const ring = (p, col) => `<circle cx="${p[0]}" cy="${p[1]}" r="5" style="fill:var(--surface);stroke:${col};stroke-width:2"/>`;
+    const dotv = (p) => `<circle cx="${p[0]}" cy="${p[1]}" r="3" style="fill:var(--ink)"/>`;
+    const { A, B, Cc, D, E } = P, mBD = mid(B, D), mBE = mid(B, E), mDE = mid(D, E);
+    const base = poly([A, B, D], "transparent") + poly([B, E, D], "color-mix(in srgb, var(--field) 18%, transparent)") + poly([B, Cc, E], "transparent");
+    const red = line(mBD, mBE, "var(--field)", 1.6) + line(mBE, mDE, "var(--field)", 1.6) + line(mDE, mBD, "var(--field)", 1.6);
+    $("#fig-conf").innerHTML = base + red + line(A, mBD, "var(--ok)", 2) + line(Cc, mBE, "var(--ok)", 2) + [A, B, Cc, D, E, mBD, mBE, mDE].map(dotv).join("");
+    $("#fig-nc").innerHTML = base + red + [A, B, Cc, D, E, mDE].map(dotv).join("") + ring(mBD, "var(--field)") + ring(mBE, "var(--field)");
+  })();
+
+  /* ---------- 8. which mesher for which job ---------- */
+  (() => {
+    const T = [
+      { t: "Antenna in an air box", sz: "3-D, metal in a large air region, radiation boundary", m: "Tets with Distance + Threshold at the metal, coarse air, then AMR",
+        why: "The field is singular at metal edges and smooth in the air. Grade from the metal, keep the air near the wavelength rule, and let the solver add elements where its estimator says.",
+        tl: [["Mesh.Algorithm3D = 1", "Delaunay, the default: robust, supports size fields and embedded entities"], ["Mesh.Algorithm = 6", "Frontal-Delaunay surfaces (default) for good triangles on the metal"], ["Distance + Threshold on metal curves", "SizeMin at edges and gaps, SizeMax about λ/6 to λ/10 in air (a common start)"], ["Mesh.MeshSizeFromCurvature = 12–20", "round radiators and connectors"], ["Palace: Model.Refinement", "AMR passes; HFSS does the same with ΔS"]] },
+      { t: "Thin-film on-chip stack", sz: "µm metal and oxide layers in a mm-size die", m: "Size by layer thickness only near metal; optimise tets; or model thin metal as a surface",
+        why: "Very thin layers force either many tiny tets or flat ones. Flat tets are slivers. Keep the small size close to the metal, and run the optimisers.",
+        tl: [["Distance from metal surfaces", "SizeMin about the layer thickness, growth to the die scale"], ["Mesh.Optimize = 1, Mesh.OptimizeNetgen = 1", "remove slivers after meshing; check the SICN histogram"], ["Thin-sheet conductor", "mesh the metal as a surface where the solver allows it. Palace: Boundaries/Conductivity with Thickness; for metal much thicker than the skin depth, driven and eigenmode only"], ["Extrude … Layers … Recombine", "prisms through the stack; Palace then needs nonconformal AMR"]] },
+      { t: "Curved waveguide or cavity", sz: "smooth curved walls, high Q", m: "Second-order curved tets",
+        why: "Straight-sided elements cut the curve. The geometry error then limits the answer (the resonance shifts), whatever the basis order.",
+        tl: [["Mesh.ElementOrder = 2", "10-node tets that follow the CAD surface"], ["Mesh.HighOrderOptimize = 2", "elastic + optimisation, so curved elements stay valid"], ["Mesh.MeshSizeFromCurvature = 16–24", "enough elements on each bend"], ["Palace", "reads high-order curved meshes (Palace documentation)"]] },
+      { t: "Very large 3-D model", sz: "10⁷ tetrahedra and more, many cores", m: "HXT, parallel",
+        why: "HXT is a parallel Delaunay kernel with its own optimiser. Its kernel builds 3 billion tets from a given point set in under a minute on one large machine; refinement and optimisation take more time.",
+        tl: [["Mesh.Algorithm3D = 10", "HXT, multithreaded with OpenMP"], ["General.NumThreads (or -nt)", "number of threads"], ["TetGen", "serial alternative with radius–edge and dihedral bounds"], ["Netgen", "advancing front; slower, good quality"]] },
+      { t: "Boundary layers (thermal, CFD)", sz: "steep gradients normal to a wall", m: "Layered anisotropic elements at the wall",
+        why: "The solution changes fast normal to the wall and slowly along it. Thin, long elements there save many unknowns.",
+        tl: [["BoundaryLayer field (2-D)", "Size, Ratio, NbLayers, Quads = 1 for quads"], ["Extrude … Layers … Recombine (3-D)", "prism layers from the wall surface mesh"], ["snappyHexMesh addLayers", "OpenFOAM's layer insertion on hex-dominant meshes"]] },
+      { t: "Anisotropic adaptation", sz: "shocks, skin-depth layers, thin features", m: "Metric-based remeshing",
+        why: "A metric field gives a size per direction. The mesher then makes long elements along the feature and short ones across it.",
+        tl: [["Mesh.Algorithm3D = 7", "MMG3D in Gmsh: anisotropic tetrahedra"], ["Mesh.Algorithm = 7", "BAMG: anisotropic triangles in 2-D"], ["mmg (mmg2d, mmg3d, mmgs)", "stand-alone metric remeshing"]] },
+      { t: "2-D cross-section (port, line)", sz: "Z₀ and εeff of a transmission line", m: "Triangles graded at conductor edges",
+        why: "As in the microstrip demo: the edge singularity sets the error. Grade there; refine the rest only for λ in dynamic problems.",
+        tl: [["Mesh.Algorithm = 6", "Frontal-Delaunay, high quality"], ["Distance + Threshold on conductor edges", "SizeMin about w/50, DistMax a few w"], ["Mesh.Algorithm = 8 + Mesh.RecombineAll = 1", "quads, if the solver prefers them"]] },
+    ];
+    const box = $("#ch-tasks"), out = $("#ch-out"); let cur = 0;
+    box.innerHTML = T.map((t, i) => `<button type="button" role="radio" aria-checked="${i === 0}" tabindex="${i === 0 ? 0 : -1}" data-i="${i}">${t.t}</button>`).join("");
+    function show(i) { cur = i; const t = T[i];
+      box.querySelectorAll("button").forEach((b, j) => { b.setAttribute("aria-checked", j === i); b.tabIndex = j === i ? 0 : -1; });
+      out.innerHTML = `<span class="lbl">First try</span><div class="big">${t.m}</div><span class="sz">${t.sz}</span><p>${t.why}</p><span class="lbl">Settings and alternatives</span><ul>${t.tl.map(([n, d]) => `<li><b>${n}</b><span>${d}</span></li>`).join("")}</ul>`; }
+    box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) show(+b.dataset.i); });
+    box.addEventListener("keydown", (e) => { const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return; e.preventDefault(); const n = (cur + d + T.length) % T.length; show(n); box.querySelectorAll("button")[n].focus(); });
+    show(0);
+  })();
+
+  /* ---------- nav highlight ---------- */
+  (() => {
+    const links = [...document.querySelectorAll("#topnav a[href^='#']")], secs = links.map((a) => document.querySelector(a.getAttribute("href")));
+    const io = new IntersectionObserver((es) => { es.forEach((e) => { if (e.isIntersecting) { const i = secs.indexOf(e.target); links.forEach((a, j) => a.setAttribute("aria-current", i === j ? "true" : "false")); } }); }, { rootMargin: "-40% 0px -55% 0px" });
+    secs.forEach((s) => s && io.observe(s));
+  })();
+
+  document.querySelectorAll(".readout span, .slider label, .eyebrow, .lbl").forEach((el) => { if (/[Ͱ-Ͽ₀-ₜ²³]|<sub|<sup|h \/ H/.test(el.innerHTML)) { el.style.textTransform = "none"; el.style.letterSpacing = "0.02em"; } });
+  window.MESHPAGE = { clock: PAGE.H.clock, MS: PAGE.MS, DL: PAGE.DL, AF: PAGE.AF, RP: PAGE.RP, SZ, TT, AD, redraw: PAGE.H.themeChange };
+})();
+</script>
+</body>
+</html>
