@@ -58,7 +58,7 @@ A short comparison of FDTD, FEM, 3D MoM and 2.5D MoM. Then the picker:
 ![The picker for an antenna in package at 28 GHz](docs/img/picker-aip.png)
 
 ### Tools and research use
-Data for 56 commercial, open-source and free tools: methods, owner, price tier, student or trial editions, scripting, GPU, HPC, import formats and design-flow links. It also has free paths that work, typical tool sets for a small team, and the number of papers that mention each tool.
+Data for 62 commercial, open-source and free tools: methods, owner, price tier, student or trial editions, scripting, GPU, HPC, import formats and design-flow links. It also has free paths that work, typical tool sets for a small team, and the number of papers that mention each tool.
 
 ![Papers that mention each tool](docs/img/research-use.png)
 
@@ -66,9 +66,9 @@ Data for 56 commercial, open-source and free tools: methods, owner, price tier, 
 
 | File | Content | Source |
 |---|---|---|
-| [`data/tools-meta.json`](data/tools-meta.json) | One record for each tool, with source URLs | Vendor pages and documentation, checked 14 October 2026 ([notes](data/tools-meta.md)) |
+| [`data/tools-meta.json`](data/tools-meta.json) | One record for each tool, with source URLs | Vendor pages and documentation, checked 14 October 2026, 6 tools added 17 October 2026 ([notes](data/tools-meta.md)) |
 | [`meshes/`](meshes) | The Gmsh mesh of each device: surfaces, a slice of the tetrahedra, MoM triangles and counts | [`scripts/meshgen.py`](scripts/meshgen.py) (Gmsh 4.15, OpenCASCADE geometry) |
-| [`data/citations.json`](data/citations.json) | Paper mentions for each tool since 2020, and main-paper citations for open-source tools | OpenAlex API, 14 October 2026 ([method](data/citations-method.md)) |
+| [`data/citations.json`](data/citations.json) | Paper mentions for each tool since 2020, and main-paper citations for open-source tools | OpenAlex API, 14 October 2026, new tools 17 October 2026 ([method](data/citations-method.md)) |
 
 The page contains a copy of this data. After you change a data file, run:
 

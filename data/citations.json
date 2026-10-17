@@ -459,6 +459,20 @@
    "note": "Only 1 hit; papers rarely name ESTEAM. Count is not meaningful."
   },
   {
+   "name": "Nullspace EM",
+   "owner": "Nullspace, Inc.",
+   "license": "commercial",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "\"Nullspace Inc\"",
+   "mentions_all": 2,
+   "mentions_since_2020": 2,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. \"Nullspace\" alone is the linear-algebra term, so only exact product and company phrases were tried: \"Nullspace EM\" 0, \"Nullspace ES\" 0, Nullspace AND IERUS 0, \"Nullspace Inc\" 2 (both IEEE Microwave Magazine IMS Preview issues, exhibitor listings). Not a usable measure; the page shows no count."
+  },
+  {
    "name": "TICRA GRASP",
    "owner": "TICRA",
    "license": "commercial",
@@ -485,6 +499,48 @@
    "precision_estimate": null,
    "canonical_paper": null,
    "note": "Includes NEC-4 and generic 'Numerical Electromagnetics Code' mentions. The Burke & Poggio 1981 report has no DOI. Informal sample 10/10 antenna context."
+  },
+  {
+   "name": "NEC-4",
+   "owner": "LLNL (licensed)",
+   "license": "commercial",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "(\"NEC-4\" OR NEC4 OR \"NEC-4.2\") AND antenna",
+   "mentions_all": 161,
+   "mentions_since_2020": 37,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. Overlaps the NEC-2 row, whose \"Numerical Electromagnetics Code\" phrase also matches NEC-4 papers. Informal sample 8/10 antenna or NEC context (off: a standardisation thesis and a metrology comparison)."
+  },
+  {
+   "name": "EZNEC",
+   "owner": "Roy Lewallen (freeware)",
+   "license": "free",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "EZNEC AND antenna",
+   "mentions_all": 64,
+   "mentions_since_2020": 19,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. Bare EZNEC gives 74 hits with some text-extraction noise (a processor-simulator thesis, a forestry article); the antenna context word removes them. Informal sample 9/10 on target (one book index)."
+  },
+  {
+   "name": "MMANA-GAL",
+   "owner": "JE3HHT, DL1PBD, DL2KQ (freeware)",
+   "license": "free",
+   "methods": [
+    "mom3d"
+   ],
+   "query": "\"MMANA-GAL\" OR (MMANA AND antenna)",
+   "mentions_all": 193,
+   "mentions_since_2020": 119,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. Bare MMANA gives 2,126 hits, mostly noise in medical, maths and Indonesian or Ukrainian texts, so the query needs the full name or an antenna word. Informal sample 7/10 on target; many hits are Indonesian and Ukrainian student antenna papers."
   },
   {
    "name": "Bempp-cl",
@@ -534,6 +590,20 @@
    "note": "Many hits use the DeepMIMO dataset (generated with Wireless InSite) rather than run the tool. Informal sample 9/10 in context."
   },
   {
+   "name": "WinProp",
+   "owner": "Siemens (formerly Altair, formerly AWE Communications)",
+   "license": "commercial",
+   "methods": [
+    "asym"
+   ],
+   "query": "WinProp AND (propagation OR \"ray tracing\" OR Altair OR AWE)",
+   "mentions_all": 463,
+   "mentions_since_2020": 296,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. Bare WinProp gives 996 hits; the context words give 463. Informal sample 8/10 on target (off: an RFID protocol paper and a leaky-wave antenna paper). Includes channel-simulator comparisons that only name WinProp."
+  },
+  {
    "name": "Remcom XGtd",
    "owner": "Remcom",
    "license": "commercial",
@@ -565,6 +635,20 @@
     "cited_by": 246
    },
    "note": "Released 2023. Some hits only mention or cite Sionna; includes software-release records. Informal sample 9/10 in context."
+  },
+  {
+   "name": "Ansys Perceive EM",
+   "owner": "Ansys (part of Synopsys)",
+   "license": "commercial",
+   "methods": [
+    "asym"
+   ],
+   "query": "\"Perceive EM\" AND Ansys",
+   "mentions_all": 4,
+   "mentions_since_2020": 4,
+   "precision_estimate": null,
+   "canonical_paper": null,
+   "note": "Retrieved 2026-10-17. The phrase \"Perceive EM\" alone gives 176 hits, 63 of them before the product existed (ordinary wording), so Ansys is required. All 4 remaining hits (2025-2026) are radar digital-twin papers. Too new for a meaningful count."
   },
   {
    "name": "POFacets",

@@ -41,3 +41,19 @@ With n=10, each figure is roughly ±0.15.
 | 8 | gprMax | 769 | 1,094 |
 | 9 | Ansys Q3D / 2D Extractor | 758 | 1,265 |
 | 10 | MEEP | 648 | 1,338 |
+
+## Tools added 2026-10-17
+Same method (one `search=` query, grouped by `publication_year`), run on 17 Oct 2026. The API now reports `search=` as a full-text search ("full text has"); re-running two older queries gave the same counts within drift (WIPL-D 581 vs 579, POFacets 69 vs 69). Informal 10-record samples (`sample=10&seed=7`) only.
+
+| Tool | Query | All years | Since 2020 | Sample on target |
+|---|---|---|---|---|
+| WinProp | `WinProp AND (propagation OR "ray tracing" OR Altair OR AWE)` | 463 | 296 | 8/10 |
+| MMANA-GAL | `"MMANA-GAL" OR (MMANA AND antenna)` | 193 | 119 | 7/10 |
+| NEC-4 | `("NEC-4" OR NEC4 OR "NEC-4.2") AND antenna` | 161 | 37 | 8/10 |
+| EZNEC | `EZNEC AND antenna` | 64 | 19 | 9/10 |
+| Perceive EM | `"Perceive EM" AND Ansys` | 4 | 4 | 4/4 |
+| Nullspace EM | `"Nullspace Inc"` | 2 | 2 | 0/2, not shown |
+
+- **Nullspace:** the bare word is the linear-algebra term, so only exact phrases were tried: "Nullspace EM" 0, "Nullspace ES" 0, Nullspace AND IERUS 0, "Nullspace Inc" 2 (both IEEE Microwave Magazine IMS Preview issues). The page shows no count for it, as for ESTEAM.
+- **Bare names collide:** MMANA 2,126 hits (medical, maths and text-extraction noise), WinProp 996, "Perceive EM" 176 (63 of them before the product existed).
+- **NEC-4** overlaps the NEC-2 row, whose "Numerical Electromagnetics Code" phrase also matches NEC-4 papers.

@@ -44,15 +44,21 @@ const DESC = {
   'gprMax': 'FDTD for ground-penetrating radar, with GPU support.',
   'WIPL-D Pro': '3D MoM with higher-order basis functions. Efficient for large metal and dielectric bodies.',
   'ESTEAM': 'Higher-order MoM and MLFMM for antennas and reflector feeds.',
+  'Nullspace EM': '3D MoM (surface integral equation) with high-order basis functions, matrix compression and multi-GPU. For antennas on platforms, large arrays and RCS.',
   'NEC-2': 'The classic wire MoM code. Most amateur and HF antenna tools use it.',
   '4nec2': 'Free Windows interface for NEC, with optimisation and plots.',
+  'NEC-4': 'The licensed successor to NEC-2, from LLNL. Thin wires and closed surfaces, plus buried and insulated wires.',
+  'EZNEC': 'Wire-antenna program built on NEC. Free since its author retired, with no support.',
+  'MMANA-GAL': 'Wire-antenna program on the MININEC engine. Free for private, non-commercial use. Popular with radio amateurs.',
   'Bempp-cl': 'Boundary element (MoM) library in Python for Maxwell and acoustic problems.',
   'Sonnet Suites': '2.5D MoM in a closed box, with an FFT-calculated box Green\'s function on a uniform cell grid.',
   'Sonnet Lite': 'Free version of Sonnet. Limits: 6 ports, 64 MB, 2 metal levels. You can use it to learn planar EM.',
   'GRASP': 'The standard tool for reflector antennas. It uses PO, PTD and UTD.',
   'XGtd': 'GO and UTD ray tracing for antenna placement and coupling on large platforms such as aircraft and ships.',
   'Wireless InSite': 'Ray tracing for radio propagation in cities, buildings and vehicles.',
+  'WinProp': 'Radio propagation and network planning: ray tracing, the dominant path model and empirical models, from indoor to satellite links.',
   'Sionna RT': 'Differentiable ray tracer for radio propagation, with Python scripts.',
+  'Perceive EM': 'GPU ray solver (SBR) delivered as an API with no GUI, for real-time radar and wireless channel scenes in digital twins.',
   'POFacets': 'MATLAB physical-optics RCS code for faceted models. Frequently used to teach RCS.',
   '2D Extractor and Q3D Extractor': 'Cross-section RLGC and quasi-static 3D parasitic extraction.',
   'Si9000e': 'Boundary-element field solver for PCB transmission-line impedance.',
@@ -91,6 +97,7 @@ const FIX = {
   'Exalto and RaptorX': { m: ['mom25', 'mom3d'] },
   'CST Studio Suite': { eda: null },
   'Simcenter Feko': { eda: null },
+  'Nullspace EM': { owner: 'Nullspace, Inc.' },
   'µWave Wizard': { d: 'Mode-matching solver (with FEM and MoM parts) for waveguide filters, feeds and couplers. The page lists it under FEM.' },
 };
 const STD = {
@@ -100,16 +107,19 @@ const STD = {
   'Wireless InSite': ['prop'], 'gprMax': ['prop'], 'GRASP': ['antenna'], 'openEMS': ['free'], 'Sonnet Lite': ['free'],
 };
 // thin-wire MoM kernels (segments with a reduced kernel, as in NEC); the shortlist ranks these first for the "Thin wires" structure
-const WIRE = { 'NEC-2': 'std', '4nec2': 'std', 'Simcenter Feko': true, 'WIPL-D Pro': true };
+const WIRE = { 'NEC-2': 'std', '4nec2': 'std', 'NEC-4': 'std', 'EZNEC': 'std', 'MMANA-GAL': true, 'Simcenter Feko': true, 'WIPL-D Pro': true };
 // specialist tools: the structures and the main method they are made for (the shortlist moves them down for
 // other structures, or when only their secondary method fits; GRASP's MoM is for reflector feeds and struts)
-const GEOS = { 'GRASP': { geos: ['metal3d'], prim: 'asym', spec: 'Made for reflector antennas' } };
+// (layout extractors have a 3D MoM tag for on-chip and board parts; they move down for vehicles, platforms and wires)
+const GEOS = { 'GRASP': { geos: ['metal3d'], prim: 'asym', spec: 'Made for reflector antennas' },
+  'Exalto and RaptorX': { geos: ['planar', 'mixed3d'], spec: 'Made for on-chip layouts' },
+  'HyperLynx Advanced Solvers': { geos: ['planar', 'mixed3d', 'crosssec'], spec: 'Made for PCB and package layouts' } };
 const VALID = { 'XFdtd': 'States IEC/IEEE 62704-1 SAR averaging', 'Sim4Life': 'States IEC/IEEE 62704-1 SAR averaging', 'HFSS': 'Has an IEC/IEEE 62704-4 draft SAR setting', 'EMX': 'Foundry-certified for many processes' };
 // tools added after review (Ben, 2026-10-14); sources: remcom.com/wavefarer-automotive-radar-software, remcom.com/radar-and-scattering
 out.splice(out.findIndex((t) => t.n === 'Wireless InSite'), 0, { n: 'WaveFarer', lic: 'c', owner: 'Remcom', m: ['asym'], dom: ['radar', 'antenna'], price: null, trial: null, api: null, gpu: null, hpc: null, os: null, imp: null, eda: null, cloud: false, mat: 'production', url: 'https://www.remcom.com/wavefarer-automotive-radar-software',
   d: 'Radar simulation with ray tracing: PO and equivalent currents for scattering, GO and UTD for multipath. For automotive and indoor radar scenes and far-field RCS, up to more than 100 GHz.' });
 // radar and RCS field
-['XGtd', 'Simcenter Feko', 'HFSS-IE and SBR+', 'CST Studio Suite', 'POFacets', 'WIPL-D Pro'].forEach((n) => { const t = out.find((x) => x.n === n); if (t && !t.dom.includes('radar')) t.dom.push('radar'); });
+['XGtd', 'Simcenter Feko', 'HFSS-IE and SBR+', 'CST Studio Suite', 'POFacets', 'WIPL-D Pro', 'Nullspace EM', 'Perceive EM'].forEach((n) => { const t = out.find((x) => x.n === n); if (t && !t.dom.includes('radar')) t.dom.push('radar'); });
 STD['WaveFarer'] = ['radar']; STD['XGtd'] = ['radar', 'antenna']; STD['HFSS-IE and SBR+'] = ['radar']; STD['Simcenter Feko'] = ['antenna', 'emc', 'radar'];
 out.forEach((t) => { if (FIX[t.n]) Object.assign(t, FIX[t.n]); if (STD[t.n]) t.std = STD[t.n]; if (VALID[t.n]) t.valid = VALID[t.n]; if (WIRE[t.n]) t.wire = WIRE[t.n]; if (GEOS[t.n]) Object.assign(t, GEOS[t.n]); if (t.owner === 'Dassault Systemes') t.owner = 'Dassault Systèmes'; });
 // owner text tidy-ups

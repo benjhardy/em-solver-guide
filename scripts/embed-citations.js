@@ -15,9 +15,10 @@ const DISPLAY = {
   'Bempp-cl': 'Bempp-cl', 'Sonnet (incl. Sonnet Lite)': 'Sonnet Suites', 'Remcom Wireless InSite': 'Wireless InSite', 'Remcom XGtd': 'XGtd',
   'Sionna RT': 'Sionna RT', 'POFacets': 'POFacets', 'Ansys Q3D Extractor / 2D Extractor': '2D Extractor and Q3D Extractor',
   'Polar Instruments Si9000': 'Si9000e', 'FastHenry': 'FastHenry', 'FastCap': 'FastCap', 'ASITIC': 'ASITIC', 'MMTL': 'MMTL',
+  'Nullspace EM': 'Nullspace EM', 'NEC-4': 'NEC-4', 'EZNEC': 'EZNEC', 'MMANA-GAL': 'MMANA-GAL', 'WinProp': 'WinProp', 'Ansys Perceive EM': 'Perceive EM',
 };
 // mention counts that the research agent marked as not reliable
-const NO_MENTIONS = new Set(['TICRA ESTEAM', 'ASITIC', 'Cadence AWR Microwave Office']);
+const NO_MENTIONS = new Set(['TICRA ESTEAM', 'ASITIC', 'Cadence AWR Microwave Office', 'Nullspace EM']);
 const tools = [];
 for (const t of c.tools) {
   const n = DISPLAY[t.name];
@@ -31,7 +32,7 @@ for (const t of c.tools) {
 // CST: list it with its time-domain solver colour
 const [Y, Mo, Dd] = c.retrieved.split('-').map(Number); const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const method = 'Method: on ' + Dd + ' ' + MONTHS[Mo - 1] + ' ' + Y +
-  ', we searched the OpenAlex database for each tool name in titles, abstracts and full texts. Names with other meanings (for example HFSS and Palace) have context words. ' +
+  ' (17 October 2026 for NEC-4, EZNEC, MMANA-GAL, WinProp and Perceive EM), we searched the OpenAlex database for each tool name in titles, abstracts and full texts. Names with other meanings (for example HFSS and Palace) have context words. ' +
   'The counts are minimum values, because OpenAlex does not have the full text of all papers. A mention does not prove that the authors used the tool. ' +
   'For the six largest counts, a sample of 10 papers each showed 75 to 100 percent relevant results. Strict queries make Palace, Elmer, EMX, Sonnet and GRASP too low. ' +
   'The main-paper chart uses the OpenAlex citation count of one paper for each open-source tool.';

@@ -1365,6 +1365,49 @@
       ]
     },
     {
+      "name": "Nullspace EM",
+      "owner": "Nullspace, Inc. (USA). Spun out of the defense contractor IERUS Technologies; independent since 2023.",
+      "url": "https://www.nullspaceinc.com/products/nullspace-em",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna",
+        "emc",
+        "rf"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": "both",
+      "api": [
+        "Python"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": null,
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Frequency-domain surface-integral-equation MoM with high-order geometry and basis functions, for metal, dielectric and magnetic parts. Adaptive matrix compression and a fast direct solver for electrically large bodies (the compression method is not named; MLFMM is not mentioned). Multi-CPU and multi-GPU (NVIDIA Kepler or later) on one node; MPI or cluster runs not stated. Windows 10/11 and RHEL. Antennas, placement and co-site, phased arrays, radomes, and RCS of aircraft, ships and ground vehicles. CAD import and meshing are in Nullspace Prep (built with Coreform); formats not named. Licences per compute node, lease or paid-up (the architecture page says floating). 1-month free trial for qualified customers; academic licences at a nominal cost, which can be waived, with no feature limits. Sister product Nullspace ES is an electrostatic MoM solver for ion-trap electrodes (Linux). Speed-up figures are the vendor's own.",
+      "sources": [
+        "https://www.nullspaceinc.com/products/nullspace-em",
+        "https://www.nullspaceinc.com/capabilities/architecture",
+        "https://www.nullspaceinc.com/resources/support/faq",
+        "https://www.nullspaceinc.com/resources/support/system-requirements",
+        "https://www.nullspaceinc.com/resources/support/release-notes",
+        "https://www.nullspaceinc.com/industries/academic-program",
+        "https://www.nullspaceinc.com/products/nullspace-prep",
+        "https://www.nullspaceinc.com/products/nullspace-es",
+        "https://www.nullspaceinc.com/company/about",
+        "https://ierustech.com/products/software/nullspace-em-tool/"
+      ]
+    },
+    {
       "name": "NEC-2",
       "owner": "Lawrence Livermore National Laboratory (original). Public domain.",
       "url": "https://www.nec2.org",
@@ -1426,6 +1469,93 @@
       "note": "NEC-2/4 GUI and optimiser popular with radio amateurs. Author, OS and version not confirmed on the fetched page.",
       "sources": [
         "https://www.qsl.net/4nec2/"
+      ]
+    },
+    {
+      "name": "NEC-4",
+      "owner": "Lawrence Livermore National Laboratory (LLNL). Licensed, not public domain.",
+      "url": "https://softwarelicensing.llnl.gov/product/nec-v42",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$",
+      "trial": null,
+      "api": [
+        "NEC card deck"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": null,
+      "import": [],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Current version NEC-4.2. MoM with the EFIE for thin wires and the MFIE for closed conducting surfaces; adds wires buried in a homogeneous ground and insulated wires. LLNL sells 3-year licences, from $110 for an individual to $2,400 for a non-US organisation site; free for US government agencies and their contractors. OS and source-code terms are not stated on the licensing page.",
+      "sources": [
+        "https://softwarelicensing.llnl.gov/product/nec-v42"
+      ]
+    },
+    {
+      "name": "EZNEC",
+      "owner": "Roy Lewallen, W7EL (freeware; the author has retired)",
+      "url": "https://www.eznec.com/",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "free",
+      "open_licence": null,
+      "price_tier": "free",
+      "trial": null,
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows"
+      ],
+      "import": null,
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "Wire-antenna GUI. The free EZNEC Pro/2+ v7.0 has an enhanced NEC-2 engine, up to 45,000 segments, and can call external NEC-4.2 or NEC-5 engines (licensed separately from LLNL). Pro/4+, with a built-in NEC-4.2 engine, is only a free upgrade for earlier Pro/4 owners. Windows 7 or later. No support for any version. Free since January 2022 (v6.0, per a news report); the source code was not released.",
+      "sources": [
+        "https://www.eznec.com/",
+        "https://www.eznec.com/ez70faq.htm",
+        "https://www.kb6nu.com/want-to-learn-antenna-modeling-eznec-is-now-free/"
+      ]
+    },
+    {
+      "name": "MMANA-GAL",
+      "owner": "Makoto Mori JE3HHT (copyright), with Alexander Schewelew DL1PBD and Igor Gontcharenko DL2KQ",
+      "url": "http://gal-ana.de/basicmm/en/",
+      "methods": [
+        "mom3d"
+      ],
+      "domains": [
+        "antenna"
+      ],
+      "licence": "free",
+      "open_licence": null,
+      "price_tier": "free",
+      "trial": null,
+      "api": null,
+      "gpu": null,
+      "hpc": null,
+      "os": null,
+      "import": null,
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "teaching",
+      "note": "Wire-antenna analyser on a modified MININEC-3 MoM engine (not NEC), with an optimiser. The basic version (3.5, Jan 2022) is free only for private, non-commercial use: 10,000 segments, 600 wires, 100 sources. The paid PRO version (3.3) allows 45,000 segments and 10,000 wires and adds a near-field window. OS not stated on the developer page (third-party listings say Windows). The developer site has a certificate error over HTTPS; use HTTP.",
+      "sources": [
+        "http://gal-ana.de/basicmm/en/"
       ]
     },
     {
@@ -1618,6 +1748,47 @@
       ]
     },
     {
+      "name": "WinProp",
+      "owner": "Siemens (bought Altair, closed 26 Mar 2025). Altair bought AWE Communications, the University of Stuttgart spin-off that wrote WinProp, in April 2016.",
+      "url": "https://help.altair.com/winprop/topics/winprop/user_guide/introduction/overview_winprop_c.htm",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "propagation"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "WinProp API",
+        "WinPropCLI (batch)"
+      ],
+      "gpu": null,
+      "hpc": null,
+      "os": [
+        "Windows",
+        "Linux"
+      ],
+      "import": [
+        "DXF",
+        "DWG"
+      ],
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Radio propagation and network planning, from satellite and rural to urban, indoor and tunnel links: empirical and semi-empirical models, 3D ray tracing and the dominant path model, plus coverage, capacity and network simulation. Imports antenna patterns and RCS patterns from Feko. The 2026 documentation still says Altair WinProp; a June 2026 Siemens release post says Simcenter Feko WinProp 2026.1. GPU support, trial and student editions not confirmed.",
+      "sources": [
+        "https://help.altair.com/winprop/topics/winprop/user_guide/introduction/overview_winprop_c.htm",
+        "https://2025.help.altair.com/2025/winprop/topics/winprop/user_guide/introduction/overview_winprop_c.htm",
+        "https://help.altair.com/winprop/topics/winprop/user_guide/wallman_tuman/wallman_usage/drawing_database_dwg_dxf_winprop.htm",
+        "https://blogs.sw.siemens.com/simcenter/whats-new-in-simcenter-feko-2026-1/",
+        "https://www.prnewswire.com/news-releases/altair-acquires-winprop-and-awe-communications-gmbh-300248097.html",
+        "https://www.digitalengineering247.com/article/siemens-completes-acquisition-of-altair/news"
+      ]
+    },
+    {
       "name": "Sionna RT",
       "owner": "NVIDIA (NVlabs)",
       "url": "https://github.com/NVlabs/sionna-rt",
@@ -1652,6 +1823,38 @@
       "sources": [
         "https://github.com/NVlabs/sionna-rt",
         "https://research.nvidia.com/publication/2025-04_sionna-rt-technical-report"
+      ]
+    },
+    {
+      "name": "Perceive EM",
+      "owner": "Ansys, part of Synopsys",
+      "url": "https://ansys.synopsys.com/products/electronics/ansys-perceive-em",
+      "methods": [
+        "asym"
+      ],
+      "domains": [
+        "propagation"
+      ],
+      "licence": "commercial",
+      "open_licence": null,
+      "price_tier": "$$",
+      "trial": null,
+      "api": [
+        "Python",
+        "C++"
+      ],
+      "gpu": true,
+      "hpc": null,
+      "os": null,
+      "import": null,
+      "eda_link": [],
+      "cloud_only": false,
+      "maturity": "production",
+      "note": "Headless solver API (no GUI) with PO-based shooting and bouncing rays (SBR), multipath and diffraction, on NVIDIA GPUs (multi-GPU). For real-time radar (automotive, SAR/ISAR, MIMO, moving platforms) and 5G/6G channel scenes in digital twins, for example NVIDIA Aerial Omniverse Digital Twin. A separate product from HFSS SBR+. A reseller lists it as new in 2024 R2; the Ansys 2024 R2 press release does not name it. OS, licensing and trial not stated.",
+      "sources": [
+        "https://ansys.synopsys.com/products/electronics/ansys-perceive-em",
+        "https://ansys.synopsys.com/blog/accelerating-the-future-of-wireless-and-radar",
+        "https://www.cadfem.net/en/cadfem-informs/newsroom/ansys-release/ansys-release-2024-electronics-hf.html"
       ]
     },
     {
