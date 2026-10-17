@@ -254,35 +254,130 @@ ol.loop { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 0.9
   .cmprow li span { color: var(--ink); }
 }
 
-/* picker */
-.picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 20px; align-items: start; }
-@media (max-width: 900px) { .picker { grid-template-columns: 1fr; } }
-.form { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 14px; min-width: 0; }
-.field { display: grid; gap: 6px; }
-.field > label, .field > .lab2 { font: 600 0.72rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+/* picker: a size x frequency pad, chip groups, and live results */
 select, input[type=number] { font: 400 0.95rem/1.2 var(--body); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; width: 100%; min-width: 0; }
-.pair { display: grid; grid-template-columns: minmax(0, 1fr) 92px; gap: 8px; }
-.checks { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.92rem; }
-.checks label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; }
-.presets { display: flex; flex-wrap: wrap; gap: 6px; }
-.presets button.task { border-style: solid; font-weight: 600; }
-.presets button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--ink); }
-.presets button[aria-pressed="true"]::before { content: "✓ "; }
-.loaded { font: 600 0.8rem/1.3 var(--mono); color: var(--ink); background: var(--bg); border-radius: 6px; padding: 6px 8px; }
-.presets button { font: 500 0.78rem/1 var(--body); padding: 8px 10px; border-radius: 6px; border: 1px solid color-mix(in srgb, var(--muted) 55%, transparent); background: transparent; color: var(--ink); cursor: pointer; }
-.cost { display: grid; gap: 6px; }
-.cost > div { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 0.86rem; padding: 6px 8px; border-radius: 6px; }
-.cost > div.win { background: var(--bg); }
-.cost span:first-child { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--ink); }
-.cost span:nth-child(2) { color: var(--ink); }
-.cost svg { width: 11px; height: 11px; }
-.cost b { font-family: var(--mono); color: var(--ink); }
-.elec { font: 600 0.9rem/1.5 var(--mono); background: var(--bg); border-radius: 8px; padding: 10px 12px; }
-.result { display: grid; gap: 14px; min-width: 0; }
-.pick { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid currentColor; border-radius: 12px; padding: 20px; display: grid; gap: 10px; }
-.pick .big { font: 800 2rem/1 var(--display); }
+.pkhead { display: grid; gap: 6px; min-width: 0; }
+.pkpre { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.lbl { font: 600 0.68rem/1.2 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.pkpre .lbl { margin-right: 2px; }
+.pkpre .sep { width: 1px; height: 22px; background: var(--line); margin: 0 6px; flex: none; }
+.pkpre button { flex: none; font: 500 0.8rem/1 var(--body); padding: 8px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; white-space: nowrap; }
+.pkpre button.task { font-weight: 600; border-color: color-mix(in srgb, var(--muted) 60%, transparent); }
+.pkpre button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.loaded { font: 500 0.82rem/1.3 var(--body); color: var(--muted); }
+@media (max-width: 700px) { .pkpre { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; } }
+.picker { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 960px) { .picker { grid-template-columns: 1fr; } }
+.pkctl { display: grid; gap: 14px; min-width: 0; }
+.padtop { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: space-between; align-items: baseline; }
+.elec { font: 600 0.84rem/1.4 var(--mono); color: var(--ink); }
+.elec b { font-weight: 700; }
+.padbox { position: relative; touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+.padbox canvas { display: block; width: 100%; border-radius: 8px; }
+.pdot { position: absolute; left: 0; top: 0; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid var(--ink); background: var(--surface); box-shadow: 0 0 0 3px var(--surface), 0 2px 8px rgba(0,0,0,0.25); cursor: grab; transition: background-color 0.25s; }
+.pdot:active { cursor: grabbing; }
+.pdot:focus-visible { outline: 3px solid var(--ink); outline-offset: 4px; }
+.padin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > .lbl { font-size: 0.64rem; }
+.pair { display: grid; grid-template-columns: minmax(0, 1fr) 70px; gap: 4px; }
+.pair select, .pair input { padding: 8px 6px; font-size: 0.9rem; }
+.pair input[type=range] { padding: 0; accent-color: var(--ink); align-self: center; }
+@media (max-width: 520px) { .padin { grid-template-columns: 1fr 1fr; } .padin .er { grid-column: 1 / -1; } }
+.hint { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 0.86rem; color: var(--bad); }
+.cgs { gap: 12px; }
+.cg { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+.cg > .lbl { padding-top: 9px; }
+.cg .ex { grid-column: 2; font-size: 0.8rem; color: var(--muted); }
+@media (max-width: 520px) { .cg { grid-template-columns: 1fr; } .cg > .lbl { padding-top: 0; } .cg .ex { grid-column: 1; } }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.chips button { font: 500 0.8rem/1 var(--body); padding: 8px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.chips button:hover { border-color: var(--ink); }
+.chips button svg { width: 16px; height: 16px; flex: none; }
+.chips button[aria-checked="true"], .chips button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chips button[aria-pressed]::before { content: ""; width: 9px; height: 9px; border-radius: 3px; border: 1.5px solid currentColor; flex: none; }
+.chips button[aria-pressed="true"]::before { background: currentColor; }
+.result { display: grid; gap: 12px; min-width: 0; }
+@media (min-width: 961px) { .result { position: sticky; top: 64px; } }
+.pick { background: var(--surface); border: 1px solid var(--line); border-left: 6px solid currentColor; border-radius: 12px; padding: 16px 20px; display: grid; gap: 8px; }
+.pick .big { font: 800 2.2rem/1 var(--display); display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+.pick .big svg { width: 0.62em; height: 0.62em; flex: none; }
+.pick .then { font: 600 1rem/1.2 var(--body); color: var(--muted); }
+.pick .then b { font-weight: 800; }
 .pick .sub { color: var(--ink); font-size: 0.95rem; }
-.pick ul { margin: 0; padding-left: 18px; color: var(--ink); display: grid; gap: 4px; font-size: 0.94rem; }
+.pick ul { margin: 0; padding-left: 18px; color: var(--ink); display: grid; gap: 3px; font-size: 0.92rem; }
+.pick.flip .big { animation: pkpop 0.45s ease; }
+@keyframes pkpop { from { opacity: 0.15; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+details.mini > summary { cursor: pointer; font: 600 0.84rem/1.3 var(--body); color: var(--muted); }
+details.mini[open] > summary { margin-bottom: 6px; }
+details.mini > *:not(summary) + * { margin-top: 6px; }
+details.mini ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 0.9rem; color: var(--ink); }
+.rank { position: relative; }
+.rrow { position: absolute; left: 0; right: 0; top: 0; height: 28px; display: grid; grid-template-columns: 132px minmax(0, 1fr) 64px; gap: 10px; align-items: center; font-size: 0.85rem; transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.rrow .lb { color: var(--ink); font-weight: 600; display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.rrow .lb svg { width: 11px; height: 11px; flex: none; }
+.rrow .track { height: 10px; border-radius: 5px; background: var(--grid); overflow: hidden; }
+.rrow .fill { display: block; height: 100%; border-radius: 5px; background: currentColor; transition: width 0.45s ease; }
+.rrow .sc { font-family: var(--mono); color: var(--muted); text-align: right; font-size: 0.76rem; white-space: nowrap; }
+.rrow.win .lb { font-weight: 800; }
+.tcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.tcard { display: grid; gap: 6px; align-content: start; padding: 10px 12px; border: 1px solid var(--line); border-top: 4px solid currentColor; border-radius: 10px; text-decoration: none; background: var(--surface); min-width: 0; }
+.tcard:hover, .tcard:focus-visible { border-color: currentColor; }
+.tcard .tn { font: 800 1.02rem/1.15 var(--display); color: var(--ink); overflow-wrap: anywhere; }
+.tcard .tb { display: flex; flex-wrap: wrap; gap: 4px; }
+.bd { font: 600 0.66rem/1 var(--mono); padding: 4px 6px; border-radius: 4px; background: var(--bg); color: var(--ink); white-space: nowrap; }
+.bd.m { color: inherit; border: 1px solid currentColor; background: none; }
+.bd.free { color: var(--ok); border: 1px solid var(--ok); background: none; }
+.bd.com { color: var(--muted); border: 1px solid var(--line); background: none; }
+.bd.warn { color: var(--bad); }
+.tcard .also { font-size: 0.76rem; color: var(--muted); }
+details.pcost > summary { cursor: pointer; font-size: 0.9rem; color: var(--ink); }
+details.pcost > summary .lbl { margin-right: 6px; }
+details.pcost[open] > summary { margin-bottom: 10px; }
+.cost { display: grid; gap: 8px; }
+.cost > div { display: grid; grid-template-columns: 92px minmax(0, 1fr) 70px; gap: 4px 10px; align-items: center; font-size: 0.84rem; }
+.cost > div.win { font-weight: 700; }
+.cost .k { display: inline-flex; gap: 6px; align-items: center; font-weight: 600; color: var(--ink); }
+.cost .k svg { width: 11px; height: 11px; }
+.cost .t { grid-column: 2 / -1; color: var(--muted); font-size: 0.8rem; }
+.cost .track { height: 8px; border-radius: 4px; background: var(--grid); overflow: hidden; }
+.cost .fill { display: block; height: 100%; background: currentColor; border-radius: 4px; transition: width 0.4s ease; }
+.cost b { font-family: var(--mono); color: var(--ink); text-align: right; }
+.pkmini { display: none; }
+@media (max-width: 960px) {
+  .pkmini { display: inline-flex; position: sticky; bottom: 12px; z-index: 6; justify-self: center; gap: 8px; align-items: center; font: 600 0.9rem/1 var(--body); padding: 11px 16px; border-radius: 999px; border: 1px solid var(--ink); background: var(--ink); color: var(--bg); box-shadow: 0 6px 20px rgba(0,0,0,0.25); cursor: pointer; }
+  .pkmini svg { width: 12px; height: 12px; }
+}
+
+/* convergence: three rule cards (the tabs), then the demos of the selected solver */
+.cvtabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.cvtabs button { text-align: left; display: grid; gap: 6px; align-content: start; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line); border-top: 5px solid currentColor; background: var(--surface); cursor: pointer; font: inherit; }
+.cvtabs button:hover { border-color: currentColor; }
+.cvtabs .cvk { font: 600 0.7rem/1 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+.cvtabs b { font: 800 1.15rem/1.15 var(--display); color: var(--ink); }
+.cvtabs .rl { font-size: 0.9rem; line-height: 1.45; color: var(--ink); }
+.cvtabs .go { font: 600 0.78rem/1.2 var(--mono); }
+.cvtabs button[aria-selected="true"] { box-shadow: inset 0 0 0 2px currentColor; background: color-mix(in srgb, currentColor 8%, var(--surface)); }
+.cvtabs button[aria-selected="true"] .go::after { content: " ▾"; }
+@media (max-width: 760px) { .cvtabs { grid-template-columns: 1fr; gap: 6px; } .cvtabs button { padding: 10px 12px; gap: 4px; } .cvtabs .rl { font-size: 0.86rem; } }
+.cvpane { display: grid; gap: 14px; min-width: 0; }
+.demo-h { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 1.25rem; margin-top: 10px; }
+.demo-h .tagx { font: 600 0.66rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 7px; border-radius: 4px; border: 1px solid currentColor; }
+.plotbox canvas.fit { height: auto; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 500 0.78rem/1.3 var(--mono); color: var(--muted); }
+.legend2 i { display: inline-block; width: 14px; height: 0; border-top: 2.5px solid currentColor; vertical-align: middle; margin-right: 5px; }
+.legend2 i.dot { border-top-style: dotted; } .legend2 i.dash { border-top-style: dashed; }
+.readout div.big { grid-column: 1 / -1; }
+.readout span.nt { text-transform: none; letter-spacing: 0.02em; }
+.readout div.big b { font-size: 1.25rem; }
+.readout div.ok b { color: var(--ok); } .readout div.warn b { color: var(--c-fdtd); } .readout div.bad b { color: var(--bad); }
+.status.warn { color: var(--c-fdtd); border-color: var(--c-fdtd); }
+.cg2 { display: grid; gap: 4px; }
+.twoconv { display: grid; grid-template-columns: 150px minmax(0, 1fr) 150px; gap: 14px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; }
+.twoconv svg { width: 100%; height: auto; display: block; }
+.twoconv p { font-size: 0.92rem; }
+@media (max-width: 700px) { .twoconv { grid-template-columns: 1fr 1fr; } .twoconv p { grid-column: 1 / -1; grid-row: 1; } }
+.stab { font-size: 0.92rem; padding: 8px 10px; border-left: 4px solid var(--c-fdtd); background: var(--bg); border-radius: 0 8px 8px 0; }
 
 /* method cards */
 .flav { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
@@ -397,7 +492,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     <ol class="path" aria-label="Learning path">
       <li><span><a href="#lab">Select a device</a>. See the real mesh of each solver in 3D.</span></li>
       <li><span><a href="#learn">Learn the building block</a> of each solver, step by step.</span></li>
-      <li><span><a href="#convergence">Run the convergence demos</a>. Make the FDTD time step too large and see the result.</span></li>
+      <li><span><a href="#convergence">See when each solver is done</a>: a live MoM solve, FDTD ring-down and FEM passes.</span></li>
       <li><span><a href="#compare">Compare</a>, then <a href="#picker">test your own problem</a>.</span></li>
     </ol>
   </section>
@@ -479,71 +574,183 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   <!-- CONVERGENCE -->
   <section id="convergence" aria-labelledby="conv-h">
     <div class="read"><h2 id="conv-h">Convergence</h2>
-      <p>A result is correct only when it does not change on a finer mesh. Each solver has its own rule for this. Try each demo.</p></div>
-    <div class="seg" role="tablist" aria-label="Convergence demo" id="convtabs">
-      <button type="button" role="tab" data-c="fdtd" aria-selected="true">FDTD: Courant limit</button>
-      <button type="button" role="tab" data-c="fem" aria-selected="false" tabindex="-1">FEM: adaptive passes and &Delta;S</button>
-      <button type="button" role="tab" data-c="mom" aria-selected="false" tabindex="-1">MoM: mesh density</button>
+      <p>A result is correct only when it stays the same on a finer mesh. Each solver has a different test. Select a solver, then try its demos.</p></div>
+    <div class="cvtabs" role="tablist" aria-label="Convergence demo" id="convtabs">
+      <button type="button" role="tab" id="ct-fem" data-c="fem" aria-selected="true" aria-controls="conv-fem" class="m-fem"><span class="cvk">FEM</span><b>When is FEM done?</b><span class="rl">The solver refines its own mesh. It stops when &Delta;S between two passes is less than the target, for example 0.02.</span><span class="go">1 demo</span></button>
+      <button type="button" role="tab" id="ct-fdtd" data-c="fdtd" aria-selected="false" aria-controls="conv-fdtd" tabindex="-1" class="m-fdtd"><span class="cvk">FDTD</span><b>When is FDTD done?</b><span class="rl">Two tests. Time: the stored energy has decayed by 40 to 60 dB. Space: a finer grid does not change the result.</span><span class="go">3 demos</span></button>
+      <button type="button" role="tab" id="ct-mom" data-c="mom" aria-selected="false" aria-controls="conv-mom" tabindex="-1" class="m-mom3d"><span class="cvk">MoM</span><b>When is MoM done?</b><span class="rl">You refine the mesh yourself. Halve the cells until Zin, S or RCS changes less than your tolerance. Refine edges and feeds first.</span><span class="go">3 demos, real solves</span></button>
     </div>
 
-    <div class="conv" id="conv-fdtd">
-      <div class="panel">
-        <p class="eyebrow">Live 1D FDTD: a pulse on a grid of 240 cells</p>
-        <div class="plotbox"><canvas id="cfl-cv" width="1200" height="440" role="img" aria-label="Live plot of the electric field of a pulse that moves along a 1D grid"></canvas></div>
-        <div class="slider"><label for="cfl-s">Courant number <span class="nc">S = c&middot;&Delta;t / &Delta;x</span>: <span id="cfl-sv" class="mono"></span></label><input type="range" id="cfl-s" min="0.3" max="1.1" step="0.01" value="0.9"></div>
-        <div class="row"><button class="ibtn" type="button" id="cfl-play" aria-pressed="true">Pause</button><button class="ibtn" type="button" id="cfl-reset">Restart</button><span class="status" id="cfl-status" role="status"></span></div>
-      </div>
-      <div class="card">
-        <h3>The time step has a limit</h3>
-        <p>In one time step, a wave must not move more than one cell. If it does, the update cannot follow it, and small errors increase at each step. This is the Courant-Friedrichs-Lewy (CFL) limit.</p>
-        <p>In 1D, the update is stable when S &le; 1. Move the slider above 1.0 and the field increases without limit. In 3D with cubic cells, the limit is S &le; 1/&radic;3 &asymp; 0.577.</p>
-        <p class="mono formula">&Delta;t &le; 1 / ( c &middot; &radic;(1/&Delta;x&sup2; + 1/&Delta;y&sup2; + 1/&Delta;z&sup2;) )</p>
-        <div class="slider"><label for="cfl-cell">Smallest cell in the 3D grid: <span id="cfl-cellv" class="mono"></span></label><input type="range" id="cfl-cell" min="0" max="4" step="0.01" value="2.3"></div>
-        <div class="readout"><div><span>Largest &Delta;t</span><b id="cfl-dt"></b></div><div><span>Steps for 10 ns</span><b id="cfl-steps"></b></div></div>
-        <p class="note">One small feature needs one small cell. That cell sets &Delta;t for the full grid. Thus, fine details in a large domain make FDTD slow.</p>
-      </div>
-    </div>
-
-    <div class="conv" id="conv-fem" hidden>
-      <div class="panel">
-        <p class="eyebrow">Adaptive mesh near a metal corner (2D illustration)</p>
-        <div class="plotbox"><canvas id="fem-cv" width="1200" height="560" role="img" aria-label="Triangle mesh that becomes finer near a corner at each adaptive pass, and a plot of delta S for each pass"></canvas></div>
-        <div class="row">
-          <button class="btn primary" type="button" id="fem-next">Next pass</button>
-          <button class="btn" type="button" id="fem-run">Run to convergence</button>
-          <button class="btn" type="button" id="fem-reset">Reset</button>
-          <label class="note" for="fem-target">Target &Delta;S</label>
-          <select id="fem-target" style="width:auto"><option value="0.02" selected>0.02</option><option value="0.01">0.01</option><option value="0.005">0.005</option></select>
+    <div class="cvpane" id="conv-fem" role="tabpanel" aria-labelledby="ct-fem">
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Adaptive mesh near a metal corner (2D illustration)</p>
+          <div class="plotbox"><canvas id="fem-cv" width="1200" height="560" role="img" aria-label="Triangle mesh that becomes finer near a corner at each adaptive pass, and a plot of delta S for each pass"></canvas></div>
+          <div class="row">
+            <button class="btn primary" type="button" id="fem-next">Next pass</button>
+            <button class="btn" type="button" id="fem-run">Run to convergence</button>
+            <button class="btn" type="button" id="fem-reset">Reset</button>
+            <label class="note" for="fem-target">Target &Delta;S</label>
+            <select id="fem-target" style="width:auto"><option value="0.02" selected>0.02</option><option value="0.01">0.01</option><option value="0.005">0.005</option></select>
+          </div>
+          <div class="readout"><div><span>Pass</span><b id="fem-pass"></b></div><div><span>Elements</span><b id="fem-n"></b></div><div><span>&Delta;S</span><b id="fem-ds"></b></div></div>
+          <p class="status" id="fem-status" role="status"></p>
         </div>
-        <div class="readout"><div><span>Pass</span><b id="fem-pass"></b></div><div><span>Elements</span><b id="fem-n"></b></div><div><span>&Delta;S</span><b id="fem-ds"></b></div></div>
-        <p class="status" id="fem-status" role="status"></p>
-      </div>
-      <div class="card">
-        <h3>The adaptive loop</h3>
-        <ol class="loop">
-          <li>Solve the field at one frequency, the solution frequency.</li>
-          <li>Calculate the S-parameters.</li>
-          <li>Calculate &Delta;S: the largest change of any S-parameter from the previous pass.</li>
-          <li>Estimate the error in each element. Refine the elements with the largest error, frequently about 30 percent more elements.</li>
-          <li>Go to step 1. Stop when &Delta;S is less than the target, or at the maximum number of passes. For safety, ask for 2 converged passes.</li>
-        </ol>
-        <p>The field changes quickly near sharp metal corners and edges. Thus, the solver puts small elements there and keeps large elements where the field is smooth.</p>
-        <p class="note">Select a solution frequency near the highest frequency that you need. A mesh that is good at that frequency is usually good at lower frequencies. The values in this demo are typical, not from a real solve.</p>
+        <div class="card">
+          <h3>The adaptive loop</h3>
+          <p>Solve. Find the elements with the largest error. Refine them. Solve again. Stop when &Delta;S stays below the target.</p>
+          <details class="mini"><summary>The five steps</summary>
+          <ol class="loop">
+            <li>Solve the field at one frequency, the solution frequency.</li>
+            <li>Calculate the S-parameters.</li>
+            <li>Calculate &Delta;S: the largest change of any S-parameter from the previous pass.</li>
+            <li>Estimate the error in each element. Refine the elements with the largest error, frequently about 30 percent more elements.</li>
+            <li>Go to step 1. Stop when &Delta;S is less than the target, or at the maximum number of passes. For safety, ask for 2 converged passes.</li>
+          </ol></details>
+          <p class="note">Small elements go near sharp corners and edges, where the field changes quickly. Select a solution frequency near the highest frequency that you need. The values in this demo are typical, not from a real solve.</p>
+        </div>
       </div>
     </div>
 
-    <div class="conv" id="conv-mom" hidden>
-      <div class="panel">
-        <p class="eyebrow">Square metal plate, 1 &lambda; wide, with triangles</p>
-        <div class="plotbox"><canvas id="mom-cv" width="1200" height="520" role="img" aria-label="Triangle mesh of a plate and plots of result error and matrix memory against mesh density"></canvas></div>
-        <div class="slider"><label for="mom-n">Mesh density: <span id="mom-nv" class="mono"></span></label><input type="range" id="mom-n" min="3" max="40" step="1" value="10"></div>
-        <div class="readout"><div><span>Unknowns N</span><b id="mom-N"></b></div><div><span>Matrix memory</span><b id="mom-mem"></b></div><div><span>Result error</span><b id="mom-err"></b></div></div>
+    <div class="cvpane" id="conv-fdtd" role="tabpanel" aria-labelledby="ct-fdtd" hidden>
+      <h3 class="demo-h m-fdtd"><span class="tagx">Time</span><span style="color:var(--ink)">Has the pulse finished ringing?</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Probe signal and stored energy of one resonance</p>
+          <div class="plotbox"><canvas id="f1-t" class="fit" role="img" aria-label="Probe signal and stored energy in dB against time, with the stop threshold and the point where the run stops"></canvas></div>
+          <div class="slider"><label for="f1-q">Q of the resonance: <span id="f1-qv" class="mono"></span></label><input type="range" id="f1-q" min="1" max="3" step="0.02" value="2"></div>
+          <div class="slider"><label for="f1-x">Stop when the energy is down by: <span id="f1-xv" class="mono"></span></label><input type="range" id="f1-x" min="10" max="80" step="1" value="20"></div>
+          <p class="eyebrow">Spectrum near the resonance</p>
+          <div class="plotbox"><canvas id="f1-f" class="fit" role="img" aria-label="Spectrum of the full record and of the record that stops at the threshold"></canvas></div>
+          <p class="legend2"><span class="m-fdtd"><i></i>record that stops at the threshold</span><span><i class="dash"></i>full record</span></p>
+        </div>
+        <div class="card">
+          <div class="readout"><div><span>Run length</span><b id="f1-n"></b></div><div><span>Time steps*</span><b id="f1-steps"></b></div><div><span>Peak error</span><b id="f1-pk"></b></div></div>
+          <p class="status" id="f1-status" role="status"></p>
+          <p class="mono formula">periods &asymp; 0.037 &middot; X<sub>dB</sub> &middot; Q</p>
+          <p class="note">The probe signal looks finished long before the energy is down by 50 dB. openEMS stops at &minus;50 dB by default.</p>
+          <p class="note">*At 10 GHz with 0.5 mm cells (about 100 steps for each period). The signal is a model of one resonance, not a full FDTD run.</p>
+        </div>
       </div>
-      <div class="card">
-        <h3>Finer triangles, more accuracy, much more memory</h3>
-        <p>MoM converges when the result does not change on smaller triangles. A usual start is an edge length of &lambda;/10, with smaller triangles at metal edges, where the current is high.</p>
-        <p>Each inner edge is one unknown. Each unknown connects to all other unknowns, so the matrix has N&sup2; values. If you double the density, N increases approximately 4 times. Then the memory increases approximately 16 times.</p>
-        <p class="note">Memory is for a dense matrix in double complex (16 bytes for each value). The error curve is typical, not from a real solve. MLFMM decreases the memory for large problems.</p>
+
+      <h3 class="demo-h m-fdtd"><span class="tagx">Stability</span><span style="color:var(--ink)">The Courant limit: stability, not accuracy</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Live 1D FDTD: a pulse on a grid of 240 cells</p>
+          <div class="plotbox"><canvas id="cfl-cv" width="1200" height="440" role="img" aria-label="Live plot of the electric field of a pulse that moves along a 1D grid"></canvas></div>
+          <div class="slider"><label for="cfl-s">Courant number <span class="nc">S = c&middot;&Delta;t / &Delta;x</span>: <span id="cfl-sv" class="mono"></span></label><input type="range" id="cfl-s" min="0.3" max="1.1" step="0.01" value="0.9"></div>
+          <div class="row"><button class="ibtn" type="button" id="cfl-play" aria-pressed="true">Pause</button><button class="ibtn" type="button" id="cfl-reset">Restart</button><span class="status" id="cfl-status" role="status"></span></div>
+        </div>
+        <div class="card">
+          <h3>The time step has a limit</h3>
+          <p>In one time step, a wave must not move more than one cell. In 1D the update is stable when S &le; 1. In 3D with cubic cells the limit is S &le; 1/&radic;3 &asymp; 0.577. Move the slider above 1.0 and the field increases without limit.</p>
+          <p class="stab"><b>This rule only stops the run from blowing up.</b> A stable run can still be wrong. Accuracy comes from the run length (above) and the cells per wavelength (below).</p>
+          <p class="mono formula">&Delta;t &le; 1 / ( c &middot; &radic;(1/&Delta;x&sup2; + 1/&Delta;y&sup2; + 1/&Delta;z&sup2;) )</p>
+          <div class="slider"><label for="cfl-cell">Smallest cell in the 3D grid: <span id="cfl-cellv" class="mono"></span></label><input type="range" id="cfl-cell" min="0" max="4" step="0.01" value="2.3"></div>
+          <div class="readout"><div><span>Largest &Delta;t</span><b id="cfl-dt"></b></div><div><span>Steps for 10 ns</span><b id="cfl-steps"></b></div></div>
+          <p class="note">One small feature needs one small cell. That cell sets &Delta;t for the full grid. Thus, fine details in a large domain make FDTD slow.</p>
+        </div>
+      </div>
+
+      <h3 class="demo-h m-fdtd"><span class="tagx">Space</span><span style="color:var(--ink)">Cells per wavelength: the grid makes waves slow</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">A wave after 10 &lambda; of travel: exact, and on the Yee grid</p>
+          <div class="plotbox"><canvas id="disp-cv" class="fit" role="img" aria-label="Two waves after ten wavelengths of travel: the exact wave and the slower wave on the grid"></canvas></div>
+          <p class="legend2"><span><i class="dash"></i>exact</span><span class="m-fdtd"><i></i>Yee grid</span></p>
+          <div class="slider"><label for="disp-n">Cells per wavelength N: <span id="disp-nv" class="mono"></span></label><input type="range" id="disp-n" min="5" max="40" step="1" value="10"></div>
+        </div>
+        <div class="card">
+          <p>On the grid, waves move a little too slowly. The phase error builds up with each wavelength of travel. Halve the cell and the error decreases 4 times.</p>
+          <p class="mono formula">error &asymp; (&pi;&sup2;/6)(1 &minus; S&sup2;) / N&sup2;</p>
+          <div class="readout"><div><span>Velocity error</span><b id="disp-e"></b></div><div><span>Formula</span><b id="disp-f"></b></div><div><span>Phase, 10 &lambda;</span><b id="disp-p"></b></div></div>
+          <p class="note">3D grid, wave along an axis, S = 0.99/&radic;3. About 1.1 % at 10 cells/&lambda; and 0.28 % at 20. Large models need more cells per &lambda;. Check with a refinement study: 10, 15, then 20 cells/&lambda;.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cvpane" id="conv-mom" role="tabpanel" aria-labelledby="ct-mom" hidden>
+      <h3 class="demo-h m-mom3d"><span class="tagx">Mesh</span><span style="color:var(--ink)">Dipole lab: a real MoM solve in your browser</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Half-wave dipole: input impedance against segments per &lambda; (computed)</p>
+          <div class="plotbox"><canvas id="m1-z" class="fit" role="img" aria-label="Computed input resistance and reactance of a half-wave dipole against the number of segments per wavelength"></canvas></div>
+          <p class="legend2"><span class="m-mom3d"><i></i>R (computed)</span><span style="color:var(--hfield)"><i></i>X (computed)</span><span><i class="dot"></i>73.1 + j42.5 &Omega;, infinitely thin</span><span id="m1-limleg"><i class="dash"></i>limit (computed)</span></p>
+          <div class="slider"><label for="m1-n">Segments: <span id="m1-nv" class="mono"></span></label><input type="range" id="m1-n" min="0" max="18" step="1" value="6"></div>
+          <p class="eyebrow">Current on the wire for this mesh</p>
+          <div class="plotbox"><canvas id="m1-i" class="fit" role="img" aria-label="Magnitude of the computed current along the dipole"></canvas></div>
+          <p class="legend2"><span class="m-mom3d"><i></i>|I(z)|, this mesh</span><span><i class="dash"></i>sine approximation</span><span id="m1-refleg"><i class="dot"></i>300 segments</span></p>
+        </div>
+        <div class="card">
+          <div class="cg2"><span class="lbl" id="m1-feedl">Feed</span><div class="seg" id="m1-feed" role="radiogroup" aria-labelledby="m1-feedl"><button type="button" role="radio" data-v="gap">Fixed gap 0.02 &lambda;</button><button type="button" role="radio" data-v="delta">Delta gap</button></div></div>
+          <div class="cg2"><span class="lbl" id="m1-kerl">Kernel</span><div class="seg" id="m1-ker" role="radiogroup" aria-labelledby="m1-kerl"><button type="button" role="radio" data-v="exact">Exact</button><button type="button" role="radio" data-v="reduced">Thin-wire</button></div></div>
+          <div class="slider"><label for="m1-a">Wire radius a: <span id="m1-av" class="mono"></span></label><input type="range" id="m1-a" min="-5" max="-2" step="0.1" value="-3"></div>
+          <div class="readout">
+            <div class="big"><span>Zin, computed</span><b id="m1-zin"></b></div>
+            <div id="m1-dzb"><span>&Delta;Z from N/2</span><b id="m1-dz"></b></div>
+            <div id="m1-dab"><span>&Delta; / a</span><b id="m1-da"></b></div>
+            <div><span>Unknowns</span><b id="m1-unk"></b></div>
+            <div><span>Matrix</span><b id="m1-mem"></b></div>
+            <div><span>Solve time</span><b id="m1-t"></b></div>
+          </div>
+          <p class="status" id="m1-status" role="status"></p>
+          <details class="mini"><summary>Three traps this lab shows</summary>
+            <ul>
+              <li><b>Delta gap:</b> the gap is one segment wide, so it gets smaller with the mesh. Zin never settles. Use a gap of fixed size.</li>
+              <li><b>Thin-wire kernel:</b> correct only when the segment is much longer than the radius (NEC: &Delta;/a &gt; 8). Below &Delta;/a &asymp; 2 it breaks down, and a finer mesh makes it worse. Try a = 0.005 &lambda; and 150 segments.</li>
+              <li><b>73.1 + j42.5 &Omega;</b> is the limit for an infinitely thin wire with a sine current. A real wire gives more: approximately 85 + j48 &Omega; at a = 0.001 &lambda;.</li>
+            </ul>
+            <p class="note">Method: triangle current basis on the joints between segments (the wire form of RWG), pulse testing (Harrington 1968). ΔZ = |Z(N) &minus; Z(N/2)| / |Z(N)|, the MoM form of &Delta;S. The limit is 2&middot;Z(200) &minus; Z(100). Checked against the Python reference solver (difference less than 0.001 &Omega;) and AN-SOF (97.6 + j54.1 &Omega; against 97.59 + j54.03 &Omega;).</p>
+          </details>
+        </div>
+      </div>
+
+      <div class="twoconv">
+        <svg viewBox="0 0 150 70" role="img" aria-label="Iterative solver residual falls below the tolerance"><path d="M8 10 L30 22 L52 31 L74 42 L96 50 L118 56 L140 61" fill="none" stroke="var(--c-fem)" stroke-width="2.5"/><path d="M8 52 H142" stroke="var(--ok)" stroke-dasharray="4 3"/><text x="8" y="68" font-size="9" fill="var(--muted)" font-family="JetBrains Mono, monospace">residual vs iteration</text></svg>
+        <p><b>Two different tests.</b> An iterative solver (GMRES with MLFMM) stops when its residual is small. That only means Z&middot;I = V is solved on this mesh. It does not tell you if the mesh is fine enough. Only a finer mesh shows that the answer has converged.</p>
+        <svg viewBox="0 0 150 70" role="img" aria-label="The answer approaches its limit as the mesh gets finer"><path d="M8 58 C30 30 60 22 140 16" fill="none" stroke="var(--c-mom3d)" stroke-width="2.5"/><path d="M8 13 H142" stroke="var(--muted)" stroke-dasharray="4 3"/><text x="8" y="68" font-size="9" fill="var(--muted)" font-family="JetBrains Mono, monospace">answer vs mesh</text></svg>
+      </div>
+
+      <h3 class="demo-h m-mom3d"><span class="tagx">Edges</span><span style="color:var(--ink)">The charge crowds at the edges</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Square plate, 1 m: charge on each cell and capacitance error (computed)</p>
+          <div class="plotbox"><canvas id="m2-cv" class="fit" role="img" aria-label="Heat map of the charge on a square plate, and the capacitance error against the number of unknowns for a uniform and an edge-graded mesh"></canvas></div>
+          <p class="legend2"><span style="color:var(--c-q2d)"><i></i>uniform mesh</span><span class="m-mom3d"><i></i>edge-graded mesh</span></p>
+          <div class="slider"><label for="m2-n">Cells along each side: <span id="m2-nv" class="mono"></span></label><input type="range" id="m2-n" min="0" max="12" step="1" value="7"></div>
+          <div class="seg" id="m2-mesh" role="radiogroup" aria-label="Mesh"><button type="button" role="radio" data-v="0">Uniform</button><button type="button" role="radio" data-v="1">Edge-graded</button></div>
+        </div>
+        <div class="card">
+          <p>Near a metal edge, the charge and the current along the edge increase sharply. A uniform mesh misses this. Small cells at the edges fix it. This is why planar tools add an edge mesh.</p>
+          <div class="readout">
+            <div><span id="m2-cul" class="nt">Uniform</span><b id="m2-cu"></b></div>
+            <div><span id="m2-cgl" class="nt">Edge-graded</span><b id="m2-cg"></b></div>
+            <div><span>Unknowns</span><b id="m2-N"></b></div>
+          </div>
+          <p class="note">Error against 40.811 pF (Read 1997). The uniform error halves each time the cells double: first order. Grading is about second order. Electrostatic, but the edge physics is the same as for the RF current.</p>
+        </div>
+      </div>
+
+      <h3 class="demo-h m-mom3d"><span class="tagx">Cost</span><span style="color:var(--ink)">Why MoM users do not refine everywhere</span></h3>
+      <div class="conv">
+        <div class="panel">
+          <p class="eyebrow">Dense matrix: how the cost grows with a finer mesh</p>
+          <div class="plotbox"><canvas id="mom-cv" class="fit" role="img" aria-label="Triangle mesh of one square wavelength, and plots of matrix memory and solve time against mesh density"></canvas></div>
+          <p class="legend2"><span><i class="dot"></i>unknowns N</span><span style="color:var(--field)"><i></i>matrix memory, N&sup2;</span><span class="m-mom3d"><i class="dash"></i>direct solve time, N&sup3;</span></p>
+          <div class="slider"><label for="mom-n">Mesh density: <span id="mom-nv" class="mono"></span></label><input type="range" id="mom-n" min="5" max="40" step="1" value="10"></div>
+          <div class="row"><div class="chips" id="mom-area" role="radiogroup" aria-label="Structure"></div><button class="btn" type="button" id="mom-half">Halve the edge length</button></div>
+        </div>
+        <div class="card">
+          <p class="stab" style="border-left-color:var(--c-mom3d)"><b>Halve the edge length:</b> 4 &times; the unknowns, 16 &times; the memory, 64 &times; the direct-solve time.</p>
+          <div class="readout">
+            <div><span>Unknowns N</span><b id="mom-N"></b></div>
+            <div><span>Matrix memory</span><b id="mom-mem"></b></div>
+            <div><span>Solve, 1 TFLOP/s</span><b id="mom-tw"></b></div>
+            <div><span>Solve, this browser</span><b id="mom-tb"></b></div>
+          </div>
+          <p class="status" id="mom-x" role="status"></p>
+          <p class="note">N &asymp; 3.46 &middot; A / h&sup2; unknowns, 16 bytes for each matrix value, (8/3)&middot;N&sup3; operations for LU. Browser time: measured on this device, scaled as N&sup3;. For large models, MLFMM and ACA cut the cost to near N log N.</p>
+        </div>
       </div>
     </div>
   </section>
@@ -625,51 +832,50 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   <!-- PICKER -->
   <section id="picker" aria-labelledby="pk-h">
     <div class="read"><h2 id="pk-h">Your problem</h2>
-      <p>Describe your problem. The picker gives a score to six solver families with the rules on this page. Then it lists the tools to look at first. Use the result as a first step. It is not a final decision.</p></div>
+      <p>Drag the point to your size and frequency. Press the chips that fit your problem. The ranking and the tools change at once. Use the result as a first step, not a final decision.</p></div>
+    <div class="pkhead">
+      <div class="pkpre" id="pk-presets" role="group" aria-label="Examples"></div>
+      <p class="loaded" id="pk-loaded" role="status"></p>
+    </div>
     <div class="picker">
-      <form class="form" id="pk" onsubmit="return false">
-        <div class="field"><span class="lab2">Start from an example</span><div class="presets" id="pk-presets"></div><p class="loaded" id="pk-loaded" role="status"></p></div>
-        <div class="field">
-          <label for="pk-geo">Type of structure</label>
-          <select id="pk-geo">
-            <option value="planar">Planar layers (MMIC, RFIC, PCB traces)</option>
-            <option value="wire">Thin wires (dipoles, Yagis, HF arrays)</option>
-            <option value="metal3d">3D metal in open space (vehicle, aircraft, dish)</option>
-            <option value="mixed3d">3D, many materials (packages, connectors, cavities)</option>
-            <option value="inhomog">Inhomogeneous or dispersive bodies (tissue, soil, optics)</option>
-            <option value="crosssec">Uniform line (only the cross-section is important)</option>
-          </select>
+      <div class="pkctl">
+        <div class="panel">
+          <div class="padtop"><p class="eyebrow">Size and frequency: drag the point</p><p class="elec" id="pk-elec"></p></div>
+          <div class="padbox" id="pk-padbox">
+            <canvas id="pk-pad" aria-hidden="true"></canvas>
+            <div class="pdot" id="pk-dot" tabindex="0" role="slider" aria-roledescription="2D slider" aria-label="Size and frequency. Left and right arrows change the size, up and down arrows change the frequency. Hold Shift for big steps." aria-valuemin="-6" aria-valuemax="3"></div>
+          </div>
+          <p class="note">Colour: the method that wins at each point, for your other choices. Diagonal lines: size in wavelengths.</p>
+          <div class="padin">
+            <div class="field"><span class="lbl" id="lb-size">Largest dimension</span>
+              <span class="pair"><input id="pk-size" type="number" min="0" step="any" value="30" aria-labelledby="lb-size">
+                <select id="pk-sizeu" aria-label="Size unit"><option value="1e-6">µm</option><option value="1e-3" selected>mm</option><option value="1e-2">cm</option><option value="1">m</option></select></span></div>
+            <div class="field"><span class="lbl" id="lb-freq">Highest frequency</span>
+              <span class="pair"><input id="pk-freq" type="number" min="0" step="any" value="5" aria-labelledby="lb-freq">
+                <select id="pk-frequ" aria-label="Frequency unit"><option value="1e6">MHz</option><option value="1e9" selected>GHz</option><option value="1e12">THz</option></select></span></div>
+            <div class="field er"><span class="lbl" id="lb-er">Highest &epsilon;<sub>r</sub></span>
+              <span class="pair"><input id="pk-err" type="range" min="0" max="2" step="0.01" value="0.54" aria-label="Highest relative permittivity, slider"><input id="pk-er" type="number" min="1" step="any" value="3.5" aria-labelledby="lb-er"></span></div>
+          </div>
+          <p class="hint" id="pk-hint" hidden></p>
         </div>
-        <div class="field"><span class="lab2">Largest dimension</span>
-          <div class="pair"><input id="pk-size" type="number" min="0" step="any" value="30" aria-label="Largest dimension">
-            <select id="pk-sizeu" aria-label="Size unit"><option value="1e-6">µm</option><option value="1e-3" selected>mm</option><option value="1e-2">cm</option><option value="1">m</option></select></div></div>
-        <div class="field"><span class="lab2">Highest frequency</span>
-          <div class="pair"><input id="pk-freq" type="number" min="0" step="any" value="5" aria-label="Highest frequency">
-            <select id="pk-frequ" aria-label="Frequency unit"><option value="1e6">MHz</option><option value="1e9" selected>GHz</option><option value="1e12">THz</option></select></div></div>
-        <div class="field"><label for="pk-er">Highest relative permittivity &epsilon;<sub>r</sub></label>
-          <input id="pk-er" type="number" min="1" step="any" value="3.5"></div>
-        <div class="elec" id="pk-elec"></div>
-        <p class="note" id="pk-hint" hidden></p>
-        <div class="field">
-          <label for="pk-need">Result that you need</label>
-          <select id="pk-need">
-            <option value="sparams">S-parameters at ports</option>
-            <option value="radiation" selected>Radiation pattern and gain</option>
-            <option value="rcs">Radar cross-section (scattering)</option>
-            <option value="transient">Transient response (pulses, ESD, GPR)</option>
-            <option value="modes">Resonances, modes and Q</option>
-            <option value="nearfield">Fields in materials (SAR, heat)</option>
-          </select>
+        <div class="panel cgs">
+          <div class="cg"><span class="lbl" id="lb-geo">Structure</span><div class="chips" id="pk-geo" aria-labelledby="lb-geo"></div><p class="ex" id="pk-geox"></p></div>
+          <div class="cg"><span class="lbl" id="lb-need">Result</span><div class="chips" id="pk-need" aria-labelledby="lb-need"></div></div>
+          <div class="cg"><span class="lbl" id="lb-band">Band</span><div class="chips" role="group" aria-labelledby="lb-band"><button type="button" id="pk-bb" aria-pressed="false">Very wide band</button><button type="button" id="pk-q" aria-pressed="false" title="Q above approximately 500">High Q (&gt; 500)</button></div></div>
+          <div class="cg"><span class="lbl" id="lb-fld">Field</span><div class="chips" id="pk-fld" aria-labelledby="lb-fld"></div></div>
+          <div class="cg"><span class="lbl" id="lb-lic">Licence</span><div class="chips" id="pk-lic" aria-labelledby="lb-lic"></div></div>
+          <div class="cg"><span class="lbl" id="lb-flow">Design flow</span><div class="chips" id="pk-flow" aria-labelledby="lb-flow"></div></div>
+          <div class="cg"><span class="lbl" id="lb-cloud">Model data</span><div class="chips" role="group" aria-labelledby="lb-cloud"><button type="button" id="pk-cloud" aria-pressed="false">Can go to a vendor cloud</button></div></div>
         </div>
-        <div class="field"><label for="pk-fld">Field</label><select id="pk-fld"></select></div>
-        <div class="pair" style="grid-template-columns:1fr 1fr">
-          <div class="field"><label for="pk-lic">Licence</label><select id="pk-lic"><option value="all">Any licence</option><option value="c">Commercial</option><option value="of">Free or open source only</option></select></div>
-          <div class="field"><label for="pk-flow">Design flow</label><select id="pk-flow"><option value="">None</option><option value="ADS">Keysight ADS</option><option value="Virtuoso">Cadence Virtuoso</option><option value="Microwave Office">Microwave Office</option><option value="AEDT Circuit">Ansys AEDT</option><option value="Allegro">Cadence Allegro</option></select></div>
-        </div>
-        <div class="checks"><label><input type="checkbox" id="pk-cloud"> The model data can go to a vendor cloud</label></div>
-        <div class="checks"><label><input type="checkbox" id="pk-bb"> Very wide band</label><label><input type="checkbox" id="pk-q"> High Q (above approximately 500)</label></div>
-      </form>
-      <div class="result" id="pk-out" aria-live="polite"></div>
+      </div>
+      <button type="button" class="pkmini" id="pk-mini"></button>
+      <div class="result" id="pk-out">
+        <p class="sr" id="pk-live" aria-live="polite"></p>
+        <div class="pick" id="pk-win"></div>
+        <div class="panel"><div class="padtop"><p class="eyebrow">Relative fit</p><p class="note">Changes as you edit</p></div><div class="rank" id="pk-rank"></div></div>
+        <div class="panel" id="pk-tools"></div>
+        <details class="panel pcost" id="pk-cost"><summary id="pk-costsum"></summary><div id="pk-costbody"></div></details>
+      </div>
     </div>
   </section>
 
@@ -1945,50 +2151,466 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     $("fem-target").addEventListener("change", (e) => { FE.target = +e.target.value; femDraw(); });
   }
 
-  // ---- MoM: mesh density, unknowns and dense-matrix memory ----
-  function momDraw() {
-    const n = +$("mom-n").value, cv = $("mom-cv"), { w, h, k } = hiDPI(cv), ctx = cv.getContext("2d");
-    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, w, h);
-    const pad = 24 * k, size = Math.min(h - 2 * pad - 36 * k, w * 0.42), ox = pad, oy = pad, s = size / n;
-    ctx.fillStyle = css("--grid"); ctx.fillRect(ox, oy, size, size);
-    ctx.strokeStyle = css("--c-mom3d"); ctx.lineWidth = Math.max(0.5, Math.min(1.4, 14 / n) * k);
-    ctx.beginPath();
-    for (let i = 0; i <= n; i++) { ctx.moveTo(ox + i * s, oy); ctx.lineTo(ox + i * s, oy + size); ctx.moveTo(ox, oy + i * s); ctx.lineTo(ox + size, oy + i * s); }
-    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { ctx.moveTo(ox + i * s, oy + j * s); ctx.lineTo(ox + (i + 1) * s, oy + (j + 1) * s); }
-    ctx.stroke();
-    ctx.fillStyle = css("--muted"); ctx.font = `${11 * k}px JetBrains Mono, monospace`; ctx.fillText("1 λ", ox + size / 2 - 10 * k, oy + size + 16 * k);
-    const N = 3 * n * n - 2 * n, mem = 16 * N * N, err = 14 / (n * n) + 0.04;
-    // charts: error (left axis) and memory (right axis) against density
-    const cx0 = ox + size + 56 * k, cw = w - cx0 - 70 * k, ch = size, cy0 = oy;
-    const nx = (v) => cx0 + (v - 3) / (40 - 3) * cw;
-    const eLo = Math.log10(0.03), eHi = Math.log10(2), ey = (v) => cy0 + (eHi - Math.log10(v)) / (eHi - eLo) * ch;
-    const mLo = Math.log10(16 * 21 * 21), mHi = Math.log10(16 * Math.pow(3 * 1600 - 80, 2)), my = (v) => cy0 + (mHi - Math.log10(v)) / (mHi - mLo) * ch;
-    ctx.strokeStyle = css("--line"); ctx.lineWidth = 1; ctx.strokeRect(cx0, cy0, cw, ch);
-    ctx.strokeStyle = css("--c-mom3d"); ctx.lineWidth = 2.2 * k; ctx.beginPath();
-    for (let v = 3; v <= 40; v++) { const x = nx(v), y = ey(14 / (v * v) + 0.04); v === 3 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke();
-    ctx.strokeStyle = css("--field"); ctx.setLineDash([5 * k, 4 * k]); ctx.beginPath();
-    for (let v = 3; v <= 40; v++) { const NN = 3 * v * v - 2 * v, x = nx(v), y = my(16 * NN * NN); v === 3 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); } ctx.stroke(); ctx.setLineDash([]);
-    ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(nx(n), cy0); ctx.lineTo(nx(n), cy0 + ch); ctx.stroke();
-    [[ey(err), css("--c-mom3d")], [my(mem), css("--field")]].forEach(([y, c]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(nx(n), y, 5 * k, 0, 7); ctx.fill(); });
-    ctx.font = `${11 * k}px JetBrains Mono, monospace`;
-    ctx.fillStyle = css("--c-mom3d"); ctx.fillText("error (%)", cx0, cy0 - 8 * k);
-    ctx.fillStyle = css("--field"); ctx.fillText("memory - - -", cx0 + cw - 92 * k, cy0 - 8 * k);
-    ctx.fillStyle = css("--muted"); [5, 10, 20, 40].forEach((v) => ctx.fillText(String(v), nx(v) - 6 * k, cy0 + ch + 16 * k));
-    ctx.fillText("triangles per λ", cx0 + cw / 2 - 50 * k, cy0 + ch + 33 * k);
-    ctx.fillStyle = css("--c-mom3d"); [0.05, 0.1, 0.5, 1].forEach((v) => ctx.fillText(String(v), cx0 - 40 * k, ey(v) + 4 * k));
-    ctx.fillStyle = css("--field"); [[1e4, "10 kB"], [1e6, "1 MB"], [1e8, "100 MB"], [1e10, "10 GB"], [1e12, "1 TB"]].forEach(([v, t]) => { const y = my(v); if (y > cy0 + 6 && y < cy0 + ch) ctx.fillText(t, cx0 + cw + 6 * k, y + 4 * k); });
-    $("mom-nv").textContent = `${n} per λ (edge length λ/${n})`;
-    $("mom-N").textContent = fmtInt(N); $("mom-mem").textContent = fmtBytes(mem); $("mom-err").textContent = err.toFixed(2) + " %";
+  // ---- shared plot helpers (CSS-pixel canvases, see fit()) ----
+  function frame(ctx, b, o) {
+    const fx = (v) => (o.xlog ? Math.log10(v) : v), fy = (v) => (o.ylog ? Math.log10(v) : v);
+    const X = (v) => b.l + (fx(v) - fx(o.x0)) / (fx(o.x1) - fx(o.x0)) * b.w;
+    const Y = (v) => b.t + (fy(o.y1) - fy(v)) / (fy(o.y1) - fy(o.y0)) * b.h;
+    ctx.lineWidth = 1; ctx.font = "10px JetBrains Mono, monospace"; ctx.fillStyle = css("--muted");
+    (o.xt || []).forEach(([v, t]) => { const x = X(v); ctx.strokeStyle = css("--grid"); ctx.beginPath(); ctx.moveTo(x, b.t); ctx.lineTo(x, b.t + b.h); ctx.stroke(); if (t) { ctx.textAlign = "center"; ctx.fillText(t, x, b.t + b.h + 13); } });
+    (o.yt || []).forEach(([v, t]) => { const y = Y(v); ctx.strokeStyle = css("--grid"); ctx.beginPath(); ctx.moveTo(b.l, y); ctx.lineTo(b.l + b.w, y); ctx.stroke(); if (t) { ctx.textAlign = "right"; ctx.fillText(t, b.l - 5, y + 3.5); } });
+    ctx.strokeStyle = css("--line"); ctx.strokeRect(b.l + 0.5, b.t + 0.5, b.w - 1, b.h - 1);
+    if (o.xl) { ctx.textAlign = "right"; ctx.fillText(o.xl, b.l + b.w, b.t + b.h + 26); }
+    if (o.yl) { ctx.textAlign = "left"; ctx.fillText(o.yl, b.l, b.t - 6); }
+    ctx.textAlign = "left";
+    return { X, Y };
   }
-  function initMoM() { $("mom-n").addEventListener("input", momDraw); momDraw(); }
+  function pline(ctx, pts, color, w, dash) {
+    if (pts.length < 2) return;
+    ctx.strokeStyle = color; ctx.lineWidth = w || 2; ctx.setLineDash(dash || []); ctx.beginPath();
+    pts.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.stroke(); ctx.setLineDash([]);
+  }
+  const fmtDur = (s) => s < 1e-3 ? +(s * 1e6).toPrecision(2) + " µs" : s < 1 ? +(s * 1e3).toPrecision(2) + " ms" : s < 120 ? +s.toPrecision(2) + " s" : s < 7200 ? +(s / 60).toPrecision(2) + " min" : s < 172800 ? +(s / 3600).toPrecision(2) + " h" : s < 6e7 ? +(s / 86400).toPrecision(2) + " days" : +(s / 3.15e7).toPrecision(2) + " years";
+  function radioSeg(el, get, set) {
+    const btns = [...el.querySelectorAll("button")];
+    const sync = () => btns.forEach((b) => { const on = b.dataset.v === String(get()); b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; });
+    btns.forEach((b, i) => {
+      b.addEventListener("click", () => { set(b.dataset.v); sync(); });
+      b.addEventListener("keydown", (e) => { const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return; e.preventDefault(); const nb = btns[(i + d + btns.length) % btns.length]; nb.focus(); nb.click(); });
+    });
+    sync(); return sync;
+  }
+  const pct = (v, d = 2) => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(d) + " %";
 
+  // ---- FDTD time convergence: ring-down of one resonance, e^(-pi t / Q) sin(2 pi t), t in RF periods ----
+  // stored energy falls as e^(-2 pi t / Q): X dB takes X ln10 / 10 * Q / (2 pi) = 0.0366 X Q periods
+  const f1Periods = (x, Q) => x * Math.LN10 / 10 * Q / (2 * Math.PI);
+  function f1Spec(nu, a, T) { // |X(nu)| for the record from 0 to T (T = Infinity: the full record); nu = f / f0
+    const part = (b) => { let nr = 1, ni = 0; if (isFinite(T)) { const m = Math.exp(-a * T); nr = 1 - m * Math.cos(b * T); ni = m * Math.sin(b * T); } const d = a * a + b * b; return [(nr * a + ni * b) / d, (ni * a - nr * b) / d]; };
+    const p = part(2 * Math.PI * (nu - 1)), q = part(2 * Math.PI * (nu + 1));
+    return Math.hypot(p[0] - q[0], p[1] - q[1]) / 2;
+  }
+  function f1Draw() {
+    const ct = $("f1-t"); if (!ct.offsetParent) return;
+    const Q = +(10 ** +$("f1-q").value).toPrecision(2), Xdb = +$("f1-x").value, a = Math.PI / Q;
+    const Ts = f1Periods(Xdb, Q), Tm = f1Periods(85, Q), narrow = narrowMQ.matches;
+    $("f1-qv").textContent = fmtInt(Q); $("f1-xv").textContent = `${Xdb} dB`;
+    $("f1-n").textContent = `${Ts < 10 ? Ts.toFixed(1) : fmtInt(Ts)} periods`; $("f1-steps").textContent = fmtCount(Ts * 104);
+    const ink = css("--ink"), muted = css("--muted"), col = css("--c-fdtd");
+    // time: probe signal (top) and energy in dB (bottom)
+    let { ctx, W, H } = fit(ct, narrow ? 0.9 : 0.56);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const l = 40, r = 10, bw = W - l - r, h1 = H * 0.34, b1 = { l, t: 22, w: bw, h: h1 }, b2 = { l, t: h1 + 50, w: bw, h: H - h1 - 50 - 30 };
+    const xt = []; const stp = 10 ** Math.floor(Math.log10(Tm / 3)), st = Tm / stp > 12 ? stp * 5 : Tm / stp > 6 ? stp * 2 : stp; for (let v = 0; v <= Tm; v += st) xt.push([v, fmtInt(v)]);
+    const A = frame(ctx, b1, { x0: 0, x1: Tm, y0: -1.1, y1: 1.1, xt: xt.map(([v]) => [v, ""]), yt: [[0, "0"]], yl: "probe signal" });
+    const Bf = frame(ctx, b2, { x0: 0, x1: Tm, y0: -90, y1: 0, xt, yt: [[0, "0"], [-30, "−30"], [-60, "−60"], [-90, "−90"]], yl: "stored energy (dB)", xl: "time (RF periods)" });
+    const pxPer = bw / Tm, env = (t) => Math.exp(-a * t);
+    [[0, Ts, 1], [Ts, Tm, 0.22]].forEach(([t0, t1, al]) => {
+      ctx.globalAlpha = al;
+      if (pxPer > 4) { const pts = []; for (let t = t0; t <= t1; t += 1 / 24) pts.push([A.X(t), A.Y(env(t) * Math.sin(2 * Math.PI * t))]); pline(ctx, pts, col, 1.6); }
+      else { ctx.fillStyle = col; ctx.beginPath(); const n = 160; for (let i = 0; i <= n; i++) { const t = t0 + (t1 - t0) * i / n; i ? ctx.lineTo(A.X(t), A.Y(env(t))) : ctx.moveTo(A.X(t), A.Y(env(t))); } for (let i = n; i >= 0; i--) { const t = t0 + (t1 - t0) * i / n; ctx.lineTo(A.X(t), A.Y(-env(t))); } ctx.fill(); }
+      ctx.globalAlpha = 1;
+    });
+    // energy line, threshold, stop point
+    pline(ctx, [[Bf.X(0), Bf.Y(0)], [Bf.X(Ts), Bf.Y(-Xdb)]], col, 2.5);
+    pline(ctx, [[Bf.X(Ts), Bf.Y(-Xdb)], [Bf.X(Tm), Bf.Y(-85)]], col, 2, [3, 4]);
+    pline(ctx, [[b2.l, Bf.Y(-Xdb)], [b2.l + b2.w, Bf.Y(-Xdb)]], ink, 1, [6, 4]);
+    [A, Bf].forEach((P, i) => { const bb = i ? b2 : b1; ctx.fillStyle = css("--grid"); ctx.globalAlpha = 0.45; ctx.fillRect(P.X(Ts), bb.t + 1, bb.l + bb.w - P.X(Ts) - 1, bb.h - 2); ctx.globalAlpha = 1; pline(ctx, [[P.X(Ts), bb.t], [P.X(Ts), bb.t + bb.h]], ink, 1.5); });
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(Bf.X(Ts), Bf.Y(-Xdb), 5, 0, 7); ctx.fill();
+    ctx.font = "600 10.5px JetBrains Mono, monospace"; ctx.fillStyle = ink;
+    const lab = `run stops: −${Xdb} dB`, lw = ctx.measureText(lab).width, lx = Math.min(Bf.X(Ts) + 6, b2.l + b2.w - lw - 4);
+    ctx.fillText(lab, lx, Math.max(b2.t + 12, Bf.Y(-Xdb) - 8));
+    ctx.fillStyle = muted; ctx.font = "10px JetBrains Mono, monospace"; if (b2.l + b2.w - Bf.X(Ts) > 90) ctx.fillText("not computed", Bf.X(Ts) + 6, b2.t + b2.h - 8);
+    // spectrum near f0: full record against the stopped record
+    const cf = $("f1-f"); ({ ctx, W, H } = fit(cf, narrow ? 0.62 : 0.38));
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const w = 6 / Q, ref1 = f1Spec(1, a, Infinity), bs = { l: 40, t: 22, w: W - 50, h: H - 52 };
+    const fmtNu = (v) => (v === 1 ? "f₀" : (v > 1 ? "+" : "−") + (Math.abs(v - 1) * 100).toPrecision(2) + " %");
+    const S = frame(ctx, bs, { x0: 1 - w, x1: 1 + w, y0: -40, y1: 3, xt: [[1 - 4 / Q, fmtNu(1 - 4 / Q)], [1, "f₀"], [1 + 4 / Q, fmtNu(1 + 4 / Q)]], yt: [[0, "0"], [-20, "−20"], [-40, "−40"]], yl: "|S| (dB, re the full peak)", xl: "frequency" });
+    const pr = [], pt = []; let dev = 0;
+    for (let i = 0; i <= 400; i++) {
+      const nu = 1 - w + 2 * w * i / 400, dr = 20 * Math.log10(f1Spec(nu, a, Infinity) / ref1), dt = 20 * Math.log10(f1Spec(nu, a, Ts) / ref1);
+      pr.push([S.X(nu), S.Y(Math.max(-40, dr))]); pt.push([S.X(nu), S.Y(Math.max(-40, Math.min(3, dt)))]);
+      if (dr > -30) dev = Math.max(dev, Math.abs(dt - dr));
+    }
+    ctx.save(); ctx.beginPath(); ctx.rect(bs.l, bs.t, bs.w, bs.h); ctx.clip();
+    pline(ctx, pr, ink, 1.5, [5, 4]); pline(ctx, pt, col, 2.2); ctx.restore();
+    const pk = 20 * Math.log10(f1Spec(1, a, Ts) / ref1);
+    $("f1-pk").textContent = `${pk >= -0.005 ? "0.00" : "−" + Math.abs(pk).toFixed(2)} dB`;
+    const stt = $("f1-status");
+    if (dev < 0.5) { stt.className = "status ok"; stt.textContent = `Long enough: the spectrum agrees with the full record (largest difference ${dev.toFixed(2)} dB).`; }
+    else { stt.className = "status bad"; stt.textContent = `Stopped too early: the peak is ${Math.abs(pk).toFixed(1)} dB low and the spectrum has ripple of up to ${dev.toFixed(1)} dB.`; }
+  }
+  function initF1() { ["f1-q", "f1-x"].forEach((id) => $(id).addEventListener("input", f1Draw)); }
+
+  // ---- FDTD space convergence: numerical dispersion along an axis of a 3D Yee grid ----
+  // sin(w dt / 2) / (c dt) = sin(k~ dx / 2) / dx, with w dt = 2 pi S / N
+  function dispVel(N, S) { return (2 * Math.PI / N) / (2 * Math.asin(Math.min(1, Math.sin(Math.PI * S / N) / S))); }
+  function dispDraw() {
+    const cv = $("disp-cv"); if (!cv.offsetParent) return;
+    const N = +$("disp-n").value, S = 0.99 / Math.sqrt(3), v = dispVel(N, S), f = Math.PI ** 2 / 6 * (1 - S * S) / (N * N), ph = 3600 * (1 / v - 1);
+    $("disp-nv").textContent = `${N} (cell = λ/${N})`;
+    $("disp-e").textContent = pct((v - 1) * 100); $("disp-f").textContent = (f * 100).toFixed(2) + " %"; $("disp-p").textContent = ph.toFixed(0) + "°";
+    const { ctx, W, H } = fit(cv, narrowMQ.matches ? 0.5 : 0.3);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const b = { l: 14, t: 16, w: W - 28, h: H - 44 }, x0 = 8.6, x1 = 11.4, lag = 10 * (1 - v);
+    const P = frame(ctx, b, { x0, x1, y0: -1.15, y1: 1.15, xt: [[9, "9 λ"], [10, "10 λ"], [11, "11 λ"]], xl: "distance travelled" });
+    const wave = (c) => { const pts = []; for (let x = x0; x <= x1; x += 0.004) pts.push([P.X(x), P.Y(Math.exp(-(((x - c) / 0.55) ** 2)) * Math.cos(2 * Math.PI * (x - c)))]); return pts; };
+    ctx.save(); ctx.beginPath(); ctx.rect(b.l, b.t, b.w, b.h); ctx.clip();
+    ctx.strokeStyle = css("--grid"); for (let i = Math.ceil(x0 * N); i <= x1 * N; i++) { const x = P.X(i / N); ctx.beginPath(); ctx.moveTo(x, b.t + b.h - 6); ctx.lineTo(x, b.t + b.h); ctx.stroke(); }
+    pline(ctx, wave(10), css("--ink"), 1.5, [5, 4]); pline(ctx, wave(10 - lag), css("--c-fdtd"), 2.4); ctx.restore();
+    ctx.fillStyle = css("--muted"); ctx.font = "10px JetBrains Mono, monospace"; ctx.fillText(`grid wave is ${(lag).toFixed(3)} λ behind`, b.l + 6, b.t + 12);
+  }
+  function initDisp() { $("disp-n").addEventListener("input", dispDraw); }
+
+  /* ---- MoM numerics, ported from the Python reference solvers (mom-convergence/reference-solvers) ---- */
+  function gaussLegendre(n) {
+    const x = new Float64Array(n), w = new Float64Array(n);
+    for (let i = 0; i < Math.ceil(n / 2); i++) {
+      let z = Math.cos(Math.PI * (i + 0.75) / (n + 0.5)), pp = 1;
+      for (let it = 0; it < 100; it++) {
+        let p1 = 1, p2 = 0;
+        for (let j = 1; j <= n; j++) { const p3 = p2; p2 = p1; p1 = ((2 * j - 1) * z * p2 - (j - 1) * p3) / j; }
+        pp = n * (z * p1 - p2) / (z * z - 1);
+        const z1 = z; z = z1 - p1 / pp; if (Math.abs(z - z1) < 1e-15) break;
+      }
+      x[i] = -z; x[n - 1 - i] = z; w[i] = w[n - 1 - i] = 2 / ((1 - z * z) * pp * pp);
+    }
+    return [x, w];
+  }
+  const GQ = {}; const gq = (n) => GQ[n] || (GQ[n] = gaussLegendre(n));
+  const ETA = 119.9169832 * Math.PI;
+  // exact (tube) kernel: int w(z') g(off - z') dz' on [lo, hi], g averaged over the wire circumference; 1/R is subtracted and integrated analytically
+  function segExact(off, lo, hi, a, k, D, tri) {
+    // far from the source the integrand is smooth: fewer angle points give the same result. Keep 32 points along z: the charge term takes a second difference of these values
+    const far = Math.abs(off) > hi + 2 * D, nt = far ? 12 : 48, nz = 32, [tg, tw] = gq(nt), [zg, zw] = gq(nz);
+    const pts = lo < off && off < hi ? [lo, off, hi] : [lo, hi];
+    let re = 0, im = 0;
+    for (let s = 0; s < pts.length - 1; s++) {
+      const p0 = pts[s], p1 = pts[s + 1], h = 0.5 * (p1 - p0), c = 0.5 * (p1 + p0);
+      const wo = !tri ? 1 : (p0 <= off && off <= p1 ? 1 - Math.abs(off) / D : 0);
+      for (let i = 0; i < nt; i++) {
+        const t = 0.5 * (tg[i] + 1), phi = Math.PI * t * t, dphi = Math.PI * t * tw[i];
+        const rho = 2 * a * Math.sin(phi / 2), rho2 = rho * rho;
+        let sr = 0, si = 0;
+        for (let j = 0; j < nz; j++) {
+          const zp = h * zg[j] + c, w = h * zw[j], wf = tri ? 1 - Math.abs(zp) / D : 1;
+          const dz = off - zp, R = Math.sqrt(dz * dz + rho2), kr = k * R;
+          sr += ((Math.cos(kr) - 1) * wf + (wf - wo)) / R * w;
+          si -= Math.sin(kr) / R * wf * w;
+        }
+        const an = wo * (Math.asinh((off - p0) / rho) - Math.asinh((off - p1) / rho));
+        re += (sr + an) * dphi / Math.PI; im += si * dphi / Math.PI;
+      }
+    }
+    return [re / (4 * Math.PI), im / (4 * Math.PI)];
+  }
+  // reduced (thin-wire) kernel, R = sqrt(z^2 + a^2): pulse integral, with subtraction near the source
+  function psiReduced(off, D, a, k) {
+    const [xg, wg] = gq(16), near = Math.abs(off) < D; let re = 0, im = 0;
+    for (let j = 0; j < 16; j++) {
+      const zp = 0.5 * D * xg[j], w = 0.5 * D * wg[j], dz = off - zp, R = Math.sqrt(dz * dz + a * a), kr = k * R;
+      re += w * (Math.cos(kr) - (near ? 1 : 0)) / R; im -= w * Math.sin(kr) / R;
+    }
+    if (near) re += Math.asinh((off + D / 2) / a) - Math.asinh((off - D / 2) / a);
+    return [re / (4 * Math.PI * D), im / (4 * Math.PI * D)];
+  }
+  function triReduced(off, D, a, k) {
+    const [xg, wg] = gq(24); let re = 0, im = 0;
+    [[-D, 0], [0, D]].forEach(([lo, hi]) => {
+      const pts = lo < off && off < hi ? [lo, off, hi] : [lo, hi];
+      for (let s = 0; s < pts.length - 1; s++) {
+        const p0 = pts[s], p1 = pts[s + 1];
+        for (let j = 0; j < 24; j++) {
+          const zp = 0.5 * (p1 - p0) * xg[j] + 0.5 * (p1 + p0), w = 0.5 * (p1 - p0) * wg[j] * (1 - Math.abs(zp) / D);
+          const dz = off - zp, R = Math.sqrt(dz * dz + a * a), kr = k * R;
+          re += w * Math.cos(kr) / (4 * Math.PI * R); im -= w * Math.sin(kr) / (4 * Math.PI * R);
+        }
+      }
+    });
+    return [re / D, im / D];
+  }
+  // complex dense LU solve with partial pivoting. A: Float64Array(2n*n) (re, im), b: Float64Array(2n). Both are overwritten
+  function cSolve(A, b, n) {
+    for (let c = 0; c < n; c++) {
+      let p = c, best = -1;
+      for (let r = c; r < n; r++) { const i = 2 * (r * n + c), v = A[i] * A[i] + A[i + 1] * A[i + 1]; if (v > best) { best = v; p = r; } }
+      if (p !== c) {
+        for (let j = 0; j < 2 * n; j++) { const t = A[2 * c * n + j]; A[2 * c * n + j] = A[2 * p * n + j]; A[2 * p * n + j] = t; }
+        for (let j = 0; j < 2; j++) { const t = b[2 * c + j]; b[2 * c + j] = b[2 * p + j]; b[2 * p + j] = t; }
+      }
+      const dr = A[2 * (c * n + c)], di = A[2 * (c * n + c) + 1], dd = dr * dr + di * di;
+      for (let r = c + 1; r < n; r++) {
+        const i = 2 * (r * n + c), ar = A[i], ai = A[i + 1];
+        const fr = (ar * dr + ai * di) / dd, fi = (ai * dr - ar * di) / dd;
+        if (fr === 0 && fi === 0) continue;
+        for (let j = c + 1; j < n; j++) { const s = 2 * (c * n + j), q = 2 * (r * n + j), xr = A[s], xi = A[s + 1]; A[q] -= fr * xr - fi * xi; A[q + 1] -= fr * xi + fi * xr; }
+        const br = b[2 * c], bi = b[2 * c + 1]; b[2 * r] -= fr * br - fi * bi; b[2 * r + 1] -= fr * bi + fi * br;
+      }
+    }
+    for (let r = n - 1; r >= 0; r--) {
+      let sr = b[2 * r], si = b[2 * r + 1];
+      for (let j = r + 1; j < n; j++) { const q = 2 * (r * n + j), xr = b[2 * j], xi = b[2 * j + 1]; sr -= A[q] * xr - A[q + 1] * xi; si -= A[q] * xi + A[q + 1] * xr; }
+      const dr = A[2 * (r * n + r)], di = A[2 * (r * n + r) + 1], dd = dr * dr + di * di;
+      b[2 * r] = (sr * dr + si * di) / dd; b[2 * r + 1] = (si * dr - sr * di) / dd;
+    }
+    return b;
+  }
+  // thin-wire dipole: length L and radius a in wavelengths, Nseg (even) segments; triangle basis on the inner nodes, pulse testing (Harrington 1968)
+  // gap: null = delta gap at the centre node, or a fixed gap width; kernel: "exact" or "reduced"
+  function solveDipole(Nseg, L, a, gap, kernel) {
+    const k = 2 * Math.PI, wmu = k * ETA, weps = k / ETA, D = L / Nseg, M = Nseg - 1;
+    const P = [], A = [];
+    for (let d = 0; d <= M; d++) P.push(kernel === "exact" ? segExact(d * D, -D / 2, D / 2, a, k, D, false).map((v) => v / D) : psiReduced(d * D, D, a, k));
+    for (let d = 0; d < M; d++) A.push(kernel === "exact" ? segExact(d * D, -D, D, a, k, D, true).map((v) => v / D) : triReduced(d * D, D, a, k));
+    const zr = new Float64Array(M), zi = new Float64Array(M);
+    for (let d = 0; d < M; d++) {
+      const qr = 2 * P[d][0] - P[Math.abs(d - 1)][0] - P[d + 1][0], qi = 2 * P[d][1] - P[Math.abs(d - 1)][1] - P[d + 1][1];
+      zr[d] = -wmu * D * D * A[d][1] + qi / weps; zi[d] = wmu * D * D * A[d][0] - qr / weps;
+    }
+    const Z = new Float64Array(2 * M * M), V = new Float64Array(2 * M), zn = [];
+    for (let m = 0; m < M; m++) for (let n = 0; n < M; n++) { const d = Math.abs(m - n), i = 2 * (m * M + n); Z[i] = zr[d]; Z[i + 1] = zi[d]; }
+    for (let m = 0; m < M; m++) {
+      zn.push(-L / 2 + D * (m + 1));
+      if (gap == null) V[2 * m] = m === (M >> 1) ? 1 : 0;
+      else { const lo = zn[m] - D / 2, hi = zn[m] + D / 2; V[2 * m] = Math.max(0, Math.min(hi, gap / 2) - Math.max(lo, -gap / 2)) / gap; }
+    }
+    const t0 = performance.now(); const I = cSolve(Z, V, M); const tLU = performance.now() - t0;
+    const c = M >> 1, ir = I[2 * c], ii = I[2 * c + 1], dd = ir * ir + ii * ii;
+    return { R: ir / dd, X: -ii / dd, I, zn, tLU };
+  }
+  // electrostatic 1 m square plate: pulse charge on each rectangle, point matching at the centres (Harrington 1968). C in pF
+  const EPS0 = 8.8541878128e-12;
+  function plateEdges(n, graded) { const e = []; for (let i = 0; i <= n; i++) e.push(graded ? 0.5 * (1 - Math.cos(Math.PI * i / n)) : i / n); return e; }
+  function solvePlate(n, graded) {
+    // the plate has mirror symmetry in x and y: one unknown for each group of up to 4 mirror cells
+    const e = plateEdges(n, graded), h = Math.ceil(n / 2), K = h * h, s = 1 / (4 * Math.PI * EPS0);
+    const cls = (i) => Math.min(i, n - 1 - i);
+    const F = (x, y) => { const r = Math.sqrt(x * x + y * y); return x * Math.log(y + r + 1e-300) + y * Math.log(x + r + 1e-300); };
+    const B = new Float64Array(K * K), q = new Float64Array(K).fill(1), T = new Float64Array((n + 1) * (n + 1));
+    for (let a = 0; a < h; a++) for (let b = 0; b < h; b++) {
+      const row = (a * h + b) * K, x0 = (e[a] + e[a + 1]) / 2, y0 = (e[b] + e[b + 1]) / 2, m = n + 1;
+      for (let i = 0; i <= n; i++) for (let j = 0; j <= n; j++) T[i * m + j] = F(e[i] - x0, e[j] - y0);
+      for (let i = 0; i < n; i++) {
+        const ci = cls(i) * h;
+        for (let j = 0; j < n; j++) B[row + ci + cls(j)] += (T[(i + 1) * m + j + 1] - T[i * m + j + 1] - T[(i + 1) * m + j] + T[i * m + j]) * s;
+      }
+    }
+    for (let c = 0; c < K; c++) { // diagonally dominant: no pivoting
+      const d = B[c * K + c];
+      for (let r = c + 1; r < K; r++) { const f = B[r * K + c] / d; if (!f) continue; for (let j = c + 1; j < K; j++) B[r * K + j] -= f * B[c * K + j]; q[r] -= f * q[c]; }
+    }
+    for (let r = K - 1; r >= 0; r--) { let v = q[r]; for (let j = r + 1; j < K; j++) v -= B[r * K + j] * q[j]; q[r] = v / B[r * K + r]; }
+    const dens = new Float64Array(n * n); let C = 0;
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const v = q[cls(i) * h + cls(j)]; dens[i * n + j] = v; C += v * (e[i + 1] - e[i]) * (e[j + 1] - e[j]); }
+    return { C: C * 1e12, q: dens, e, n };
+  }
+
+  // ---- M1: dipole convergence lab (computed live) ----
+  const M1N = [4, 6, 8, 10, 12, 16, 20, 26, 30, 40, 50, 60, 80, 100, 120, 150, 200, 250, 300];
+  const M1 = { i: 6, a: 1e-3, feed: "gap", ker: "exact", L: 0.5, G: 0.02, cache: {}, gen: 0, started: false };
+  const m1Key = (N) => `${M1.ker}|${M1.feed}|${M1.a}|${N}`;
+  const m1Get = (N) => M1.cache[m1Key(N)];
+  const m1Half = (N) => Math.max(2, 2 * Math.round(N / 4));
+  function m1Solve(N) {
+    const k = m1Key(N);
+    if (!M1.cache[k]) { const t0 = performance.now(); const r = solveDipole(N, M1.L, M1.a, M1.feed === "gap" ? M1.G : null, M1.ker); r.t = performance.now() - t0; M1.cache[k] = r; }
+    return M1.cache[k];
+  }
+  // the selected mesh first, then N/2, then the full sweep: one solve for each task, so the page stays responsive
+  function m1Queue() {
+    const gen = ++M1.gen, N = M1N[M1.i];
+    const q = [N, m1Half(N), ...M1N].filter((n, i, arr) => arr.indexOf(n) === i);
+    const step = () => { if (gen !== M1.gen) return; const n = q.find((x) => !m1Get(x)); if (n === undefined) return; m1Solve(n); m1Draw(); setTimeout(step, 0); };
+    m1Draw(); setTimeout(step, 0);
+  }
+  function m1Draw() {
+    const N = M1N[M1.i], D = M1.L / N, da = D / M1.a, cur = m1Get(N), half = m1Get(m1Half(N));
+    $("m1-nv").textContent = `${N} (${N / M1.L} per λ, edge λ/${N / M1.L})`;
+    $("m1-av").textContent = `${+M1.a.toPrecision(2)} λ`;
+    $("m1-unk").textContent = fmtInt(N - 1); $("m1-mem").textContent = fmtBytes(16 * (N - 1) * (N - 1));
+    $("m1-da").textContent = da >= 100 ? fmtInt(da) : da.toFixed(da < 10 ? 2 : 1);
+    const dab = $("m1-dab"); dab.className = M1.ker === "reduced" ? (da > 8 ? "ok" : da >= 2 ? "warn" : "bad") : "";
+    let dz = null;
+    if (cur) {
+      $("m1-zin").textContent = `${cur.R.toFixed(1)} ${cur.X < 0 ? "−" : "+"} j${Math.abs(cur.X).toFixed(1)} Ω`;
+      $("m1-t").textContent = cur.t < 10 ? cur.t.toFixed(1) + " ms" : fmtInt(cur.t) + " ms";
+      if (half) dz = Math.hypot(cur.R - half.R, cur.X - half.X) / Math.hypot(cur.R, cur.X);
+    } else { $("m1-zin").textContent = "solving…"; $("m1-t").textContent = "—"; }
+    $("m1-dz").textContent = dz == null ? "—" : (dz * 100).toFixed(dz < 0.1 ? 1 : 0) + " %";
+    $("m1-dzb").className = dz == null ? "" : dz < 0.02 ? "ok" : "warn";
+    const st = $("m1-status");
+    if (M1.ker === "reduced" && da < 2) { st.className = "status bad"; st.textContent = "Wrong result: the segment is shorter than 2 × the radius, where the thin-wire kernel is not valid. A finer mesh made it worse. Use fewer segments or the exact kernel."; }
+    else if (M1.ker === "reduced" && da < 8) { st.className = "status warn"; st.textContent = "Δ/a is less than 8: the thin-wire kernel starts to lose accuracy (NEC rule)."; }
+    else if (M1.feed === "delta") { st.className = "status warn"; st.textContent = "Delta gap: the gap is one segment wide, so Zin keeps moving as you add segments. It has no limit. Use a fixed gap."; }
+    else if (dz != null && dz < 0.02) { st.className = "status ok"; st.textContent = "Converged to 2 %: ΔZ from N/2 is less than 2 % (like ΔS < 0.02)."; }
+    else { st.className = "status"; st.textContent = dz == null ? "Solving…" : "Not converged to 2 %: add segments."; }
+    m1PlotZ(N); m1PlotI(N, cur);
+  }
+  function m1PlotZ(N) {
+    const cv = $("m1-z"); if (!cv.offsetParent) return;
+    const { ctx, W, H } = fit(cv, narrowMQ.matches ? 0.72 : 0.5);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const pts = M1N.map((n) => [n, m1Get(n)]).filter((p) => p[1]);
+    const lim = M1.feed === "gap" && M1.ker === "exact" && m1Get(100) && m1Get(200) ? { R: 2 * m1Get(200).R - m1Get(100).R, X: 2 * m1Get(200).X - m1Get(100).X } : null;
+    $("m1-limleg").hidden = !lim;
+    let lo = 30, hi = 110; pts.forEach(([, z]) => { lo = Math.min(lo, z.R, z.X); hi = Math.max(hi, z.R, z.X); });
+    lo = Math.max(-100, Math.floor((lo - 5) / 20) * 20); hi = Math.min(200, Math.ceil((hi + 5) / 20) * 20);
+    const yt = []; const ys = hi - lo > 160 ? 40 : 20; for (let v = Math.ceil(lo / ys) * ys; v <= hi; v += ys) yt.push([v, String(v)]);
+    const b = { l: 40, t: 22, w: W - 50, h: H - 52 }, sx = (n) => n / M1.L;
+    const P = frame(ctx, b, { xlog: true, x0: 7, x1: 700, y0: lo, y1: hi, xt: [[10, "10"], [20, "20"], [50, "50"], [100, "100"], [200, "200"], [500, "500"]], yt, yl: "Zin (Ω)", xl: "segments per λ" });
+    ctx.save(); ctx.beginPath(); ctx.rect(b.l, b.t, b.w, b.h); ctx.clip();
+    const cR = css("--c-mom3d"), cX = css("--hfield"), mu = css("--muted");
+    [[73.1, cR], [42.5, cX]].forEach(([v]) => pline(ctx, [[b.l, P.Y(v)], [b.l + b.w, P.Y(v)]], mu, 1.2, [2, 3]));
+    if (lim) { pline(ctx, [[b.l, P.Y(lim.R)], [b.l + b.w, P.Y(lim.R)]], cR, 1.2, [6, 4]); pline(ctx, [[b.l, P.Y(lim.X)], [b.l + b.w, P.Y(lim.X)]], cX, 1.2, [6, 4]); }
+    pline(ctx, [[P.X(sx(N)), b.t], [P.X(sx(N)), b.t + b.h]], css("--ink"), 1);
+    pline(ctx, pts.map(([n, z]) => [P.X(sx(n)), P.Y(z.R)]), cR, 2.2); pline(ctx, pts.map(([n, z]) => [P.X(sx(n)), P.Y(z.X)]), cX, 2.2);
+    pts.forEach(([n, z]) => { const on = n === N, r = on ? 5.5 : 3; ctx.fillStyle = cR; ctx.beginPath(); ctx.arc(P.X(sx(n)), P.Y(z.R), r, 0, 7); ctx.fill(); ctx.fillStyle = cX; ctx.fillRect(P.X(sx(n)) - r, P.Y(z.X) - r, 2 * r, 2 * r); });
+    ctx.restore();
+    ctx.font = "600 10.5px JetBrains Mono, monospace"; ctx.fillStyle = mu;
+    if (lim) { ctx.fillText(`limit ≈ ${lim.R.toFixed(1)} + j${lim.X.toFixed(1)} Ω`, b.l + 6, b.t + 12); }
+    else if (M1.feed === "delta") ctx.fillText("delta gap: no limit", b.l + 6, b.t + 12);
+    const busy = M1N.filter((n) => !m1Get(n)).length; if (busy) { ctx.textAlign = "right"; ctx.fillText(`computing ${M1N.length - busy} of ${M1N.length}…`, b.l + b.w - 6, b.t + 12); ctx.textAlign = "left"; }
+  }
+  function m1PlotI(N, cur) {
+    const cv = $("m1-i"); if (!cv.offsetParent) return;
+    const { ctx, W, H } = fit(cv, narrowMQ.matches ? 0.5 : 0.3);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const h = M1.L / 2, ref = N !== 300 ? m1Get(300) : null; $("m1-refleg").hidden = !ref;
+    const mag = (r) => { const p = [[-h, 0]]; r.zn.forEach((z, i) => p.push([z, Math.hypot(r.I[2 * i], r.I[2 * i + 1]) * 1000])); p.push([h, 0]); return p; };
+    const curP = cur ? mag(cur) : [], refP = ref ? mag(ref) : [];
+    let top = 1; curP.concat(refP).forEach((p) => { top = Math.max(top, p[1]); }); top = Math.ceil(top * 1.15 / 2) * 2;
+    const b = { l: 40, t: 22, w: W - 50, h: H - 52 };
+    const P = frame(ctx, b, { x0: -h, x1: h, y0: 0, y1: top, xt: [[-h, "−λ/4"], [0, "feed"], [h, "+λ/4"]], yt: [[0, "0"], [top / 2, String(top / 2)], [top, String(top)]], yl: "|I| (mA for 1 V)", xl: "position on the wire" });
+    if (!cur) return;
+    const i0 = curP[(curP.length - 1) >> 1][1], k = 2 * Math.PI, sine = [];
+    for (let z = -h; z <= h + 1e-9; z += h / 60) sine.push([P.X(z), P.Y(i0 * Math.sin(k * (h - Math.abs(z))) / Math.sin(k * h))]);
+    pline(ctx, sine, css("--ink"), 1.3, [5, 4]);
+    if (ref) pline(ctx, refP.map(([z, v]) => [P.X(z), P.Y(v)]), css("--muted"), 1.3, [2, 3]);
+    pline(ctx, curP.map(([z, v]) => [P.X(z), P.Y(v)]), css("--c-mom3d"), 2.4);
+    if (N <= 80) { ctx.fillStyle = css("--c-mom3d"); curP.forEach(([z, v]) => { ctx.beginPath(); ctx.arc(P.X(z), P.Y(v), N <= 30 ? 3.2 : 2, 0, 7); ctx.fill(); }); }
+  }
+  function initM1() {
+    $("m1-n").addEventListener("input", () => { M1.i = +$("m1-n").value; m1Queue(); });
+    $("m1-a").addEventListener("input", () => { M1.a = +(10 ** +$("m1-a").value).toPrecision(2); m1Queue(); });
+    radioSeg($("m1-feed"), () => M1.feed, (v) => { M1.feed = v; m1Queue(); });
+    radioSeg($("m1-ker"), () => M1.ker, (v) => { M1.ker = v; m1Queue(); });
+  }
+
+  // ---- M2: edge refinement on a square plate (computed live) ----
+  const M2N = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24, 30];
+  const M2 = { i: 7, graded: 0, cache: {}, gen: 0 }, PLATE_REF = 40.811; // pF: 0.3667874 x 4 pi eps0 (Read 1997)
+  const m2Get = (n, g) => M2.cache[n + "|" + g];
+  function m2Queue() {
+    const gen = ++M2.gen, n = M2N[M2.i];
+    const q = [[n, M2.graded], [n, 1 - M2.graded]]; M2N.forEach((m) => q.push([m, 0], [m, 1]));
+    const step = () => { if (gen !== M2.gen) return; const job = q.find(([m, g]) => !m2Get(m, g)); if (!job) return; M2.cache[job.join("|")] = solvePlate(job[0], !!job[1]); m2Draw(); setTimeout(step, 0); };
+    m2Draw(); setTimeout(step, 0);
+  }
+  function m2Draw() {
+    const n = M2N[M2.i], cu = m2Get(n, 0), cg = m2Get(n, 1), err = (c) => (c.C - PLATE_REF) / PLATE_REF * 100;
+    $("m2-nv").textContent = `${n} (${fmtInt(n * n)} unknowns)`; $("m2-N").textContent = fmtInt(n * n);
+    $("m2-cu").textContent = cu ? pct(err(cu), 2) : "…"; $("m2-cg").textContent = cg ? pct(err(cg), 2) : "…";
+    $("m2-cul").textContent = "Uniform" + (cu ? `, ${cu.C.toFixed(2)} pF` : ""); $("m2-cgl").textContent = "Edge-graded" + (cg ? `, ${cg.C.toFixed(2)} pF` : "");
+    const cv = $("m2-cv"); if (!cv.offsetParent) return;
+    const narrow = narrowMQ.matches, { ctx, W, H } = fit(cv, narrow ? 1.45 : 0.5);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const sz = narrow ? Math.min(W - 40, H * 0.5) : Math.min(H - 40, W * 0.42), ox = narrow ? (W - sz) / 2 : 12, oy = 18;
+    const sol = m2Get(n, M2.graded);
+    ctx.fillStyle = css("--muted"); ctx.font = "10px JetBrains Mono, monospace"; ctx.fillText(`charge on each cell (${M2.graded ? "edge-graded" : "uniform"})`, ox, oy - 6);
+    if (sol) {
+      let mn = Infinity, mx = 0; sol.q.forEach((v) => { mn = Math.min(mn, v); mx = Math.max(mx, v); });
+      const s0 = hexRGB(css("--surface")), s1 = hexRGB(css("--c-mom3d")), e = sol.e;
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+        const t = mx > mn ? Math.log(sol.q[i * n + j] / mn) / Math.log(mx / mn) : 1, c = s0.map((v, k) => Math.round(v + (s1[k] - v) * (0.12 + 0.88 * t)));
+        ctx.fillStyle = `rgb(${c})`; ctx.fillRect(ox + e[i] * sz, oy + e[j] * sz, (e[i + 1] - e[i]) * sz + 0.6, (e[j + 1] - e[j]) * sz + 0.6);
+      }
+      if (n <= 24) { ctx.strokeStyle = css("--surface"); ctx.globalAlpha = 0.6; ctx.lineWidth = 1; ctx.beginPath(); e.forEach((v) => { ctx.moveTo(ox + v * sz, oy); ctx.lineTo(ox + v * sz, oy + sz); ctx.moveTo(ox, oy + v * sz); ctx.lineTo(ox + sz, oy + v * sz); }); ctx.stroke(); ctx.globalAlpha = 1; }
+    }
+    ctx.strokeStyle = css("--ink"); ctx.lineWidth = 1.5; ctx.strokeRect(ox, oy, sz, sz);
+    ctx.fillStyle = css("--muted"); ctx.fillText("strong colour = more charge", ox, oy + sz + 14);
+    const b = narrow ? { l: 44, t: oy + sz + 50, w: W - 66, h: H - (oy + sz + 50) - 32 } : { l: ox + sz + 58, t: 24, w: W - (ox + sz + 58) - 22, h: H - 54 };
+    const P = frame(ctx, b, { xlog: true, ylog: true, x0: 1, x1: 1000, y0: 0.05, y1: 30, xt: [[1, "1"], [10, "10"], [100, "100"], [1000, "1000"]], yt: [[0.1, "0.1 %"], [1, "1 %"], [10, "10 %"]], yl: "|error| of C", xl: "unknowns" });
+    [[0, css("--c-q2d")], [1, css("--c-mom3d")]].forEach(([g, c]) => {
+      const pts = M2N.map((m) => [m, m2Get(m, g)]).filter((p) => p[1]).map(([m, s]) => [P.X(m * m), P.Y(Math.max(0.05, Math.abs(err(s))))]);
+      pline(ctx, pts, c, 2.2); ctx.fillStyle = c; pts.forEach(([x, y]) => { ctx.beginPath(); ctx.arc(x, y, 2.6, 0, 7); ctx.fill(); });
+      const s = m2Get(n, g); if (s) { ctx.beginPath(); ctx.arc(P.X(n * n), P.Y(Math.max(0.05, Math.abs(err(s)))), g === M2.graded ? 6 : 4.5, 0, 7); ctx.fill(); }
+    });
+    pline(ctx, [[P.X(n * n), b.t], [P.X(n * n), b.t + b.h]], css("--ink"), 1);
+  }
+  function initM2() {
+    $("m2-n").addEventListener("input", () => { M2.i = +$("m2-n").value; m2Queue(); });
+    radioSeg($("m2-mesh"), () => M2.graded, (v) => { M2.graded = +v; m2Draw(); });
+  }
+
+  // ---- M4: the cost of a finer MoM mesh ----
+  const M4A = [["0.5", "Patch, 0.5 λ²"], ["1", "Plate, 1 λ²"], ["100", "Plate, 10 λ × 10 λ"], ["300", "Small UAV, ~300 λ²"]];
+  const M4 = { A: 1, c: null, msg: "" };
+  function m4Calibrate() { // time one complex LU here, then scale as N^3
+    if (M4.c) return;
+    const n = 200, A = new Float64Array(2 * n * n), b = new Float64Array(2 * n);
+    for (let i = 0; i < 2 * n * n; i++) A[i] = Math.random() - 0.5;
+    for (let i = 0; i < n; i++) { A[2 * (i * n + i)] += n; b[2 * i] = 1; }
+    let best = Infinity; for (let k = 0; k < 2; k++) { const B = A.slice(), v = b.slice(), t0 = performance.now(); cSolve(B, v, n); best = Math.min(best, performance.now() - t0); }
+    M4.c = best / 1000 / n ** 3; momDraw();
+  }
+  function momDraw() {
+    const d = +$("mom-n").value, A = M4.A, Nf = (dd) => 3.46 * A * dd * dd, mem = (dd) => 16 * Nf(dd) ** 2, tw = (dd) => 8 / 3 * Nf(dd) ** 3 / 1e12;
+    const N = Nf(d);
+    $("mom-nv").textContent = `${d} per λ (edge length λ/${d})`;
+    $("mom-N").textContent = fmtInt(N); $("mom-mem").textContent = fmtBytes(mem(d)); $("mom-tw").textContent = fmtDur(tw(d));
+    $("mom-tb").textContent = M4.c ? fmtDur(M4.c * N ** 3) : "measuring…";
+    const x = $("mom-x"); x.textContent = M4.msg || (mem(d) > 16e9 ? "More than the memory of a 16 GB laptop. Use MLFMM or ACA, or a coarser mesh with edge refinement." : "Fits in the memory of a 16 GB laptop.");
+    x.className = "status " + (M4.msg ? "warn" : mem(d) > 16e9 ? "bad" : "ok");
+    $("mom-half").disabled = d * 2 > 40;
+    const cv = $("mom-cv"); if (!cv.offsetParent) return;
+    const narrow = narrowMQ.matches, { ctx, W, H } = fit(cv, narrow ? 1.25 : 0.46);
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    const sz = narrow ? Math.min(W - 60, H * 0.42) : Math.min(H - 40, W * 0.36), ox = narrow ? (W - sz) / 2 : 12, oy = 18, s = sz / d;
+    ctx.fillStyle = css("--grid"); ctx.fillRect(ox, oy, sz, sz);
+    ctx.strokeStyle = css("--c-mom3d"); ctx.lineWidth = Math.max(0.5, Math.min(1.4, 14 / d)); ctx.beginPath();
+    for (let i = 0; i <= d; i++) { ctx.moveTo(ox + i * s, oy); ctx.lineTo(ox + i * s, oy + sz); ctx.moveTo(ox, oy + i * s); ctx.lineTo(ox + sz, oy + i * s); }
+    for (let i = 0; i < d; i++) for (let j = 0; j < d; j++) { ctx.moveTo(ox + i * s, oy + j * s); ctx.lineTo(ox + (i + 1) * s, oy + (j + 1) * s); }
+    ctx.stroke();
+    ctx.fillStyle = css("--muted"); ctx.font = "10px JetBrains Mono, monospace"; ctx.fillText("1 λ × 1 λ of the surface", ox, oy - 6);
+    const b = narrow ? { l: 52, t: oy + sz + 40, w: W - 70, h: H - (oy + sz + 40) - 32 } : { l: ox + sz + 62, t: 24, w: W - (ox + sz + 62) - 16, h: H - 54 };
+    // growth against the lambda/10 mesh: unknowns ~ d^2, memory ~ d^4, direct solve ~ d^6
+    const g = (v, p) => (v / 10) ** p, yt = [[1 / 64, "÷64"], [1 / 8, "÷8"], [1, "×1"], [8, "×8"], [64, "×64"], [512, "×512"], [4096, "×4096"]];
+    const P = frame(ctx, b, { xlog: true, ylog: true, x0: 5, x1: 40, y0: 1 / 64, y1: 4096, xt: [[5, "λ/5"], [10, "λ/10"], [20, "λ/20"], [40, "λ/40"]], yt, yl: "growth against a λ/10 mesh", xl: "edge length" });
+    ctx.save(); ctx.beginPath(); ctx.rect(b.l, b.t, b.w, b.h); ctx.clip();
+    const S3 = [[2, css("--ink"), [2, 3], "unknowns"], [4, css("--field"), [], "memory"], [6, css("--c-mom3d"), [6, 4], "solve time"]];
+    S3.forEach(([p, c, dash]) => { const pts = []; for (let v = 5; v <= 40.01; v *= 1.05) pts.push([P.X(v), P.Y(g(v, p))]); pline(ctx, pts, c, 2.3, dash); });
+    pline(ctx, [[P.X(d), b.t], [P.X(d), b.t + b.h]], css("--ink"), 1);
+    ctx.font = "600 10.5px JetBrains Mono, monospace";
+    S3.forEach(([p, c, , lab]) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(P.X(d), P.Y(g(d, p)), 4.5, 0, 7); ctx.fill(); ctx.textAlign = "right"; ctx.fillText(lab, b.l + b.w - 6, P.Y(g(40, p)) + (p === 6 ? 14 : -6)); ctx.textAlign = "left"; });
+    ctx.restore();
+    const fx = (v) => (v >= 1 ? "×" + +v.toPrecision(3) : "÷" + +(1 / v).toPrecision(3));
+    ctx.fillStyle = css("--ink"); ctx.font = "600 10.5px JetBrains Mono, monospace";
+    S3.forEach(([p, c, , lab], i) => { ctx.fillStyle = c; ctx.fillText(`${lab} ${fx(g(d, p))}`, b.l + 6, b.t + 14 + i * 14); });
+  }
+  function initMoM() {
+    $("mom-area").innerHTML = M4A.map(([v, l]) => `<button type="button" role="radio" data-v="${v}">${l}</button>`).join("");
+    radioSeg($("mom-area"), () => String(M4.A), (v) => { M4.A = +v; M4.msg = ""; momDraw(); });
+    $("mom-n").addEventListener("input", () => { M4.msg = ""; momDraw(); });
+    $("mom-half").addEventListener("click", () => {
+      const d = +$("mom-n").value; if (d * 2 > 40) return;
+      $("mom-n").value = d * 2; M4.msg = `Edge length λ/${d} → λ/${d * 2}: unknowns × 4, memory × 16, solve time × 64.`; momDraw();
+    });
+    momDraw();
+  }
+
+  function convDraw(c) {
+    fdtdDraw(); femDraw(); f1Draw(); dispDraw(); m1Draw(); m2Draw(); momDraw();
+    if (c === "fdtd") fdtdKick();
+    if (c === "mom" && !M1.started) { M1.started = true; m1Queue(); m2Queue(); setTimeout(m4Calibrate, 300); }
+  }
   function initConvergence() {
-    initFDTD(); initFEM(); initMoM();
+    initFDTD(); initFEM(); initF1(); initDisp(); initM1(); initM2(); initMoM();
     tablist($("convtabs"), (t) => {
       ["fdtd", "fem", "mom"].forEach((c) => ($("conv-" + c).hidden = c !== t.dataset.c));
-      if (t.dataset.c === "fdtd") fdtdKick(); if (t.dataset.c === "fem") femDraw(); if (t.dataset.c === "mom") momDraw();
+      convDraw(t.dataset.c);
     });
-    window.addEventListener("resize", () => { fdtdDraw(); femDraw(); momDraw(); });
+    window.addEventListener("resize", () => convDraw());
   }
 
   /* ======================================================================
@@ -2027,7 +2649,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     }
   }
 
-  /* ---------- picker ---------- */
+  /* ---------- picker: size x frequency pad, chip groups, live ranking ---------- */
   const PRESETS = ["aip", "patch", "spiral", "sma", "cav", "phone", "yagi", "ac-x", "grating"];
   const TASKS = [
     { id: "t-aip", lab: "Antenna in package, 28 GHz", geo: "mixed3d", size: 0.02, freq: 28e9, er: 4, need: "radiation", bb: false, q: false, fld: "antenna" },
@@ -2036,76 +2658,221 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     { id: "t-rcs", lab: "Aircraft RCS, X-band", geo: "metal3d", size: 15, freq: 10e9, er: 1, need: "rcs", bb: false, q: false, fld: "radar" },
     { id: "t-pcbf", lab: "PCB filter, free tools", geo: "planar", size: 0.03, freq: 10e9, er: 3.5, need: "sparams", bb: false, q: false, fld: "rf", lic: "of" },
   ];
+  // small pictograms for the structure chips (16 x 16, currentColor)
+  const GICON = {
+    planar: '<rect x="1" y="5" width="14" height="2.2"/><rect x="1" y="10" width="14" height="2.2" opacity="0.55"/><rect x="5" y="7" width="1.6" height="3"/>',
+    wire: '<rect x="7.2" y="1" width="1.6" height="14"/><rect x="3" y="3" width="1.2" height="10" opacity="0.6"/><rect x="11.8" y="3" width="1.2" height="10" opacity="0.6"/>',
+    metal3d: '<path d="M2 11 L6 4 L13 5 L14 11 L8 14 Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 4 L8 14 M2 11 L14 11" stroke="currentColor" stroke-width="1"/>',
+    mixed3d: '<rect x="2" y="3" width="12" height="3"/><rect x="2" y="7" width="12" height="3" opacity="0.55"/><rect x="2" y="11" width="12" height="2.5" opacity="0.8"/>',
+    inhomog: '<circle cx="8" cy="8" r="6.5" opacity="0.35"/><circle cx="7" cy="7" r="3.8" opacity="0.6"/><circle cx="6.5" cy="6.5" r="1.6"/>',
+    crosssec: '<rect x="6" y="5" width="4" height="2"/><rect x="2" y="7" width="12" height="5" opacity="0.4"/><rect x="2" y="12" width="12" height="1.6"/>',
+  };
+  const gic = (k) => `<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">${GICON[k]}</svg>`;
+  const GEO = [
+    ["planar", "Planar layers", "MMIC, RFIC, PCB traces"], ["wire", "Thin wires", "dipoles, Yagis, HF arrays"],
+    ["metal3d", "3D metal, open space", "vehicle, aircraft, dish"], ["mixed3d", "3D, many materials", "packages, connectors, cavities"],
+    ["inhomog", "Inhomogeneous bodies", "tissue, soil, optics"], ["crosssec", "Uniform line", "only the cross-section is important"],
+  ];
+  const NEED = [["sparams", "S-parameters", "S-parameters at ports"], ["radiation", "Pattern, gain", "Radiation pattern and gain"], ["rcs", "RCS", "Radar cross-section (scattering)"],
+    ["transient", "Transient", "Transient response (pulses, ESD, GPR)"], ["modes", "Modes, Q", "Resonances, modes and Q"], ["nearfield", "Fields in materials", "Fields in materials (SAR, heat)"]];
+  const FLD_SHORT = { any: "All", rf: "RF parts", rfic: "On-chip", pcb: "PCB, SI", antenna: "Antennas", radar: "Radar", emc: "EMC", bio: "Bio-EM", photonics: "Photonics", prop: "Propagation" };
+  const LICS = [["all", "Any"], ["c", "Commercial"], ["of", "Free or open source"]];
+  const FLOWS = [["", "None"], ["ADS", "Keysight ADS"], ["Virtuoso", "Cadence Virtuoso"], ["Microwave Office", "Microwave Office"], ["AEDT Circuit", "Ansys AEDT"], ["Allegro", "Cadence Allegro"]];
+  const PK = { geo: "planar", need: "sparams", er: 3.5, fld: "any", lic: "all", flow: "", cloud: false, bb: false, q: false };
+  const pkSync = [];
   function bestUnit(v, units) { let u = units[0]; units.forEach((x) => { if (v / x >= 1) u = x; }); return u; }
   let presetOn = null;
   function markPreset(id) {
     presetOn = id;
     $("pk-presets").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === id)));
     const src = id && (TASKS.find((t) => t.id === id) || DEVICES.find((d) => d.id === id));
-    $("pk-loaded").textContent = src ? `Example loaded: ${src.lab || src.name}. Change any input to make it your own problem.` : "Your own inputs (no example loaded).";
+    $("pk-loaded").textContent = src ? `Example: ${src.lab || src.name}. Change anything to make it your own problem.` : "Your own problem (no example loaded).";
   }
+  function setSize(v) { const su = bestUnit(v, [1e-6, 1e-3, 1e-2, 1]); $("pk-sizeu").value = su === 1e-6 ? "1e-6" : su === 1e-3 ? "1e-3" : su === 1e-2 ? "1e-2" : "1"; $("pk-size").value = +(v / su).toPrecision(4); }
+  function setFreq(v) { const fu = bestUnit(v, [1e6, 1e9, 1e12]); $("pk-frequ").value = fu === 1e6 ? "1e6" : fu === 1e9 ? "1e9" : "1e12"; $("pk-freq").value = +(v / fu).toPrecision(4); }
+  function setEr(v, from) { PK.er = Math.max(1, v || 1); if (from !== "num") $("pk-er").value = +PK.er.toPrecision(3); if (from !== "range") $("pk-err").value = Math.min(2, Math.log10(PK.er)).toFixed(2); }
   function loadPreset(d) {
-    $("pk-fld").value = d.fld || "any"; $("pk-lic").value = d.lic || "all"; $("pk-geo").value = d.geo; $("pk-need").value = d.need; $("pk-bb").checked = d.bb; $("pk-q").checked = d.q; $("pk-er").value = d.er || 1;
-    $("pk-flow").value = d.flow || ""; $("pk-cloud").checked = !!d.cloud;
-    const su = bestUnit(d.size, [1e-6, 1e-3, 1e-2, 1]);
-    $("pk-sizeu").value = su === 1e-6 ? "1e-6" : su === 1e-3 ? "1e-3" : su === 1e-2 ? "1e-2" : "1";
-    $("pk-size").value = +(d.size / su).toPrecision(4);
-    const fu = bestUnit(d.freq, [1e6, 1e9, 1e12]);
-    $("pk-frequ").value = fu === 1e6 ? "1e6" : fu === 1e9 ? "1e9" : "1e12";
-    $("pk-freq").value = +(d.freq / fu).toPrecision(4);
+    Object.assign(PK, { fld: d.fld || "any", lic: d.lic || "all", geo: d.geo, need: d.need, bb: !!d.bb, q: !!d.q, flow: d.flow || "", cloud: !!d.cloud });
+    setEr(d.er || 1); setSize(d.size); setFreq(d.freq);
+    pkSync.forEach((f) => f());
     markPreset(d.id);
     runPicker();
   }
-  function runPicker() {
-    const size = parseFloat($("pk-size").value) * parseFloat($("pk-sizeu").value), freq = parseFloat($("pk-freq").value) * parseFloat($("pk-frequ").value);
-    if (!(size > 0) || !(freq > 0)) { $("pk-elec").textContent = "Type a size and a frequency that are more than zero."; $("pk-out").innerHTML = ""; $("pk-hint").hidden = true; SHORT = null; return; }
-    const er = Math.max(1, parseFloat($("pk-er").value) || 1);
-    const r = score({ geo: $("pk-geo").value, need: $("pk-need").value, size, freq, er, broadband: $("pk-bb").checked, highQ: $("pk-q").checked });
-    const top = r.ranked[0], second = r.ranked[1];
-    $("pk-elec").innerHTML = `λ = ${fmtSize(C0 / freq)} &nbsp;·&nbsp; D = ${fmtE(r.e0)}${er > 1 ? ` (${fmtE(r.e)} in the material)` : ""} &nbsp;→&nbsp; use first <b class="m-${top}" style="white-space:nowrap">${METHODS[top].short}</b>`;
-    const hint = $("pk-hint");
-    hint.hidden = !($("pk-geo").value === "planar" && r.e0 > 0.25);
-    hint.textContent = "Is the board, mold or package finite? Then select \"3D, many materials\". A 2.5D solver assumes that the layers are infinite.";
-    const reasons = r.why[top].length ? r.why[top] : ["This method has the highest score after the size and geometry penalties"];
-    $("pk-out").innerHTML =
-      `<div class="pick m-${top}"><p class="eyebrow">${r.tie ? "Equal score: use first" : "Use first"}</p><div class="big">${METHODS[top].short}${r.tie ? ` <span class="m-${second}" style="font-size:0.6em">or ${METHODS[second].short}</span>` : ""}</div><p class="sub">${METHODS[top].name}</p>` +
-      `<ul>${reasons.map((x) => `<li>${x}.</li>`).join("")}</ul>` +
-      shortlist(r) +
-      (r.s[second] > 0 && !r.tie ? `<p class="note">Second: <b class="m-${second}">${METHODS[second].short}</b>${r.why[second][0] ? ". " + r.why[second][0] : ""}.</p>` : "") +
-      `<p class="note"><b>Check your result.</b> Solve again with a second method or tool, or compare with a measurement or a known case.</p>` +
-      `</div><div class="panel"><p class="eyebrow">Relative fit</p>` + rankBars(r, false) + `</div>` + costPanel(r, top, $("pk-geo").value);
-    // bind the buttons now: a timer can bind them two times when "input" and "change" both run the picker
-    $("pk-copy").addEventListener("click", copyResult);
-    $("pk-all").addEventListener("click", () => { setDir({ m: top, lic: $("pk-lic").value, fld: $("pk-fld").value }); $("tools").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth" }); });
+  // radio chips: one value from a list; arrow keys move the selection (roving tab index)
+  function radioChips(el, items, key, render) {
+    el.setAttribute("role", "radiogroup");
+    el.innerHTML = items.map(([v, lab, tip]) => `<button type="button" role="radio" data-v="${v}"${tip ? ` title="${tip}"` : ""}>${render ? render(v) : ""}${lab}</button>`).join("");
+    const btns = [...el.querySelectorAll("button")];
+    const sync = () => btns.forEach((b) => { const on = b.dataset.v === String(PK[key]); b.setAttribute("aria-checked", String(on)); b.tabIndex = on ? 0 : -1; });
+    btns.forEach((b, i) => {
+      b.addEventListener("click", () => { PK[key] = b.dataset.v; sync(); pkUser(); });
+      b.addEventListener("keydown", (e) => { const d = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key]; if (!d) return; e.preventDefault(); const nb = btns[(i + d + btns.length) % btns.length]; nb.focus(); nb.click(); });
+    });
+    pkSync.push(sync); sync();
   }
-  // order-of-magnitude problem size for each method. e0: D in free-space wavelengths; e: D in the densest material
-  function costPanel(r, top, geo) {
-    const e0 = r.e0, e = r.e;
-    if (e0 < 0.3) {
-      return `<div class="panel"><p class="eyebrow">Estimated problem size</p><p>The device is small compared with the wavelength. The geometry sets the mesh, not the wavelength: thin metal, small gaps and vias need small elements. Expect 10,000 to 1,000,000 unknowns, related to the detail.</p></div>`;
+  function toggleChip(id, key) {
+    const b = $(id), sync = () => b.setAttribute("aria-pressed", String(!!PK[key]));
+    b.addEventListener("click", () => { PK[key] = !PK[key]; sync(); pkUser(); });
+    pkSync.push(sync); sync();
+  }
+  function pkUser() { markPreset(null); pkRun(); }
+  let pkRaf = 0;
+  const pkRun = () => { if (!pkRaf) pkRaf = requestAnimationFrame(() => { pkRaf = 0; runPicker(); }); };
+
+  // ---- the size x frequency pad: the colour of each point is the winner of score() there ----
+  const PADR = { x0: -6, x1: 3, y0: 6, y1: 15 };
+  let PADG = null, padImg = null, padKey = "", padLabels = [];
+  function fit(cv, aspect) {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = Math.max(260, Math.round(cv.parentElement.clientWidth)), H = Math.round(W * aspect);
+    if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+    cv.style.height = H + "px";
+    const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); return { ctx, W, H };
+  }
+  const hexRGB = (h) => { h = h.replace("#", ""); if (h.length === 3) h = h.split("").map((c) => c + c).join(""); const n = parseInt(h, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+  function padBackground() {
+    const key = [PK.geo, PK.need, PK.er, PK.bb, PK.q, css("--c-fem"), css("--surface")].join("|");
+    if (key === padKey && padImg) return;
+    padKey = key;
+    const nx = 110, ny = 110, cv = padImg || document.createElement("canvas"); cv.width = nx; cv.height = ny;
+    const g = cv.getContext("2d"), img = g.createImageData(nx, ny), surf = hexRGB(css("--surface")), col = {}, acc = {};
+    ORDER.forEach((k) => { const c = hexRGB(css("--c-" + k)); col[k] = c.map((v, i) => Math.round(surf[i] + (v - surf[i]) * 0.34)); acc[k] = [0, 0, 0]; });
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const lx = PADR.x0 + (i + 0.5) / nx * (PADR.x1 - PADR.x0), ly = PADR.y1 - (j + 0.5) / ny * (PADR.y1 - PADR.y0);
+      const k = score({ geo: PK.geo, need: PK.need, size: 10 ** lx, freq: 10 ** ly, er: PK.er, broadband: PK.bb, highQ: PK.q }).ranked[0];
+      const o = 4 * (j * nx + i); img.data[o] = col[k][0]; img.data[o + 1] = col[k][1]; img.data[o + 2] = col[k][2]; img.data[o + 3] = 255;
+      acc[k][0] += i; acc[k][1] += j; acc[k][2]++;
     }
-    const thin = geo === "planar" || geo === "mixed3d" ? 10 : 1;              // thin layers need more cells in one direction
-    const n1 = 20 * e + 10, cells = Math.pow(n1, 3) * thin, steps = 20 * n1 * Math.sqrt(3);   // lambda/20 in the material, lambda/4 air layer
-    const tets = 25000 * Math.pow(e0 + 0.5, 3) * Math.max(1, Math.sqrt(e / e0));             // calibrated on the worked example: 0.5 lambda patch, 25,000 tetrahedra
-    const femUnk = tets * 6;
-    const surf = geo === "wire" ? 0 : (geo === "planar" ? 1 : 6) * e0 * e0;                  // metal surface in free-space square wavelengths
-    const mom3 = geo === "wire" ? Math.max(50, 40 * e0) : Math.max(100, 1.5 * 800 * surf);  // lambda/20 triangles, 1.5 edges per triangle
-    const mom25 = Math.max(100, 1.5 * 800 * 0.25 * e * e);                                   // 25 percent metal fill, guided wavelength
-    const rows = [
-      ["fdtd", `${fmtCount(cells)} cells, ${fmtCount(steps)} time steps`, fmtBytes(cells * 30)],
-      ["fem", `${fmtCount(tets)} tetrahedra, ${fmtCount(femUnk)} unknowns`, fmtBytes(femUnk * 7e3)],
-      ["mom3d", `${fmtCount(mom3)} unknowns, dense matrix`, fmtBytes(16 * mom3 * mom3) + (16 * mom3 * mom3 > 64e9 ? " (use MLFMM)" : "")],
-    ];
-    if (geo === "planar") rows.push(["mom25", `${fmtCount(mom25)} unknowns, dense matrix`, fmtBytes(16 * mom25 * mom25)]);
-    if (geo === "crosssec") rows.unshift(["q2d", "1,000 to 100,000 triangles on the cross-section. The length of the line has no effect", "less than 1 GB"]);
-    return `<div class="panel"><p class="eyebrow">Estimated problem size (order of magnitude)</p>` +
-      `<div class="cost">${rows.map(([k, a, b]) => `<div class="m-${k}${k === top ? " win" : ""}"><span>${icon(k)}${METHODS[k].short}</span><span>${a}</span><b>${b}</b></div>`).join("")}</div>` +
-      (top === "asym" ? `<p class="note"><b>These numbers show why a full-wave solve is not practical here.</b> A ray solver needs only the surface facets and a set of rays.</p>` : "") +
-      `<p class="note">Real models can be 10 times larger or smaller. Memory is not run time: FDTD needs all the time steps, and FEM and MoM need one solve for each frequency point. FDTD: λ/20 cells in the material. FEM: calibrated on the worked example below. MoM: λ/20 triangles.</p></div>`;
+    g.putImageData(img, 0, 0); padImg = cv;
+    padLabels = ORDER.filter((k) => acc[k][2] > nx * ny * 0.02).map((k) => [k, (acc[k][0] / acc[k][2] + 0.5) / nx, (acc[k][1] / acc[k][2] + 0.5) / ny]);
+  }
+  function padDraw(size, freq, top) {
+    const cv = $("pk-pad"); if (!cv.offsetParent) return;
+    const narrow = narrowMQ.matches, { ctx, W, H } = fit(cv, narrow ? 0.95 : 0.7);
+    const ml = narrow ? 44 : 52, mr = 6, mt = 6, mb = 22, pw = W - ml - mr, ph = H - mt - mb;
+    const X = (lx) => ml + (lx - PADR.x0) / (PADR.x1 - PADR.x0) * pw, Y = (ly) => mt + (PADR.y1 - ly) / (PADR.y1 - PADR.y0) * ph;
+    PADG = { ml, mt, pw, ph };
+    padBackground();
+    const muted = css("--muted"), ink = css("--ink");
+    ctx.fillStyle = css("--surface"); ctx.fillRect(0, 0, W, H);
+    ctx.imageSmoothingEnabled = true; ctx.drawImage(padImg, ml, mt, pw, ph);
+    ctx.save(); ctx.beginPath(); ctx.rect(ml, mt, pw, ph); ctx.clip();
+    ctx.strokeStyle = css("--surface"); ctx.globalAlpha = 0.5; ctx.lineWidth = 1;
+    for (let d = PADR.x0 + 1; d < PADR.x1; d++) { ctx.beginPath(); ctx.moveTo(X(d), mt); ctx.lineTo(X(d), mt + ph); ctx.stroke(); }
+    for (let d = PADR.y0 + 1; d < PADR.y1; d++) { ctx.beginPath(); ctx.moveTo(ml, Y(d)); ctx.lineTo(ml + pw, Y(d)); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+    // lines of constant electrical size: log f = log(k c) - log D
+    const LCc = Math.log10(C0);
+    ctx.font = `600 ${narrow ? 10 : 10.5}px JetBrains Mono, monospace`;
+    [[0.01, "0.01 λ"], [0.1, ""], [1, "1 λ"], [10, ""], [100, "100 λ"], [1000, ""]].forEach(([k, t]) => {
+      const yl = (lx) => Math.log10(k) + LCc - lx;
+      ctx.strokeStyle = ink; ctx.globalAlpha = k === 1 ? 0.6 : 0.3; ctx.lineWidth = k === 1 ? 1.4 : 1; ctx.setLineDash(k === 1 ? [] : [4, 4]);
+      ctx.beginPath(); ctx.moveTo(X(PADR.x0), Y(yl(PADR.x0))); ctx.lineTo(X(PADR.x1), Y(yl(PADR.x1))); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      if (!t) return;
+      let lx = PADR.x1 - 1.1, ly = yl(lx);
+      if (ly > PADR.y1 - 0.5) { ly = PADR.y1 - 0.6; lx = Math.log10(k) + LCc - ly; }
+      if (ly < PADR.y0 + 0.5) { ly = PADR.y0 + 0.6; lx = Math.log10(k) + LCc - ly; }
+      if (lx < PADR.x0 + 0.2) return;
+      ctx.save(); ctx.translate(X(lx), Y(ly) - 4); ctx.rotate(Math.atan2(Y(PADR.y0) - Y(PADR.y0 + 1), X(PADR.x0 + 1) - X(PADR.x0)));
+      ctx.fillStyle = muted; ctx.fillText(t, 0, 0); ctx.restore();
+    });
+    // method names at the centre of each region
+    ctx.font = `800 ${narrow ? 12 : 13.5}px Bricolage Grotesque, Arial Narrow, sans-serif`; ctx.textAlign = "center";
+    padLabels.forEach(([k, fx, fy]) => { const x = ml + fx * pw, y = mt + fy * ph; ctx.lineWidth = 3; ctx.strokeStyle = css("--surface"); ctx.globalAlpha = 0.85; ctx.strokeText(METHODS[k].short, x, y); ctx.globalAlpha = 1; ctx.fillStyle = css("--c-" + k); ctx.fillText(METHODS[k].short, x, y); });
+    ctx.textAlign = "left"; ctx.restore();
+    // crosshair to the axes
+    const px = X(Math.log10(size)), py = Y(Math.log10(freq));
+    ctx.strokeStyle = ink; ctx.globalAlpha = 0.45; ctx.setLineDash([3, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(px, mt + ph); ctx.lineTo(px, py); ctx.lineTo(ml, py); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.strokeStyle = css("--line"); ctx.strokeRect(ml + 0.5, mt + 0.5, pw - 1, ph - 1);
+    ctx.fillStyle = muted; ctx.font = `${narrow ? 9.5 : 10}px JetBrains Mono, monospace`;
+    const xl = ["1µm", "10µm", "100µm", "1mm", "1cm", "10cm", "1m", "10m", "100m", "1km"], yl = ["1 MHz", "10 MHz", "100 MHz", "1 GHz", "10 GHz", "100 GHz", "1 THz", "10 THz", "100 THz", "1 PHz"];
+    xl.forEach((t, i) => { if (narrow && i % 3) return; ctx.textAlign = i === 0 ? "left" : i === xl.length - 1 ? "right" : "center"; ctx.fillText(t, X(PADR.x0 + i), H - 6); });
+    ctx.textAlign = "right"; yl.forEach((t, i) => { if (narrow && i % 3) return; ctx.fillText(t, ml - 5, Math.min(H - mb, Math.max(mt + 8, Y(PADR.y0 + i) + 3.5))); }); ctx.textAlign = "left";
+    const dot = $("pk-dot");
+    dot.style.left = px + "px"; dot.style.top = py + "px"; dot.style.background = css("--c-" + top);
+    dot.setAttribute("aria-valuenow", Math.log10(size).toFixed(2));
+    dot.setAttribute("aria-valuetext", `Size ${fmtSize(size)}, frequency ${fmtFreq(freq)}`);
+  }
+  function padPick(e) {
+    if (!PADG) return;
+    const r = $("pk-pad").getBoundingClientRect();
+    const fx = Math.min(1, Math.max(0, (e.clientX - r.left - PADG.ml) / PADG.pw)), fy = Math.min(1, Math.max(0, (e.clientY - r.top - PADG.mt) / PADG.ph));
+    setSize(+(10 ** (PADR.x0 + fx * (PADR.x1 - PADR.x0))).toPrecision(2)); setFreq(+(10 ** (PADR.y1 - fy * (PADR.y1 - PADR.y0))).toPrecision(2));
+    pkUser();
+  }
+  function bindPad() {
+    const box = $("pk-padbox"); let drag = false;
+    box.addEventListener("pointerdown", (e) => { drag = true; box.setPointerCapture(e.pointerId); padPick(e); if (e.target !== $("pk-dot")) e.preventDefault(); $("pk-dot").focus({ preventScroll: true }); });
+    box.addEventListener("pointermove", (e) => { if (drag) padPick(e); });
+    ["pointerup", "pointercancel"].forEach((t) => box.addEventListener(t, () => { drag = false; }));
+    $("pk-dot").addEventListener("keydown", (e) => {
+      const st = e.shiftKey ? 1 : 0.1, d = { ArrowRight: [st, 0], ArrowLeft: [-st, 0], ArrowUp: [0, st], ArrowDown: [0, -st], PageUp: [0, 1], PageDown: [0, -1] }[e.key];
+      if (!d) return; e.preventDefault();
+      const { size, freq } = pkInputs(); if (!(size > 0) || !(freq > 0)) return;
+      const cl = (v, a, b) => Math.min(b, Math.max(a, v));
+      setSize(+(10 ** cl(Math.log10(size) + d[0], PADR.x0, PADR.x1)).toPrecision(2)); setFreq(+(10 ** cl(Math.log10(freq) + d[1], PADR.y0, PADR.y1)).toPrecision(2));
+      pkUser();
+    });
+  }
+  const pkInputs = () => ({ size: parseFloat($("pk-size").value) * parseFloat($("pk-sizeu").value), freq: parseFloat($("pk-freq").value) * parseFloat($("pk-frequ").value) });
+
+  // ---- results ----
+  let pkLast = "";
+  function runPicker() {
+    const { size, freq } = pkInputs();
+    if (!(size > 0) || !(freq > 0)) { $("pk-elec").textContent = "Type a size and a frequency that are more than zero."; $("pk-hint").hidden = true; return; }
+    const er = PK.er;
+    const r = score({ geo: PK.geo, need: PK.need, size, freq, er, broadband: PK.bb, highQ: PK.q });
+    const top = r.ranked[0], second = r.ranked[1];
+    $("pk-elec").innerHTML = `λ = ${fmtSize(C0 / freq)} · D = <b>${fmtE(r.e0)}</b>${er > 1 ? ` · <b>${fmtE(r.e)}</b> in ε<sub>r</sub>` : ""}`;
+    $("pk-geox").textContent = "For example: " + GEO.find((g) => g[0] === PK.geo)[2] + ".";
+    const hint = $("pk-hint");
+    hint.hidden = !(PK.geo === "planar" && r.e0 > 0.25);
+    if (!hint.hidden && !hint.firstChild) {
+      hint.innerHTML = `<span>Is the board, mold or package finite? A 2.5D solver assumes infinite layers.</span><button class="ibtn" type="button" id="pk-hintgo">Use "3D, many materials"</button>`;
+      $("pk-hintgo").addEventListener("click", () => { PK.geo = "mixed3d"; pkSync.forEach((f) => f()); pkUser(); });
+    }
+    padDraw(size, freq, top);
+    renderWin(r);
+    renderRank(r);
+    renderTools(r);
+    renderCost(r, top, PK.geo);
+    const said = `${r.tie ? "Equal score" : "Use first"}: ${METHODS[top].short}${r.tie ? " or " : ", then "}${METHODS[second].short}`;
+    if (said !== pkLast) { pkLast = said; $("pk-live").textContent = said + "."; }
+    $("pk-mini").innerHTML = `${icon(top)}<span>Use first <b>${METHODS[top].short}</b>${r.tie ? ` or ${METHODS[second].short}` : ""}</span><span aria-hidden="true">&darr;</span>`;
+  }
+  function renderWin(r) {
+    const top = r.ranked[0], second = r.ranked[1], el = $("pk-win");
+    const reasons = r.why[top].length ? r.why[top] : ["This method has the highest score after the size and geometry penalties"];
+    const det = el.querySelector("details"), open = det ? det.open : false, id = top + (r.tie ? "=" + second : "");
+    const changed = el.dataset.top !== id; el.dataset.top = id;
+    el.className = `pick m-${top}`;
+    el.innerHTML = `<p class="eyebrow">${r.tie ? "Equal score: use first" : "Use first"}</p>` +
+      `<div class="big">${icon(top)}<span>${METHODS[top].short}</span>${r.tie ? `<span class="then">or <b class="m-${second}">${METHODS[second].short}</b></span>` : r.s[second] > 0 ? `<span class="then">then <b class="m-${second}">${METHODS[second].short}</b></span>` : ""}</div>` +
+      `<p class="sub">${reasons[0]}.</p>` +
+      `<details class="mini"${open ? " open" : ""}><summary>${reasons.length > 1 ? `All ${reasons.length} reasons` : "More"}, and the second choice</summary>` +
+      `<p class="note">${METHODS[top].name}.</p><ul>${reasons.map((x) => `<li>${x}.</li>`).join("")}</ul>` +
+      (r.s[second] > 0 && !r.tie ? `<p class="note">Second: <b class="m-${second}">${METHODS[second].short}</b>${r.why[second][0] ? ". " + r.why[second][0] : ""}.</p>` : "") +
+      `<p class="note"><b>Check your result.</b> Solve again with a second method or tool, or compare with a measurement or a known case.</p></details>`;
+    if (changed && !reduceMQ.matches) { el.classList.remove("flip"); void el.offsetWidth; el.classList.add("flip"); }
+  }
+  function renderRank(r) {
+    const box = $("pk-rank"), rowH = 30, theme = css("--c-fem");
+    if (box.dataset.theme !== theme) {
+      box.dataset.theme = theme; box.style.height = ORDER.length * rowH + "px";
+      box.innerHTML = ORDER.map((k) => `<div class="rrow m-${k}" data-k="${k}"><span class="lb">${icon(k)}${METHODS[k].short}</span><span class="track"><span class="fill"></span></span><span class="sc"></span></div>`).join("");
+    }
+    const max = Math.max(1, r.s[r.ranked[0]]);
+    r.ranked.forEach((k, i) => {
+      const row = box.querySelector(`[data-k="${k}"]`), near = i > 0 && r.s[r.ranked[0]] - r.s[k] <= 1;
+      row.style.transform = `translateY(${i * rowH}px)`; row.classList.toggle("win", i === 0);
+      row.querySelector(".fill").style.width = Math.max(0, r.s[k]) / max * 100 + "%";
+      row.querySelector(".sc").textContent = i === 0 ? "1st" : ordinal(i) + (near ? ", close" : "");
+    });
   }
   // rank the tools for this problem: method rank, field, licence, design flow, cloud, maturity, research use
   function shortlist(r) {
-    const fld = $("pk-fld").value, lic = $("pk-lic").value, flow = $("pk-flow").value, cloudOK = $("pk-cloud").checked;
+    const fld = PK.fld, lic = PK.lic, flow = PK.flow, cloudOK = PK.cloud;
     const free = lic === "of";
     const [m1, m2, m3] = r.ranked, close = r.s[m1] - r.s[m2] <= 2;
     const W = { [m1]: 4 }; if (close || free) W[m2] = 2.5;
@@ -2122,7 +2889,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
       if (t.lic !== "c") why.push(t.lic === "o" ? "Open source" : "No cost");
       if (t.cloud) why.push("Cloud only: your data goes to the vendor");
       if (t.m.length > 1) why.push(`Also ${t.m.filter((k) => k !== mk).map((k) => METHODS[k].short).join(", ")}`);
-      return { t, sc, why };
+      return { t, sc, why, mk };
     }).filter(Boolean).sort((a, b) => b.sc - a.sc);
     let list = rank(true, true);
     if (list.length < 3) { const more = rank(true, false).filter((x) => !list.some((y) => y.t === x.t)); more.forEach((x) => x.why.push("Field not listed by the vendor")); list = list.concat(more); }
@@ -2132,18 +2899,76 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     if (firstM && !list.includes(firstM)) list[list.length - 1] = firstM;
     const noFlow = flow ? rank(false, true)[0] : null;
     SHORT = { r, list, fld, lic, flow };
-    const link = `<div class="row"><button class="btn" type="button" id="pk-all">See all matching tools &darr;</button><button class="btn" type="button" id="pk-copy">Copy this result</button><span class="note" id="pk-copied" role="status"></span></div>`;
-    if (!list.length) return `<p class="note">No tool in the list agrees with all your filters. Select "Any licence".</p>` + link;
-    return `<p class="eyebrow">Tools to look at first</p><div class="short">${list.map(({ t, why }) => `<div class="tl"><b><a href="${t.url}" target="_blank" rel="noopener">${t.n}</a></b><span class="lic${t.lic === "o" ? " open" : ""}">${LIC[t.lic]}</span><div class="why">${why.map((w) => `<span>${w}</span>`).join("")}</div></div>`).join("")}</div>` +
-      (noFlow && !list.some((x) => x.t === noFlow.t) ? `<p class="note">With no design-flow filter, the first tool is <b>${noFlow.t.n}</b>.</p>` : "") +
-      `<p class="note">The ranking uses the method, the field, the design flow, the licence and the maturity. It does not use the number of papers.</p>` + link;
+    return { list, noFlow };
+  }
+  // one short badge for each reason; the full sentence stays in the tooltip
+  function badge(w, mk) {
+    let m;
+    if ((m = w.match(/^Has (.+) \((\w+)\)$/))) return `<span class="bd m">${m[1]} · ${m[2]}</span>`;
+    if (w === "Common choice in this field") return `<span class="bd">★ Common in field</span>`;
+    if (w === "Common free choice") return `<span class="bd">★ Common free choice</span>`;
+    if ((m = w.match(/^Has a link to (.+)$/))) return `<span class="bd">↔ ${m[1]}</span>`;
+    if (w === "Open source" || w === "No cost" || /^Also /.test(w)) return "";
+    if (/^Cloud only/.test(w)) return `<span class="bd warn">Cloud only</span>`;
+    if (w === "Field not listed by the vendor") return `<span class="bd warn">Field not listed</span>`;
+    return `<span class="bd">${w}</span>`;
+  }
+  function renderTools(r) {
+    const { list, noFlow } = shortlist(r), top = r.ranked[0];
+    const link = `<div class="row"><button class="btn" type="button" id="pk-all">All matching tools &darr;</button><button class="btn" type="button" id="pk-copy">Copy the result</button><span class="note" id="pk-copied" role="status"></span></div>`;
+    $("pk-tools").innerHTML = `<p class="eyebrow">Tools to look at first</p>` + (!list.length ? `<p class="note">No tool in the list agrees with all your filters. Select "Any" licence.</p>` :
+      `<div class="tcards">${list.map(({ t, why, mk }) => {
+        const also = why.find((w) => /^Also /.test(w));
+        return `<a class="tcard m-${mk}" href="${t.url}" target="_blank" rel="noopener" title="${why.join(". ")}."><span class="tn">${t.n}</span>` +
+          `<span class="tb"><span class="bd ${t.lic === "c" ? "com" : "free"}">${t.lic === "c" ? "Commercial" : t.lic === "o" ? "Open source · free" : "Free"}</span>${why.map((w) => badge(w, mk)).join("")}</span>` +
+          (also ? `<span class="also">${also}</span>` : "") + `</a>`;
+      }).join("")}</div>` +
+      (noFlow && !list.some((x) => x.t === noFlow.t) ? `<p class="note">With no design-flow filter, the first tool is <b>${noFlow.t.n}</b>.</p>` : "")) +
+      link + `<details class="mini"><summary>How the tools are ranked</summary><p class="note">The ranking uses the method, the field, the design flow, the licence and the maturity. It does not use the number of papers. Select a card to open the vendor page.</p></details>`;
+    $("pk-copy").addEventListener("click", copyResult);
+    $("pk-all").addEventListener("click", () => { setDir({ m: top, lic: PK.lic, fld: PK.fld }); $("tools").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth" }); });
+  }
+  // order-of-magnitude problem size for each method. e0: D in free-space wavelengths; e: D in the densest material
+  function costPanel(r, top, geo) {
+    const e0 = r.e0, e = r.e;
+    if (e0 < 0.3) return { small: true };
+    const thin = geo === "planar" || geo === "mixed3d" ? 10 : 1;              // thin layers need more cells in one direction
+    const n1 = 20 * e + 10, cells = Math.pow(n1, 3) * thin, steps = 20 * n1 * Math.sqrt(3);   // lambda/20 in the material, lambda/4 air layer
+    const tets = 25000 * Math.pow(e0 + 0.5, 3) * Math.max(1, Math.sqrt(e / e0));             // calibrated on the worked example: 0.5 lambda patch, 25,000 tetrahedra
+    const femUnk = tets * 6;
+    const surf = geo === "wire" ? 0 : (geo === "planar" ? 1 : 6) * e0 * e0;                  // metal surface in free-space square wavelengths
+    const mom3 = geo === "wire" ? Math.max(50, 40 * e0) : Math.max(100, 1.5 * 800 * surf);  // lambda/20 triangles, 1.5 edges per triangle
+    const mom25 = Math.max(100, 1.5 * 800 * 0.25 * e * e);                                   // 25 percent metal fill, guided wavelength
+    const rows = [
+      ["fdtd", `${fmtCount(cells)} cells, ${fmtCount(steps)} time steps`, cells * 30],
+      ["fem", `${fmtCount(tets)} tetrahedra, ${fmtCount(femUnk)} unknowns`, femUnk * 7e3],
+      ["mom3d", `${fmtCount(mom3)} unknowns, dense matrix`, 16 * mom3 * mom3, 16 * mom3 * mom3 > 64e9 ? " (use MLFMM)" : ""],
+    ];
+    if (geo === "planar") rows.push(["mom25", `${fmtCount(mom25)} unknowns, dense matrix`, 16 * mom25 * mom25]);
+    if (geo === "crosssec") rows.unshift(["q2d", "1,000 to 100,000 triangles on the cross-section. The length of the line has no effect", 1e9, "", "less than 1 GB"]);
+    return { rows };
+  }
+  function renderCost(r, top, geo) {
+    const c = costPanel(r, top, geo);
+    if (c.small) {
+      $("pk-costsum").innerHTML = `<span class="lbl">Problem size</span> set by the detail, not by the wavelength`;
+      $("pk-costbody").innerHTML = `<p class="note">The device is small compared with the wavelength. The geometry sets the mesh, not the wavelength: thin metal, small gaps and vias need small elements. Expect 10,000 to 1,000,000 unknowns, related to the detail.</p>`;
+      return;
+    }
+    const row = c.rows.find((x) => x[0] === top), lo = 6, hi = 16; // bar: 1 MB to 10 PB on a log scale
+    const mem = (x) => x[4] || fmtBytes(x[2]) + (x[3] || "");
+    $("pk-costsum").innerHTML = `<span class="lbl">Problem size</span>` + (row ? `<b class="m-${top}">${METHODS[top].short}</b> ${mem(row)} of memory` : `full-wave methods: ${mem(c.rows.reduce((a, b) => (a[2] < b[2] ? a : b)))} or more`);
+    $("pk-costbody").innerHTML = `<div class="cost">${c.rows.map((x) => `<div class="m-${x[0]}${x[0] === top ? " win" : ""}"><span class="k">${icon(x[0])}${METHODS[x[0]].short}</span>` +
+      `<span class="track"><span class="fill" style="width:${Math.max(3, Math.min(100, (Math.log10(x[2]) - lo) / (hi - lo) * 100))}%"></span></span><b>${mem(x)}</b><span class="t">${x[1]}</span></div>`).join("")}</div>` +
+      (top === "asym" ? `<p class="note"><b>These numbers show why a full-wave solve is not practical here.</b> A ray solver needs only the surface facets and a set of rays.</p>` : "") +
+      `<p class="note">Order of magnitude only: real models can be 10 times larger or smaller. Memory is not run time: FDTD needs all the time steps, and FEM and MoM need one solve for each frequency point. FDTD: λ/20 cells in the material. FEM: calibrated on the worked example. MoM: λ/20 triangles.</p>`;
   }
   let SHORT = null;
   function copyResult() {
     if (!SHORT) return;
-    const { r, list } = SHORT;
+    const { r, list } = SHORT, g = GEO.find((x) => x[0] === PK.geo), nd = NEED.find((x) => x[0] === PK.need);
     const lines = [
-      `Problem: ${$("pk-geo").selectedOptions[0].text}; D = ${$("pk-size").value} ${$("pk-sizeu").selectedOptions[0].text}; f = ${$("pk-freq").value} ${$("pk-frequ").selectedOptions[0].text}; εr = ${Math.max(1, parseFloat($("pk-er").value) || 1)}; result: ${$("pk-need").selectedOptions[0].text}.`,
+      `Problem: ${g[1]} (${g[2]}); D = ${$("pk-size").value} ${$("pk-sizeu").selectedOptions[0].text}; f = ${$("pk-freq").value} ${$("pk-frequ").selectedOptions[0].text}; εr = ${PK.er}; result: ${nd[2]}.`,
       `Electrical size: ${fmtE(r.e0)} in air (${fmtE(r.e)} in the material).`,
       `Method to use first: ${METHODS[r.ranked[0]].name}. Second: ${METHODS[r.ranked[1]].name}.`,
       `Tools to look at first: ${list.map((x) => `${x.t.n} (${x.t.owner})`).join("; ")}.`,
@@ -2154,13 +2979,22 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
   }
   function fmtCount(n) { if (n >= 1e15) return sci(n); if (n >= 1e12) return +(n / 1e12).toPrecision(2) + " trillion"; if (n >= 1e9) return +(n / 1e9).toPrecision(2) + " billion"; if (n >= 1e6) return +(n / 1e6).toPrecision(2) + " million"; if (n >= 1e4) return Math.round(n / 1e3) + " thousand"; return fmtInt(n); }
   function buildPicker() {
-    $("pk-presets").innerHTML = `<span class="note" style="width:100%">Tasks</span>` + TASKS.map((t) => `<button type="button" data-id="${t.id}" class="task" aria-pressed="false">${t.lab}</button>`).join("") +
-      `<span class="note" style="width:100%">Devices from the 3D lab</span>` + PRESETS.map((id) => `<button type="button" data-id="${id}" aria-pressed="false">${DEVICES.find((d) => d.id === id).lab}</button>`).join("");
+    const chipB = (id, lab, cls) => `<button type="button" data-id="${id}" class="${cls}" aria-pressed="false">${lab}</button>`;
+    $("pk-presets").innerHTML = `<span class="lbl">Tasks</span>` + TASKS.map((t) => chipB(t.id, t.lab, "task")).join("") +
+      `<span class="sep" aria-hidden="true"></span><span class="lbl">Devices</span>` + PRESETS.map((id) => chipB(id, DEVICES.find((d) => d.id === id).lab, "")).join("");
     $("pk-presets").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => loadPreset(TASKS.find((t) => t.id === b.dataset.id) || DEVICES.find((d) => d.id === b.dataset.id))));
-    // a change by the user disconnects the form from the example
-    ["pk-geo", "pk-size", "pk-sizeu", "pk-freq", "pk-frequ", "pk-er", "pk-need", "pk-bb", "pk-q", "pk-fld", "pk-lic", "pk-flow", "pk-cloud"].forEach((id) => $(id).addEventListener("input", (e) => { if (e.isTrusted) markPreset(null); }));
-    $("pk-fld").innerHTML = Object.entries(FIELDS).map(([k, v]) => `<option value="${k}">${v[0]}</option>`).join("");
-    ["pk-geo", "pk-size", "pk-sizeu", "pk-freq", "pk-frequ", "pk-er", "pk-need", "pk-bb", "pk-q", "pk-fld", "pk-lic", "pk-flow", "pk-cloud"].forEach((id) => { $(id).addEventListener("input", runPicker); $(id).addEventListener("change", runPicker); });
+    radioChips($("pk-geo"), GEO.map(([v, l, ex]) => [v, l, "For example: " + ex]), "geo", gic);
+    radioChips($("pk-need"), NEED, "need");
+    radioChips($("pk-fld"), Object.keys(FIELDS).map((k) => [k, FLD_SHORT[k] || FIELDS[k][0], FIELDS[k][0]]), "fld");
+    radioChips($("pk-lic"), LICS, "lic");
+    radioChips($("pk-flow"), FLOWS, "flow");
+    toggleChip("pk-bb", "bb"); toggleChip("pk-q", "q"); toggleChip("pk-cloud", "cloud");
+    ["pk-size", "pk-sizeu", "pk-freq", "pk-frequ"].forEach((id) => { $(id).addEventListener("input", pkUser); $(id).addEventListener("change", pkUser); });
+    $("pk-er").addEventListener("input", () => { const v = parseFloat($("pk-er").value); if (v >= 1) { setEr(v, "num"); pkUser(); } });
+    $("pk-err").addEventListener("input", () => { setEr(+(10 ** +$("pk-err").value).toPrecision(2), "range"); pkUser(); });
+    $("pk-mini").addEventListener("click", () => $("pk-win").scrollIntoView({ behavior: reduceMQ.matches ? "auto" : "smooth", block: "center" }));
+    bindPad();
+    window.addEventListener("resize", pkRun);
   }
 
   /* ---------- citations ---------- */
@@ -2276,7 +3110,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; display: grid; ga
     if (R3) R3.setBg(); if (L3) { L3.setBg(); Object.keys(LS).forEach((k) => { clearGroup(LS[k].group); L3.root.remove(LS[k].group); delete LS[k]; }); setLesson(lesson); }
     buildDevGroups(); buildLegend();
     if (V.dev) selectDevice(V.dev.id);
-    renderCites(); renderDir(); runPicker(); renderCompare(); fdtdDraw(); femDraw(); momDraw();
+    padKey = ""; renderCites(); renderDir(); runPicker(); renderCompare(); convDraw();
   }
 
   V.ok = webglOK();
