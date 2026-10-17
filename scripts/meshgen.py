@@ -452,11 +452,13 @@ def mesh_device(did, algo3d=10, heal=False):
         surfs = [s for _, s in gmsh.model.getBoundary([(3, t) for t in p_vols], oriented=False, combined=True)]
         tops = {}
         if did in PLANAR_MOM25:  # 2.5D: keep the top face of each metal sheet (flat in y, at the highest y of its volume)
+            # The volume's own bounding box is loose after meshing (OCC adds ~3e-5 of tolerance to volumes
+            # with curved faces, e.g. a trace cut by a via), so take the top from its faces instead.
             for t in p_vols:
-                vy1 = gmsh.model.getBoundingBox(3, t)[4]
-                for _, sf in gmsh.model.getBoundary([(3, t)], oriented=False):
-                    b = gmsh.model.getBoundingBox(2, sf)
-                    if abs(b[4] - b[1]) < 1e-6 and abs(b[4] - vy1) < 1e-6: tops[sf] = True
+                fb = [(sf, gmsh.model.getBoundingBox(2, sf)) for _, sf in gmsh.model.getBoundary([(3, t)], oriented=False)]
+                vy1 = max(b[4] for _, b in fb)
+                for sf, b in fb:
+                    if abs(b[4] - b[1]) < 1e-5 and abs(b[4] - vy1) < 1e-4: tops[sf] = True
         for s in surfs:
             if did in PLANAR_MOM25 and s not in tops: continue
             mom_tris += surface_tris([s])

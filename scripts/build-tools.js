@@ -99,6 +99,11 @@ const STD = {
   'SIwave': ['pcb'], 'Sigrity': ['pcb'], 'HyperLynx Advanced Solvers': ['pcb'], 'Lumerical FDTD': ['photonics'], 'Tidy3D': ['photonics'],
   'Wireless InSite': ['prop'], 'gprMax': ['prop'], 'GRASP': ['antenna'], 'openEMS': ['free'], 'Sonnet Lite': ['free'],
 };
+// thin-wire MoM kernels (segments with a reduced kernel, as in NEC); the shortlist ranks these first for the "Thin wires" structure
+const WIRE = { 'NEC-2': 'std', '4nec2': 'std', 'Simcenter Feko': true, 'WIPL-D Pro': true };
+// specialist tools: the structures and the main method they are made for (the shortlist moves them down for
+// other structures, or when only their secondary method fits; GRASP's MoM is for reflector feeds and struts)
+const GEOS = { 'GRASP': { geos: ['metal3d'], prim: 'asym', spec: 'Made for reflector antennas' } };
 const VALID = { 'XFdtd': 'States IEC/IEEE 62704-1 SAR averaging', 'Sim4Life': 'States IEC/IEEE 62704-1 SAR averaging', 'HFSS': 'Has an IEC/IEEE 62704-4 draft SAR setting', 'EMX': 'Foundry-certified for many processes' };
 // tools added after review (Ben, 2026-10-14); sources: remcom.com/wavefarer-automotive-radar-software, remcom.com/radar-and-scattering
 out.splice(out.findIndex((t) => t.n === 'Wireless InSite'), 0, { n: 'WaveFarer', lic: 'c', owner: 'Remcom', m: ['asym'], dom: ['radar', 'antenna'], price: null, trial: null, api: null, gpu: null, hpc: null, os: null, imp: null, eda: null, cloud: false, mat: 'production', url: 'https://www.remcom.com/wavefarer-automotive-radar-software',
@@ -106,12 +111,14 @@ out.splice(out.findIndex((t) => t.n === 'Wireless InSite'), 0, { n: 'WaveFarer',
 // radar and RCS field
 ['XGtd', 'Simcenter Feko', 'HFSS-IE and SBR+', 'CST Studio Suite', 'POFacets', 'WIPL-D Pro'].forEach((n) => { const t = out.find((x) => x.n === n); if (t && !t.dom.includes('radar')) t.dom.push('radar'); });
 STD['WaveFarer'] = ['radar']; STD['XGtd'] = ['radar', 'antenna']; STD['HFSS-IE and SBR+'] = ['radar']; STD['Simcenter Feko'] = ['antenna', 'emc', 'radar'];
-out.forEach((t) => { if (FIX[t.n]) Object.assign(t, FIX[t.n]); if (STD[t.n]) t.std = STD[t.n]; if (VALID[t.n]) t.valid = VALID[t.n]; if (t.owner === 'Dassault Systemes') t.owner = 'Dassault Systèmes'; });
+out.forEach((t) => { if (FIX[t.n]) Object.assign(t, FIX[t.n]); if (STD[t.n]) t.std = STD[t.n]; if (VALID[t.n]) t.valid = VALID[t.n]; if (WIRE[t.n]) t.wire = WIRE[t.n]; if (GEOS[t.n]) Object.assign(t, GEOS[t.n]); if (t.owner === 'Dassault Systemes') t.owner = 'Dassault Systèmes'; });
 // owner text tidy-ups
 out.forEach((t) => { if (t.owner.startsWith('Ansys, part of Synopsys')) t.owner = 'Ansys (part of Synopsys)'; });
 const p = path.join(root, 'index.html');
 let s = fs.readFileSync(p, 'utf8');
-const a = s.indexOf('  const TOOLS = ['), b = s.indexOf('  const LIC = {');
+let a = s.indexOf('  const TOOLS = ['); const b = s.indexOf('  const LIC = {');
+// replace the old "tool data" comment lines too, so that the comment is not repeated on each run
+const head = s.slice(0, a).replace(/(?:  \/\/ tool data:[^\n]*\n)+$/, ""); a = head.length;
 s = s.slice(0, a) + '  // tool data: vendor pages and docs, checked ' + meta.retrieved + ' (tools-meta.json)\n  const TOOLS = ' + JSON.stringify(out) + ';\n' + s.slice(b);
 fs.writeFileSync(p, s);
 console.log('tools', out.length);
