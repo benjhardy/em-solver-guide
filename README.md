@@ -1,5 +1,7 @@
 # FDTD, FEM or MoM?
 
+**Live:** https://benjhardy.github.io/em-solver-guide/ · part of [benjhardy.github.io](https://benjhardy.github.io/)
+
 An interactive guide to electromagnetic (EM) solvers. Learn how the three main full-wave methods work, see their meshes on real devices in 3D, and select a solver and a tool for your problem.
 
 The full guide is one HTML file, [`index.html`](index.html). Open it in a browser. It needs no build step and no server.
